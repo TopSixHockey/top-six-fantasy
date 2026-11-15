@@ -1,0 +1,33 @@
+name: Update stats
+
+on:
+  schedule:
+    - cron: "0 8 * * *"    # 3:00 a.m. Eastern (after the late WHL games finish)
+    - cron: "0 17 * * *"   # midday refresh
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "discover = print what the league feed returns (writes nothing); update-dry = fetch and match but don't write; update = write to the database"
+        default: "discover"
+        type: choice
+        options: [discover, update-dry, update]
+
+jobs:
+  stats:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          MODE: ${{ github.event.inputs.mode || 'update' }}
+        run: |
+          case "$MODE" in
+            discover)   python stats/update_stats.py discover ;;
+            update-dry) python stats/update_stats.py update --dry ;;
+            *)          python stats/update_stats.py update ;;
+          esac
