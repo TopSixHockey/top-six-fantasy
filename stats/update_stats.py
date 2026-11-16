@@ -346,17 +346,31 @@ def sb_get_players():
 
 
 def sb_upsert_stats(rows):
+    """Upsert in batches of rows that all have the same columns (so no column is ever blanked by accident).
+    On failure, print the database's own error message."""
     base = os.environ["SUPABASE_URL"].rstrip("/")
-    for i in range(0, len(rows), 400):
-        batch = rows[i:i + 400]
-        req = urllib.request.Request(
-            base + "/rest/v1/player_stats?on_conflict=player_id",
-            data=json.dumps(batch).encode(),
-            headers=sb_headers({"Prefer": "resolution=merge-duplicates,return=minimal"}),
-            method="POST",
-        )
-        with urllib.request.urlopen(req, timeout=60) as r:
-            r.read()
+    groups = {}
+    for r in rows:
+        groups.setdefault(tuple(sorted(r.keys())), []).append(r)
+    for keys, grp in groups.items():
+        for i in range(0, len(grp), 300):
+            batch = grp[i:i + 300]
+            req = urllib.request.Request(
+                base + "/rest/v1/player_stats?on_conflict=player_id",
+                data=json.dumps(batch).encode(),
+                headers=sb_headers({"Prefer": "resolution=merge-duplicates,return=minimal"}),
+                method="POST",
+            )
+            try:
+                with urllib.request.urlopen(req, timeout=60) as r:
+                    r.read()
+            except urllib.error.HTTPError as e:
+                body = e.read().decode("utf-8", "replace")[:800]
+                print("ERROR writing to Supabase: HTTP %s %s" % (e.code, e.reason))
+                print("  columns in this batch:", ", ".join(keys))
+                print("  database said:", body)
+                print("  first row of batch:", json.dumps(batch[0]))
+                sys.exit(1)
 
 
 # ---------- commands ----------
