@@ -178,6 +178,7 @@ def parse_whl_shots_html(html):
         if "SOG" not in titles or "Player" not in titles:
             continue
         i_sog, i_pl, i_tm = titles.index("SOG"), titles.index("Player"), titles.index("Team")
+        i_num = titles.index("#") if "#" in titles else None
         data = json.loads(extract_json_array(html, m.end() - 2))
         out = []
         for row in data:
@@ -190,7 +191,8 @@ def parse_whl_shots_html(html):
                 team = row[i_tm][0][1]
             shots = to_num(row[i_sog])
             if shots is not None:
-                out.append((name, team, int(shots)))
+                num = str(row[i_num]) if i_num is not None and i_num < len(row) else ""
+                out.append((name, team, int(shots), num))
         return out
     raise RuntimeError("could not find the skater table data on the WHL stats page")
 
@@ -248,6 +250,9 @@ def row_name(row):
     name = pick_text(row, "name", "player_name", "shortname")
     if not name:
         name = (pick_text(row, "first_name") + " " + pick_text(row, "last_name")).strip()
+    if "," in name:  # QMJHL: "Veilleux, Philippe" -> "Philippe Veilleux"
+        last, first = name.split(",", 1)
+        name = (first.strip() + " " + last.strip()).strip()
     return name
 
 
@@ -263,6 +268,13 @@ def match(idx, league, row, want_group=None):
     if len(cands) == 1:
         return cands[0]
     if len(cands) > 1:
+        jersey = str(row.get("jersey_number", "")).strip()
+        if jersey:
+            by_num = [c for c in cands if c.get("num") is not None and str(c["num"]) == jersey]
+            if len(by_num) == 1:
+                return by_num[0]
+            if by_num:
+                cands = by_num
         hint = norm_name(pick_text(row, "team_name", "team_city", "city", "team_code"))
         if hint:
             narrowed = [c for c in cands if hint in norm_name(c["team"]) or norm_name(c["team"]) in hint]
@@ -296,7 +308,7 @@ def sb_get_players():
     base = os.environ["SUPABASE_URL"].rstrip("/")
     out, start = [], 0
     while True:
-        url = base + "/rest/v1/players?select=id,league,name,team,pos_group&order=id"
+        url = base + "/rest/v1/players?select=id,league,name,team,pos_group,num&order=id"
         h = sb_headers({"Range-Unit": "items", "Range": "%d-%d" % (start, start + 999)})
         chunk = json.loads(http_get(url, h))
         out += chunk
@@ -407,8 +419,8 @@ def cmd_update(dry):
     try:
         whl_sid = pick_season("WHL")
         added = missed = 0
-        for name, team, shots in fetch_whl_shots(whl_sid):
-            p = match(idx, "WHL", {"name": name, "team_code": team}, None)
+        for name, team, shots, num in fetch_whl_shots(whl_sid):
+            p = match(idx, "WHL", {"name": name, "team_code": team, "jersey_number": num}, None)
             if p and p["pos_group"] != "G" and p["id"] in out:
                 out[p["id"]]["shots"] = shots
                 added += 1
