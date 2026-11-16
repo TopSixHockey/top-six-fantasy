@@ -206,7 +206,9 @@ def clean(d):
 # ---------- Supabase ----------
 def sb_headers(extra=None):
     key = os.environ["SUPABASE_SERVICE_KEY"]
-    h = {"apikey": key, "Authorization": "Bearer " + key, "Content-Type": "application/json"}
+    h = {"apikey": key, "Content-Type": "application/json"}
+    if not key.startswith("sb_"):  # legacy service_role keys are JWTs and also go in Authorization
+        h["Authorization"] = "Bearer " + key
     if extra:
         h.update(extra)
     return h
