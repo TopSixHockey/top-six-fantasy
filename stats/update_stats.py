@@ -3,6 +3,7 @@
 
 Usage (run by the GitHub Action, or by hand):
     python stats/update_stats.py discover   # prints what the league feed returns; writes nothing
+    python stats/update_stats.py discover-game   # prints what one game's box score contains (GAME_ID, GAME_LEAGUE env)
     python stats/update_stats.py update     # fetches stats and upserts them into player_stats
     python stats/update_stats.py update --dry   # same, but writes nothing
 
@@ -89,8 +90,9 @@ def find_rows(obj, out=None):
         if isinstance(obj.get("row"), dict):
             out.append(obj["row"])
             return out
-        if ("player_id" in obj or "name" in obj) and ("games_played" in obj or "goals" in obj or "wins" in obj):
-            out.append(obj)
+        if ("player_id" in obj or "name" in obj or "shortname" in obj) and ("games_played" in obj or "goals" in obj or "wins" in obj):
+            if not isinstance(obj.get("games_played"), dict):  # the column-heading object has dict values
+                out.append(obj)
             return out
         for v in obj.values():
             find_rows(v, out)
@@ -142,6 +144,63 @@ def fetch_players(league, season_id, position, limit=2000):
     return find_rows(data)
 
 
+# ---------- WHL shots (the league feed leaves them out, but chl.ca's own stats page has them) ----------
+def extract_json_array(s, start):
+    """Return the JSON array text that begins at s[start] == '[' (string-aware bracket matching)."""
+    depth, in_str, esc = 0, False, False
+    for i in range(start, len(s)):
+        c = s[i]
+        if in_str:
+            if esc:
+                esc = False
+            elif c == "\\":
+                esc = True
+            elif c == '"':
+                in_str = False
+        elif c == '"':
+            in_str = True
+        elif c == "[":
+            depth += 1
+        elif c == "]":
+            depth -= 1
+            if depth == 0:
+                return s[start:i + 1]
+    raise ValueError("unterminated array")
+
+
+def parse_whl_shots_html(html):
+    """Find the skater table data embedded in the page and return [(name 'First Last', team_code, shots)]."""
+    for m in re.finditer(r"data:\s*\[\[", html):
+        before = html[max(0, m.start() - 9000):m.start()]
+        titles = re.findall(r'title:\s*"([^"]*)"', before)
+        if "Rank" in titles:
+            titles = titles[len(titles) - 1 - titles[::-1].index("Rank"):]
+        if "SOG" not in titles or "Player" not in titles:
+            continue
+        i_sog, i_pl, i_tm = titles.index("SOG"), titles.index("Player"), titles.index("Team")
+        data = json.loads(extract_json_array(html, m.end() - 2))
+        out = []
+        for row in data:
+            if len(row) <= i_sog or not isinstance(row[i_pl], list):
+                continue
+            last_first = row[i_pl][1]
+            name = " ".join(reversed([p.strip() for p in last_first.split(",", 1)])) if "," in last_first else last_first
+            team = ""
+            if isinstance(row[i_tm], list) and row[i_tm] and isinstance(row[i_tm][0], list):
+                team = row[i_tm][0][1]
+            shots = to_num(row[i_sog])
+            if shots is not None:
+                out.append((name, team, int(shots)))
+        return out
+    raise RuntimeError("could not find the skater table data on the WHL stats page")
+
+
+def fetch_whl_shots(season_id):
+    url = "https://chl.ca/whl/stats/players/%s/all/points/" % season_id
+    html = http_get(url, {"User-Agent": "Mozilla/5.0 (compatible; TopSixFantasy/1.0; +https://topsixhockey.ca)"}, timeout=90)
+    return parse_whl_shots_html(html)
+
+
 # ---------- turning feed rows into player_stats rows ----------
 def skater_stats(r):
     return {
@@ -167,21 +226,40 @@ def goalie_stats(r):
     }
 
 
+def split_name(full):
+    parts = (full or "").replace(".", ". ").split()
+    if len(parts) < 2:
+        return None
+    return norm_name(parts[0])[:1], norm_name("".join(parts[1:]))
+
+
 def build_index(pool):
-    """pool: list of dicts with id, league, name, team. Maps (league, normalized name) -> [players]."""
+    """Maps (league, normalized full name) and (league, initial, surname) -> [players]."""
     idx = {}
     for p in pool:
         idx.setdefault((p["league"], norm_name(p["name"])), []).append(p)
+        sn = split_name(p["name"])
+        if sn:
+            idx.setdefault((p["league"], "init", sn[0], sn[1]), []).append(p)
     return idx
 
 
-def match(idx, league, row):
-    name = pick_text(row, "name", "player_name")
+def row_name(row):
+    name = pick_text(row, "name", "player_name", "shortname")
     if not name:
-        first = pick_text(row, "first_name")
-        last = pick_text(row, "last_name")
-        name = (first + " " + last).strip()
+        name = (pick_text(row, "first_name") + " " + pick_text(row, "last_name")).strip()
+    return name
+
+
+def match(idx, league, row, want_group=None):
+    name = row_name(row)
     cands = idx.get((league, norm_name(name)), [])
+    if not cands and re.match(r"^[A-Za-z]\.?\s", name):  # "J. Smith" style
+        sn = split_name(name)
+        if sn:
+            cands = idx.get((league, "init", sn[0], sn[1]), [])
+    if want_group:
+        cands = [c for c in cands if c["pos_group"] == want_group]
     if len(cands) == 1:
         return cands[0]
     if len(cands) > 1:
@@ -264,6 +342,42 @@ def cmd_discover():
     print("=" * 70)
 
 
+def cmd_discover_game():
+    """Print what the per-game box-score feed contains (looking for per-player shots)."""
+    gid = os.environ.get("GAME_ID", "1023302")
+    league = os.environ.get("GAME_LEAGUE", "WHL")
+    for tab in ("gamesummary", "boxscore"):
+        print("=" * 70)
+        print("%s game %s, tab=%s" % (league, gid, tab))
+        try:
+            data = ht(league, feed="gc", tab=tab, game_id=gid)
+        except Exception as e:
+            print("  failed:", e)
+            continue
+        if isinstance(data, dict):
+            print("  top-level keys:", sorted(data.keys()))
+        found = []
+
+        def walk(o, path):
+            if isinstance(o, dict):
+                if any(isinstance(k, str) and ("shot" in k.lower() or k.lower() == "sog") for k in o):
+                    keep = ("shot", "sog", "goal", "assist", "first_name", "last_name", "player_id", "name", "jersey")
+                    found.append((path, {k: o[k] for k in o if isinstance(k, str) and any(w in k.lower() for w in keep)}))
+                for k, v in o.items():
+                    walk(v, path + "/" + str(k))
+            elif isinstance(o, list):
+                for i, v in enumerate(o[:60]):
+                    walk(v, path + "[" + str(i) + "]")
+
+        walk(data, "")
+        print("  places where a 'shots' field appears: %d" % len(found))
+        for path, vals in found[:8]:
+            print("   ", path, json.dumps(vals)[:300])
+        if not found:
+            print("  raw start:", json.dumps(data)[:900])
+    print("=" * 70)
+
+
 def cmd_update(dry):
     pool = sb_get_players()
     print("pool: %d players" % len(pool))
@@ -277,12 +391,11 @@ def cmd_update(dry):
             rows = fetch_players(league, sid, pos)
             print("  %s: %d rows from the league feed" % (pos, len(rows)))
             for r in rows:
-                p = match(idx, league, r)
+                p = match(idx, league, r, "G" if pos == "goalies" else None)
                 if not p:
-                    unmatched.setdefault(league, []).append(pick_text(r, "name", "player_name"))
+                    unmatched.setdefault(league, []).append(row_name(r))
                     continue
-                want_goalie = pos == "goalies"
-                if (group[p["id"]] == "G") != want_goalie:
+                if (group[p["id"]] == "G") != (pos == "goalies"):
                     continue
                 s = clean(conv(r))
                 if "shots" in s:
@@ -290,12 +403,35 @@ def cmd_update(dry):
                 if s:
                     s["player_id"] = p["id"]
                     out[p["id"]] = s
+    # WHL: add shots from chl.ca's stats page. If this fails we keep yesterday's shots and carry on.
+    try:
+        whl_sid = pick_season("WHL")
+        added = missed = 0
+        for name, team, shots in fetch_whl_shots(whl_sid):
+            p = match(idx, "WHL", {"name": name, "team_code": team}, None)
+            if p and p["pos_group"] != "G" and p["id"] in out:
+                out[p["id"]]["shots"] = shots
+                added += 1
+            else:
+                missed += 1
+        shots_seen += added
+        print("WHL shots from chl.ca: added for %d skaters (%d page rows not in the pool)" % (added, missed))
+    except Exception as e:
+        print("WARNING: WHL shots step failed (%s); WHL shots left as they were" % e)
     stamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
     for row in out.values():
         row["updated_at"] = stamp
     print("matched %d of %d pool players; %d skater rows had shots" % (len(out), len(pool), shots_seen))
+    by_lg = {}
+    for p in pool:
+        by_lg.setdefault(p["league"], [0, 0])[0] += 1
+        by_lg[p["league"]][1] += p["id"] in out
+    for lg, (tot, hit) in by_lg.items():
+        print("  %s: matched %d of %d pool players" % (lg, hit, tot))
+    missing = [p["name"] + " (" + p["team"] + ")" for p in pool if p["id"] not in out]
+    print("  pool players with no stats row (first 15):", ", ".join(missing[:15]))
     for lg, names in unmatched.items():
-        print("  %s: %d feed players not in the pool (call-ups, etc.)" % (lg, len(names)))
+        print("  %s: %d feed players not in the pool (call-ups, etc.); examples: %s" % (lg, len(names), ", ".join(names[:6])))
     if len(out) < 0.5 * len(pool):
         print("ERROR: fewer than half the pool matched; refusing to write. Run 'discover' and check field names.")
         sys.exit(1)
@@ -310,6 +446,8 @@ if __name__ == "__main__":
     mode = sys.argv[1] if len(sys.argv) > 1 else "update"
     if mode == "discover":
         cmd_discover()
+    elif mode == "discover-game":
+        cmd_discover_game()
     elif mode == "update":
         cmd_update("--dry" in sys.argv)
     else:
