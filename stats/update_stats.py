@@ -14,7 +14,9 @@ Environment (set as GitHub Actions secrets, never put them in the page):
 Optional overrides if the automatic season pick is wrong:
     SEASON_ID_OHL, SEASON_ID_WHL, SEASON_ID_QMJHL
 """
+import collections
 import datetime
+import difflib
 import json
 import os
 import re
@@ -283,6 +285,32 @@ def match(idx, league, row, want_group=None):
     return None
 
 
+def fuzzy_match(pool, league, team_code, name, jersey, goalie, code_map, taken=None):
+    """Second pass for spelling differences. Only accepts a very close name on the SAME team
+    (team found from the feed's team code via players already matched exactly)."""
+    if not name or re.match(r"^[A-Za-z]\.?\s", name):
+        return None
+    teams = code_map.get((league, team_code))
+    if not teams:
+        return None
+    team = max(teams, key=teams.get)
+    target = norm_name(name)
+    scored = []
+    for c in pool:
+        if c["league"] != league or c["team"] != team or (c["pos_group"] == "G") != goalie:
+            continue
+        if taken is not None and c["id"] in taken:
+            continue
+        r = difflib.SequenceMatcher(None, target, norm_name(c["name"])).ratio()
+        same_num = jersey != "" and str(c.get("num")) == str(jersey)
+        if same_num and r >= 0.7:   # same team + same jersey number + similar name
+            scored.append((r, c))
+    scored.sort(key=lambda x: -x[0])
+    if scored and (len(scored) == 1 or scored[0][0] - scored[1][0] >= 0.05):
+        return scored[0][1]
+    return None
+
+
 def clean(d):
     """Drop None so we never overwrite an existing number with null; make whole numbers ints."""
     out = {}
@@ -396,6 +424,17 @@ def cmd_update(dry):
     idx = build_index(pool)
     group = {p["id"]: p["pos_group"] for p in pool}
     out, unmatched, shots_seen = {}, {}, 0
+    pairs, leftovers, code_map = [], [], {}
+
+    def record(p, r, conv):
+        nonlocal shots_seen
+        s = clean(conv(r))
+        if "shots" in s:
+            shots_seen += 1
+        if s:
+            s["player_id"] = p["id"]
+            out[p["id"]] = s
+
     for league in CLIENT_CODE:
         print(league)
         sid = pick_season(league)
@@ -405,22 +444,29 @@ def cmd_update(dry):
             for r in rows:
                 p = match(idx, league, r, "G" if pos == "goalies" else None)
                 if not p:
-                    unmatched.setdefault(league, []).append(row_name(r))
+                    leftovers.append((league, pos, r, conv))
                     continue
                 if (group[p["id"]] == "G") != (pos == "goalies"):
                     continue
-                s = clean(conv(r))
-                if "shots" in s:
-                    shots_seen += 1
-                if s:
-                    s["player_id"] = p["id"]
-                    out[p["id"]] = s
+                code_map.setdefault((league, r.get("team_code")), collections.Counter())[p["team"]] += 1
+                record(p, r, conv)
+    # second pass: spelling differences, same team only
+    for league, pos, r, conv in leftovers:
+        p = fuzzy_match(pool, league, r.get("team_code"), row_name(r), str(r.get("jersey_number", "")).strip(),
+                        pos == "goalies", code_map, taken=out)
+        if p:
+            print("  fuzzy match: '%s' -> '%s' (%s)" % (row_name(r), p["name"], p["team"]))
+            record(p, r, conv)
+        else:
+            unmatched.setdefault(league, []).append(row_name(r))
     # WHL: add shots from chl.ca's stats page. If this fails we keep yesterday's shots and carry on.
     try:
         whl_sid = pick_season("WHL")
         added = missed = 0
         for name, team, shots, num in fetch_whl_shots(whl_sid):
             p = match(idx, "WHL", {"name": name, "team_code": team, "jersey_number": num}, None)
+            if not p:
+                p = fuzzy_match(pool, "WHL", team, name, num, False, code_map)
             if p and p["pos_group"] != "G" and p["id"] in out:
                 out[p["id"]]["shots"] = shots
                 added += 1
