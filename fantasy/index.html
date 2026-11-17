@@ -80,6 +80,21 @@ small.note{display:block;color:var(--mute);margin-top:10px}
 #pop .pb{display:flex;gap:8px;margin:3px 0;align-items:baseline}#pop .pb span{min-width:84px;flex:none}#pop .pb i{font-style:normal;flex:1;color:rgba(255,255,255,.7);font-size:11px}#pop .pb b{min-width:44px;text-align:right}
 #pop .pb.tot{margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.3);font-size:13px}#pop .pb.tot b{color:#8ef0b8}
 #pop .pn2{color:rgba(255,255,255,.65);font-size:11px;margin-top:6px}
+.lu{position:relative;border-radius:18px;overflow:hidden;border:3px solid #0b1219;background:#dfe8ee url(../rink.jpg) center top/cover;padding:6px 8px 14px;max-width:760px;margin:0 auto;color:#0f1c28}
+.lu-msg{text-align:center;padding:28px 12px;background:#ffffffd9;border-radius:12px;margin:10px}
+.lu-sec{background:#232f5a;color:#fff;text-align:center;font-weight:600;font-size:15px;padding:6px 8px;margin:12px 0 8px}
+.lu-cols{display:flex;justify-content:space-around;gap:2px;margin-bottom:4px}
+.lu-ch{flex:1;max-width:140px;min-width:0;background:#232f5a;color:#fff;text-align:center;font-size:13px;padding:4px 2px}
+.lu-row{display:flex;justify-content:space-around;align-items:flex-start;gap:2px;border-bottom:1px solid rgba(15,28,40,.2);padding-bottom:6px;margin-bottom:8px}
+.lu-row:last-child{border-bottom:0}
+.lu-p{flex:1;max-width:140px;min-width:0;text-align:center;cursor:grab;border-radius:10px;padding:2px;user-select:none;-webkit-user-select:none}
+.lu-p svg{width:100%;max-width:120px;height:auto;display:block;margin:0 auto;filter:drop-shadow(0 2px 2px rgba(0,0,0,.28));pointer-events:none}
+.lu-nm{text-transform:uppercase;font-size:11.8px;font-weight:700;line-height:1.15;overflow-wrap:anywhere;margin-top:8px;color:#fff;-webkit-text-stroke:3px #000;paint-order:stroke fill;text-shadow:0 0 2px #000,0 0 3px #000;pointer-events:none}
+.lu-p.sel{outline:3px solid #ffd24a;background:rgba(255,210,74,.25)}
+.lu-p.over{outline:3px dashed #4aa3ff;background:rgba(74,163,255,.22)}
+.lu-p.drag{opacity:.4}
+.lu-p.open svg{opacity:.28}
+.lu-p.open .lu-nm{opacity:.6}
 </style>
 </head>
 <body>
@@ -94,6 +109,7 @@ small.note{display:block;color:var(--mute);margin-top:10px}
 </header>
 <div class="tabs">
   <div class="tab on" data-tab="build">Build my team</div>
+  <div class="tab" data-tab="lineup">My lineup</div>
   <div class="tab" data-tab="lb">Leaderboard</div>
 </div>
 
@@ -137,6 +153,16 @@ small.note{display:block;color:var(--mute);margin-top:10px}
       <small class="note">Scoring: goal 3 · assist 2 · +/- 0.5 · shot 0.2 · PIM 0.1. Goalies: win 3 · shutout 4 · plus a per-game bonus for save % above .900 and GAA below 3.00.</small>
       </div>
     </div>
+  </section>
+</main>
+
+<main id="lineupView" class="hide" style="grid-template-columns:1fr">
+  <section class="card">
+    <h2 id="luTitle">My lineup</h2>
+    <div id="luPills"></div>
+    <div class="why" style="margin-bottom:10px">Just for fun: drag a player onto another spot to swap them (or tap one, then tap another). It doesn't affect scoring.</div>
+    <div class="row"><button class="sec" id="luReset">Reset lineup</button></div>
+    <div class="lu" id="lu"></div>
   </section>
 </main>
 
@@ -300,7 +326,7 @@ function lockLeagueFilter(){
   if (entry && entry.league){ lgSel.value = entry.league; lgSel.disabled = true; lgSel.title = "Your " + entry.league + " team can only use " + entry.league + " players"; }
   else { lgSel.disabled = false; lgSel.title = ""; }
 }
-function refresh(){ lockLeagueFilter(); renderRoster(); renderPool(); }
+function refresh(){ lockLeagueFilter(); renderRoster(); renderPool(); if (lineupOpen) renderLineup(); }
 
 /* ---- Data: players, entry, picks ---- */
 async function loadPool(){
@@ -493,6 +519,8 @@ document.addEventListener("click", function(e){
     document.querySelectorAll(".tab").forEach(function(x){ x.classList.toggle("on", x === t); });
     $("buildView").classList.toggle("hide", d.tab !== "build");
     $("lbView").classList.toggle("hide", d.tab !== "lb");
+    $("lineupView").classList.toggle("hide", d.tab !== "lineup");
+    lineupOpen = d.tab === "lineup"; if (lineupOpen) renderLineup();
     if (d.tab === "lb"){ if (!lbPicked && active) lbLeague = active; loadLeaderboard(); }
   }
 });
@@ -540,6 +568,128 @@ document.addEventListener("mouseover", function(e){
 document.addEventListener("mousemove", function(e){ if (popId) popPlace(e); });
 document.addEventListener("mouseout", function(e){ if (!e.relatedTarget || !e.relatedTarget.closest || !e.relatedTarget.closest("[data-pid]")) popHide(); });
 document.addEventListener("scroll", popHide, true);
+
+/* ---- My lineup: the team shown as a lineup with each player's real jersey ---- */
+var lineupOpen = false, lineups = {}, selSlot = null, dragSlot = null, JER = null, JERS = null;
+var GENERIC = ["Team", "#7d8a99", "#7d8a99", "#c5ced8", "#c5ced8", "#ffffff", "#2b3440"];
+function tnorm(s){ return String(s || "").toLowerCase().replace(/’/g, "'").replace(/[^a-z0-9]/g, ""); }
+function loadJerseys(){
+  if (JER) return JER;
+  JER = fetch("../index.html").then(function(r){ if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); }).then(function(t){
+    var a = t.indexOf("var C = {"), b = t.indexOf("// Lineup data is kept separate"), c = t.indexOf("var SPEC = {"), d = t.indexOf("var CAP = ");
+    if (a < 0 || b < a || c < b || d < c) throw new Error("jersey code not found");
+    var m = t.match(/<svg width="0" height="0"[^>]*>[\s\S]*?<\/svg>/);
+    if (m){ var h = document.createElement("div"); h.innerHTML = m[0]; document.body.appendChild(h); }
+    var api = new Function(t.slice(a, b) + "\n" + t.slice(c, d) + "\nreturn { C: C, jersey: jersey };")();
+    var map = {}; Object.keys(api.C).forEach(function(k){ map[tnorm(api.C[k][0])] = api.C[k]; });
+    JERS = { jersey: api.jersey, map: map };
+  });
+  JER.catch(function(){ JER = null; });
+  return JER;
+}
+var SLOT_F = [0, 12], SLOT_D = [12, 18], SLOT_G = [18, 20];
+function groupRange(g){ return g === "F" ? SLOT_F : g === "D" ? SLOT_D : SLOT_G; }
+function autoArrange(ids){
+  var arr = []; for (var i = 0; i < 20; i++) arr.push(null);
+  var pl = ids.map(function(id){ return BYID[id]; }).sort(function(a, b){ return b.fp - a.fp; });
+  var left = [];
+  function put(list, slots){ list.forEach(function(p){ var s = slots.filter(function(x){ return arr[x] === null; })[0]; if (s === undefined) left.push(p); else arr[s] = p.id; }); }
+  var fs = pl.filter(function(p){ return p.g === "F"; }), ds = pl.filter(function(p){ return p.g === "D"; });
+  put(fs.filter(function(p){ return p.pos === "C"; }), [1, 4, 7, 10]);
+  put(fs.filter(function(p){ return p.pos === "LW"; }), [0, 3, 6, 9]);
+  put(fs.filter(function(p){ return p.pos === "RW"; }), [2, 5, 8, 11]);
+  put(ds.filter(function(p){ return p.pos === "LD"; }), [12, 14, 16]);
+  put(ds.filter(function(p){ return p.pos === "RD"; }), [13, 15, 17]);
+  put(pl.filter(function(p){ return p.g === "G"; }), [18, 19]);
+  left.concat(fs.filter(function(p){ return arr.indexOf(p.id) < 0 && left.indexOf(p) < 0; }), ds.filter(function(p){ return arr.indexOf(p.id) < 0 && left.indexOf(p) < 0; })).forEach(function(p){
+    var r = groupRange(p.g), s = null;
+    for (var x = r[0]; x < r[1]; x++) if (arr[x] === null){ s = x; break; }
+    if (s !== null) arr[s] = p.id;
+  });
+  return arr;
+}
+function cleanArr(a){
+  var seen = {}, out = [];
+  for (var i = 0; i < 20; i++){ var id = a && a[i]; if (id && roster.indexOf(id) >= 0 && !seen[id]){ seen[id] = 1; out.push(id); } else out.push(null); }
+  roster.forEach(function(id){
+    if (seen[id]) return;
+    var r = groupRange(BYID[id].g), s = -1, x;
+    for (x = r[0]; x < r[1]; x++) if (out[x] === null){ s = x; break; }
+    if (s < 0) for (x = 0; x < 20; x++) if (out[x] === null){ s = x; break; }
+    if (s >= 0){ out[s] = id; seen[id] = 1; }
+  });
+  return out;
+}
+function lineupKey(){ return "tsh-lineup-" + (entry ? entry.id : ""); }
+function getArr(){
+  var k = lineupKey(), a = lineups[k];
+  if (!a){ try { var raw = localStorage.getItem(k); if (raw) a = JSON.parse(raw); } catch (e) {} }
+  a = a ? cleanArr(a) : autoArrange(roster);
+  lineups[k] = a; return a;
+}
+function saveArr(a){ lineups[lineupKey()] = a; try { localStorage.setItem(lineupKey(), JSON.stringify(a)); } catch (e) {} }
+function slotHtml(i, a){
+  var id = a[i], p = id ? BYID[id] : null, cls = "lu-p" + (selSlot === i ? " sel" : "") + (p ? "" : " open");
+  var c = p ? (JERS.map[tnorm(p.team)] || GENERIC) : GENERIC;
+  var last = p ? (p.name.split(" ").slice(1).join(" ") || p.name) : "";
+  return '<div class="' + cls + '" draggable="true" data-slot="' + i + '"' + (p ? ' data-pid="' + esc(p.id) + '"' : '') + '>' + JERS.jersey(p ? p.num : "", c, last) + '<div class="lu-nm">' + (p ? esc(p.name) : "Open spot") + '</div></div>';
+}
+function luSec(title, labels, per, from, count, a){
+  var h = '<div class="lu-sec">' + title + '</div><div class="lu-cols">' + labels.map(function(t){ return '<div class="lu-ch">' + t + '</div>'; }).join("") + '</div>';
+  for (var i = from; i < from + count; i += per){
+    h += '<div class="lu-row">'; for (var j = 0; j < per; j++) h += slotHtml(i + j, a); h += '</div>';
+  }
+  return h;
+}
+function renderLineup(){
+  var box = $("lu"), pills = "";
+  if (!user){ box.innerHTML = '<div class="lu-msg">Sign in and pick your players to see your team as a lineup.</div>'; $("luPills").innerHTML = ""; return; }
+  var have = LEAGUES.filter(function(l){ return entries[l]; });
+  if (have.length) pills = '<div class="pills">' + have.map(function(l){ return '<button class="pill ' + (l === active ? "on" : "") + '" data-switch="' + l + '">' + l + ' team</button>'; }).join("") + '</div>';
+  $("luPills").innerHTML = pills;
+  $("luTitle").textContent = entry ? "My lineup · " + (entry.team_name || "My Team") : "My lineup";
+  if (!entry){ box.innerHTML = '<div class="lu-msg">Choose a league and start a team on the Build my team tab first.</div>'; return; }
+  if (!JERS){
+    box.innerHTML = '<div class="lu-msg">Loading jerseys…</div>';
+    loadJerseys().then(function(){ if (lineupOpen) renderLineup(); }, function(e){ box.innerHTML = '<div class="lu-msg">Could not load the jerseys (' + esc(e.message || e) + '). Refresh and try again.</div>'; });
+    return;
+  }
+  var a = getArr();
+  box.innerHTML = luSec("Forwards", ["LW", "C", "RW"], 3, 0, 12, a) + luSec("Defence", ["LD", "RD"], 2, 12, 6, a) + luSec("Goalies", ["Starter", "Backup"], 2, 18, 2, a);
+}
+function luSwap(x, y){
+  if (x === y || x == null || y == null) return;
+  var a = getArr().slice(), t = a[x]; a[x] = a[y]; a[y] = t; saveArr(a); selSlot = null; renderLineup();
+}
+function slotOf(e){ var el = e.target && e.target.closest ? e.target.closest("[data-slot]") : null; return el ? el : null; }
+$("lu").addEventListener("click", function(e){
+  var el = slotOf(e); if (!el) return;
+  var i = +el.dataset.slot;
+  if (selSlot === null) selSlot = i; else if (selSlot === i) selSlot = null; else { luSwap(selSlot, i); return; }
+  renderLineup();
+});
+$("lu").addEventListener("dragstart", function(e){
+  var el = slotOf(e); if (!el) return;
+  dragSlot = +el.dataset.slot; selSlot = null; popHide();
+  e.dataTransfer.effectAllowed = "move"; try { e.dataTransfer.setData("text/plain", String(dragSlot)); } catch (x) {}
+  el.classList.add("drag");
+});
+$("lu").addEventListener("dragover", function(e){
+  var el = slotOf(e); if (!el || dragSlot === null) return;
+  e.preventDefault(); e.dataTransfer.dropEffect = "move";
+  document.querySelectorAll(".lu-p.over").forEach(function(x){ if (x !== el) x.classList.remove("over"); });
+  el.classList.add("over");
+});
+$("lu").addEventListener("drop", function(e){
+  var el = slotOf(e); if (!el || dragSlot === null) return;
+  e.preventDefault(); var from = dragSlot; dragSlot = null; luSwap(from, +el.dataset.slot);
+});
+$("lu").addEventListener("dragend", function(){ dragSlot = null; renderLineup(); });
+$("luReset").addEventListener("click", function(){
+  if (!entry) return;
+  try { localStorage.removeItem(lineupKey()); } catch (e) {}
+  delete lineups[lineupKey()]; selSlot = null; renderLineup();
+});
 
 /* ---- Start ---- */
 (async function(){
