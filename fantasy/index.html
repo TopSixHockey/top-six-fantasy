@@ -521,8 +521,7 @@ function popHtml(p){
       pline("Shots", s.shots == null ? "not tracked yet" : num(s.shots) + " \u00d7 " + SCORE.shots, num(s.shots) * SCORE.shots) +
       pline("Penalty min.", num(s.pim) + " \u00d7 " + SCORE.pim, num(s.pim) * SCORE.pim);
   }
-  return h + '<div class="pt">Season stats</div><div class="pst">' + st + '</div><div class="pt" style="margin:4px 0 0"></div>' + rows +
-    '<div class="pb tot"><span><b style="text-align:left">Total</b></span><i></i><b>' + p.fp.toFixed(1) + '</b></div>' + '<div class="pn2">Season to date. Only points after your team is locked count on the leaderboard.</div>';
+  return h + '<div class="pt">Season stats</div><div class="pst">' + st + '</div>';
 }
 var popEl = $("pop"), popId = null;
 function popPlace(e){
