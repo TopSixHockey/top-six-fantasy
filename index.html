@@ -1085,7 +1085,7 @@ function popHtml(k, n, nm) {
     '<div class="pr"><i>Size</i>' + d.ht + ' · ' + d.wt + ' lb</div>' +
     '<div class="pr"><i>From</i>' + d.home + '</div>' +
     (d.od ? '<div class="pr"><i>' + d.od[0] + '</i>' + d.od[1] + '</div>' : '') +
-    (d.nhl === "Undrafted" ? '' : '<div class="pr"><i>NHL Draft</i><span>' + d.nhl.replace("Top Prospect", '<b class="tp">Top Prospect</b>') + '</span></div>') +
+    (d.nhl === "Undrafted" ? '' : '<div class="pr"><i>NHL Draft</i><span>' + d.nhl.replace("Top Prospect", '<b class="tp">Top Prospect</b>').replace("NHL Draft", '<b class="tp">NHL Draft</b>') + '</span></div>') +
     '<div class="pt">2026-27 regular season</div>' + st;
 }
 var pop = document.createElement("div"); pop.id = "pop"; document.body.appendChild(pop);
