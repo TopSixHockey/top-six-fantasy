@@ -60,12 +60,21 @@ small.note{display:block;color:var(--mute);margin-top:10px}
 .auth input{width:100%;margin-bottom:8px}
 .hide{display:none}
 #lb td:first-child{width:40px;color:var(--mute)}
+.pills{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px;align-items:center}
+.pill{background:var(--panel2);color:var(--mute);border:1px solid var(--line);border-radius:999px;padding:5px 14px;font-weight:700}
+.pill.on{background:var(--acc);color:#06121f;border-color:var(--acc)}
+.pill.add{border-style:dashed}
+.lgbox{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px}
+.lgbox h3{margin:0 0 4px;font-size:14px}
+.lgrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;margin-top:8px;background:var(--panel)}
+.lgrow b{font-size:15px}
+.lgrow .why{display:block}
 </style>
 </head>
 <body>
 <header>
   <h1>Top Six Fantasy</h1>
-  <p>OHL, WHL &amp; QMJHL · public points league</p>
+  <p>Three public points leagues: OHL, WHL &amp; QMJHL</p>
   <a class="back" href="../">&larr; Line combinations</a>
   <span class="sp"></span>
   <span id="who" class="why"></span>
@@ -105,6 +114,8 @@ small.note{display:block;color:var(--mute);margin-top:10px}
     <div id="teamBox" class="hide">
       <h2>My team</h2>
       <div id="msg"></div>
+      <div id="leagueBar"></div>
+      <div id="teamDetail">
       <div class="row"><input id="tn" placeholder="Team name" maxlength="40" style="flex:1"></div>
       <div id="banner"></div>
       <div class="rules" id="rules"></div>
@@ -112,13 +123,15 @@ small.note{display:block;color:var(--mute);margin-top:10px}
       <div class="row" id="lockRow"></div>
       <div class="slots" id="slots"></div>
       <small class="note">Scoring: goal 3 · assist 2 · +/- 0.5 · shot 0.2 · PIM 0.1. Goalies: win 3 · shutout 4 · plus a per-game bonus for save % above .900 and GAA below 3.00.</small>
+      </div>
     </div>
   </section>
 </main>
 
 <main id="lbView" class="hide" style="grid-template-columns:1fr">
   <section class="card">
-    <h2>Leaderboard</h2>
+    <h2 id="lbTitle">Leaderboard</h2>
+    <div class="pills" id="lbLeagues"><button class="pill" data-lbl="OHL">OHL</button><button class="pill" data-lbl="WHL">WHL</button><button class="pill" data-lbl="QMJHL">QMJHL</button></div>
     <div class="row" style="margin-bottom:10px;align-items:center">
       <button id="lbSeason">Season</button><button class="sec" id="lbMonth">Month</button>
       <select id="lbMonthSel" class="hide" style="background:var(--panel2);color:var(--tx);border:1px solid var(--line);border-radius:8px;padding:5px 8px;font:inherit"></select>
@@ -137,7 +150,8 @@ small.note{display:block;color:var(--mute);margin-top:10px}
 <script>
 var SUPABASE_URL = "https://kiznoqzcnvpdnxdzjbur.supabase.co";
 var SUPABASE_KEY = "sb_publishable_zzyL8DzHhqqMUOrnUoV--Q_W_WPbV5A";   // public key: safe in a website
-var CONTEST = "public-2026";
+var LEAGUES = ["OHL","WHL","QMJHL"];
+function contestFor(l){ return "public-2026-" + l; }   // one contest (and one team per person) for each league
 
 /* ---- Rules and scoring (must match the SQL lock_entry and fantasy_points functions) ---- */
 var RULES = {
@@ -152,6 +166,7 @@ function num(v){ var n = Number(v); return isNaN(n) ? 0 : n; }
 
 var SB = (window.supabase && window.supabase.createClient) ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
 var POOL = [], BYID = {}, user = null, entry = null, roster = [];
+var entries = {}, active = null, picking = false, pendingPick = null;   // entries: league -> this user's team in that league
 
 function fpts(p){
   var s = p.s;
@@ -182,6 +197,7 @@ function counts(list){
 }
 function whyNot(p){
   if (roster.indexOf(p.id) >= 0) return "On your team";
+  if (entry && entry.league && p.lgn !== entry.league) return "Not in the " + entry.league;
   var c = counts(roster);
   if (c[p.g] >= RULES[p.g]) return (p.g === "F" ? "Forwards" : p.g === "D" ? "Defence" : "Goalie") + " spots full";
   if (p.g !== "G"){
@@ -208,7 +224,7 @@ function authMsg(text, good){ $("authMsg").innerHTML = text ? '<div class="msg '
 var SHOW = 120;
 function renderPool(){
   if (!POOL.length) return;
-  var q = $("q").value.trim().toLowerCase(), lg = $("lg").value, ps = $("ps").value, ag = $("ag").value, el = $("el").checked;
+  var q = $("q").value.trim().toLowerCase(), lg = (entry && entry.league) ? entry.league : $("lg").value, ps = $("ps").value, ag = $("ag").value, el = $("el").checked;
   var out = [], total = 0, canAdd = !!(user && entry && !locked());
   for (var i = 0; i < POOL.length; i++){
     var p = POOL[i];
@@ -236,7 +252,11 @@ function rule(label, have, need){ return '<div class="rule ' + (have === need ? 
 function renderRoster(){
   $("authBox").classList.toggle("hide", !!user);
   $("teamBox").classList.toggle("hide", !user);
-  if (!user || !entry) return;
+  if (!user) return;
+  renderLeagueBar();
+  var showTeam = !!entry && !picking;
+  $("teamDetail").classList.toggle("hide", !showTeam);
+  if (!showTeam) return;
   var c = counts(roster), lk = locked();
   var r = RULES.ages.map(function(a){ return rule("Age " + a.label, c.age[a.y], a.n); });
   r.push(rule("Forwards", c.F, RULES.F), rule("Defence", c.D, RULES.D), rule("Goalies", c.G, RULES.G));
@@ -263,7 +283,12 @@ function renderRoster(){
   if (document.activeElement !== $("tn")) $("tn").value = entry.team_name || "";
   $("tn").disabled = lk;
 }
-function refresh(){ renderRoster(); renderPool(); }
+function lockLeagueFilter(){
+  var lgSel = $("lg");
+  if (entry && entry.league){ lgSel.value = entry.league; lgSel.disabled = true; lgSel.title = "Your " + entry.league + " team can only use " + entry.league + " players"; }
+  else { lgSel.disabled = false; lgSel.title = ""; }
+}
+function refresh(){ lockLeagueFilter(); renderRoster(); renderPool(); }
 
 /* ---- Data: players, entry, picks ---- */
 async function loadPool(){
@@ -278,20 +303,59 @@ async function loadPool(){
   POOL = all.map(norm).sort(function(a,b){ return b.fp - a.fp; });
   BYID = {}; POOL.forEach(function(p){ BYID[p.id] = p; });
 }
-async function loadEntry(){
-  entry = null; roster = [];
+function leagueInfo(){
+  var n = {}, teams = {};
+  LEAGUES.forEach(function(l){ n[l] = 0; teams[l] = {}; });
+  POOL.forEach(function(p){ if (n[p.lgn] !== undefined){ n[p.lgn]++; teams[p.lgn][p.team] = 1; } });
+  return { n: n, t: teams };
+}
+function renderLeagueBar(){
+  var have = LEAGUES.filter(function(l){ return entries[l]; }), html = "";
+  if (have.length){
+    html += '<div class="pills">' + have.map(function(l){ return '<button class="pill ' + (l === active && !picking ? "on" : "") + '" data-switch="' + l + '">' + l + ' team</button>'; }).join("");
+    if (have.length < LEAGUES.length && !picking) html += '<button class="pill add" data-addleague="1">+ Another league</button>';
+    html += '</div>';
+  }
+  if (!have.length || picking){
+    var info = leagueInfo();
+    var open = LEAGUES.filter(function(l){ return !entries[l]; });
+    html += '<div class="lgbox"><h3>Choose your league</h3><div class="why">Each league is its own fantasy game. Your team can only use players from the league you pick, and the choice can\'t be changed afterwards.</div>';
+    open.forEach(function(l){
+      var sure = pendingPick === l;
+      html += '<div class="lgrow"><div><b>' + l + '</b><span class="why">' + Object.keys(info.t[l]).length + ' teams · ' + info.n[l] + ' players</span></div>' +
+        (sure ? '<div><span class="why" style="display:inline">Start your ' + l + ' team?</span> <button data-confirmpick="' + l + '">Yes</button> <button class="sec" data-cancelpick="1">No</button></div>'
+              : '<button data-pick="' + l + '">Play in the ' + l + '</button>') + '</div>';
+    });
+    if (picking) html += '<div class="row" style="margin:10px 0 0"><button class="sec" data-cancelpick="1">Cancel</button></div>';
+    html += '</div>';
+  }
+  $("leagueBar").innerHTML = html;
+}
+async function setActive(l){
+  active = l; entry = entries[l] || null; roster = []; picking = false; pendingPick = null; msg("");
+  if (entry){
+    var ep = await SB.from("entry_players").select("player_id").eq("entry_id", entry.id);
+    if (ep.error) msg(ep.error.message);
+    else roster = ep.data.map(function(x){ return x.player_id; }).filter(function(id){ return BYID[id]; });
+  }
+  refresh();
+}
+async function loadEntries(){
+  entries = {}; entry = null; roster = []; active = null; picking = false; pendingPick = null;
   if (!user) return;
-  var r = await SB.from("entries").select("*").eq("user_id", user.id).eq("contest", CONTEST).maybeSingle();
+  var r = await SB.from("entries").select("*").eq("user_id", user.id).in("contest", LEAGUES.map(contestFor));
   if (r.error){ msg(r.error.message); return; }
-  if (!r.data){
-    var nm = (user.user_metadata && user.user_metadata.display_name ? user.user_metadata.display_name + "'s Team" : "My Team");
-    var ins = await SB.from("entries").insert({ user_id: user.id, contest: CONTEST, team_name: nm }).select().single();
-    if (ins.error){ msg(ins.error.message); return; }
-    entry = ins.data;
-  } else entry = r.data;
-  var ep = await SB.from("entry_players").select("player_id").eq("entry_id", entry.id);
-  if (ep.error){ msg(ep.error.message); return; }
-  roster = ep.data.map(function(x){ return x.player_id; }).filter(function(id){ return BYID[id]; });
+  r.data.forEach(function(e){ if (e.league && !entries[e.league]) entries[e.league] = e; });
+  var first = LEAGUES.filter(function(l){ return entries[l]; })[0];
+  if (first) await setActive(first);
+}
+async function createEntry(l){
+  if (!user || entries[l]) return;
+  var nm = (user.user_metadata && user.user_metadata.display_name ? user.user_metadata.display_name + "'s Team" : "My Team");
+  var ins = await SB.from("entries").insert({ user_id: user.id, contest: contestFor(l), league: l, team_name: nm }).select().single();
+  if (ins.error){ msg(ins.error.message); return; }
+  entries[l] = ins.data;
+  await setActive(l);
 }
 async function addPlayer(id){
   var p = BYID[id]; if (!p || !user || !entry || locked() || whyNot(p)) return;
@@ -319,11 +383,15 @@ function saveName(){
 async function lockTeam(){
   var r = await SB.rpc("lock_entry", { p_entry: entry.id });
   if (r.error){ msg(r.error.message); return; }
-  await loadEntry(); msg("Team locked. Good luck!", true); refresh();
+  var keep = active; await loadEntries(); if (keep && entries[keep]) await setActive(keep); msg("Team locked. Good luck!", true); refresh();
 }
 
 /* ---- Leaderboard ---- */
-var lbMode = "season";
+var lbMode = "season", lbLeague = "OHL", lbPicked = false;
+function lbStyle(){
+  document.querySelectorAll("#lbLeagues .pill").forEach(function(b){ b.classList.toggle("on", b.dataset.lbl === lbLeague); });
+  $("lbTitle").textContent = "Leaderboard · " + lbLeague;
+}
 function monthOptions(){
   var out = [], d = new Date(), y = d.getFullYear(), m = d.getMonth();
   while (y > 2026 || (y === 2026 && m >= 8)){          // season starts September 2026
@@ -346,23 +414,24 @@ function lbSetMode(mode){
 function lbRows(rows){
   return rows.length ? rows.map(function(x, i){
     return '<tr><td>' + (i + 1) + '</td><td>' + esc(x.team_name) + '</td><td>' + esc(x.display_name) + '</td><td>' + num(x.points).toFixed(1) + '</td></tr>';
-  }).join("") : '<tr><td colspan="4" class="why">No locked teams yet. Be the first!</td></tr>';
+  }).join("") : '<tr><td colspan="4" class="why">No locked ' + lbLeague + ' teams yet. Be the first!</td></tr>';
 }
 async function loadLeaderboard(){
+  lbStyle();
   $("lb").innerHTML = '<tr><td colspan="4" class="why">Loading…</td></tr>';
   var r;
   if (lbMode === "month"){
     var mo = $("lbMonthSel").value;
     $("lbNote").textContent = "Points your team earned during this month, counting only points after the team was locked.";
-    r = await SB.rpc("monthly_leaders", { p_month: mo });
-    var rp = await SB.rpc("monthly_player_leaders", { p_month: mo });
+    r = await SB.rpc("monthly_leaders", { p_month: mo, p_league: lbLeague });
+    var rp = await SB.rpc("monthly_player_leaders", { p_month: mo, p_league: lbLeague });
     if (rp.error){ $("lbp").innerHTML = '<tr><td colspan="5" class="why">' + esc(rp.error.message) + '</td></tr>'; }
     else $("lbp").innerHTML = rp.data.length ? rp.data.map(function(x, i){
       return '<tr><td>' + (i + 1) + '</td><td>' + esc(x.name) + '</td><td>' + esc(x.team) + ' <span class="tag">' + esc(x.league) + '</span></td><td>' + esc(x.pos_group) + '</td><td>' + num(x.points).toFixed(1) + '</td></tr>';
     }).join("") : '<tr><td colspan="5" class="why">Monthly tracking starts with the first daily snapshot. Check back after the next stats update.</td></tr>';
   } else {
-    $("lbNote").textContent = "Points earned since each team was locked. Only locked teams appear.";
-    r = await SB.from("leaderboard").select("*").limit(200);
+    $("lbNote").textContent = "Points earned since each team was locked. Only locked " + lbLeague + " teams appear.";
+    r = await SB.from("leaderboard").select("*").eq("league", lbLeague).limit(200);
   }
   if (r.error){ $("lb").innerHTML = '<tr><td colspan="4" class="why">' + esc(r.error.message) + '</td></tr>'; return; }
   var rows = r.data.slice().sort(function(a,b){ return num(b.points) - num(a.points); });
@@ -374,7 +443,7 @@ async function applySession(session){
   user = session && session.user ? session.user : null;
   $("who").textContent = user ? (user.user_metadata && user.user_metadata.display_name) || user.email : "";
   $("signout").classList.toggle("hide", !user);
-  await loadEntry(); refresh();
+  await loadEntries(); refresh();
 }
 $("login").addEventListener("click", async function(){
   authMsg("");
@@ -394,6 +463,12 @@ $("signout").addEventListener("click", function(){ SB.auth.signOut(); });
 document.addEventListener("click", function(e){
   var t = e.target, d = t.dataset || {};
   if (d.add) addPlayer(d.add);
+  if (d.switch) setActive(d.switch);
+  if (d.addleague){ picking = true; pendingPick = null; refresh(); }
+  if (d.pick){ pendingPick = d.pick; renderLeagueBar(); }
+  if (d.confirmpick) createEntry(d.confirmpick);
+  if (d.cancelpick){ picking = false; pendingPick = null; refresh(); }
+  if (d.lbl){ lbPicked = true; lbLeague = d.lbl; loadLeaderboard(); }
   if (d.rm) removePlayer(d.rm);
   if (t.id === "lockBtn"){
     t.outerHTML = '<span class="why">This can\'t be undone.</span><button class="danger" id="lockYes">Yes, lock it</button><button class="sec" id="lockNo">Cancel</button>';
@@ -406,7 +481,7 @@ document.addEventListener("click", function(e){
     document.querySelectorAll(".tab").forEach(function(x){ x.classList.toggle("on", x === t); });
     $("buildView").classList.toggle("hide", d.tab !== "build");
     $("lbView").classList.toggle("hide", d.tab !== "lb");
-    if (d.tab === "lb") loadLeaderboard();
+    if (d.tab === "lb"){ if (!lbPicked && active) lbLeague = active; loadLeaderboard(); }
   }
 });
 ["q","lg","ps","ag","el"].forEach(function(id){ $(id).addEventListener("input", renderPool); });
