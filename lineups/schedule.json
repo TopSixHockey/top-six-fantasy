@@ -2,26 +2,60 @@
  "ohl": [
   {
    "away": "Ottawa 67's",
+   "et": "10:30",
    "home": "Kingston Frontenacs",
    "id": "29207",
    "time": "10:30"
   },
   {
    "away": "North Bay Battalion",
+   "et": "19:00",
    "home": "Owen Sound Attack",
    "id": "29208",
    "time": "19:00"
   },
   {
    "away": "Kitchener Rangers",
+   "et": "19:05",
    "home": "Sudbury Wolves",
    "id": "29210",
    "time": "19:05"
   },
   {
    "away": "Brantford Bulldogs",
+   "et": "19:05",
    "home": "Peterborough Petes",
    "id": "29209",
+   "time": "19:05"
+  }
+ ],
+ "whl": [
+  {
+   "away": "Wenatchee Wild",
+   "et": "20:00",
+   "home": "Moose Jaw Warriors",
+   "id": "1023310",
+   "time": "19:00"
+  },
+  {
+   "away": "Edmonton Oil Kings",
+   "et": "20:00",
+   "home": "Swift Current Broncos",
+   "id": "1023312",
+   "time": "19:00"
+  },
+  {
+   "away": "Regina Pats",
+   "et": "21:00",
+   "home": "Prince George Cougars",
+   "id": "1023311",
+   "time": "19:00"
+  },
+  {
+   "away": "Kamloops Blazers",
+   "et": "21:05",
+   "home": "Victoria Royals",
+   "id": "1023313",
    "time": "19:05"
   }
  ]
