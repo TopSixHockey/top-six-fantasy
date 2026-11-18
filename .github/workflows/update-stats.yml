@@ -2,25 +2,46 @@ name: Update stats
 
 on:
   schedule:
-    - cron: "0 8 * * *"    # 3:00 a.m. Eastern (after the late WHL games finish)
-    - cron: "0 17 * * *"   # midday refresh
+    # Three refreshes a day at 3:00 AM, 5:00 PM and 10:00 PM Eastern. GitHub schedules in UTC only, so each time
+    # has an EST entry and an EDT entry; the first step skips whichever one is not at the right Eastern hour.
+    # (GitHub often starts scheduled jobs up to an hour late, so the run lands a little after the hour.)
+    - cron: "0 7 * * *"    # 3 AM EDT
+    - cron: "0 8 * * *"    # 3 AM EST (after the late WHL games finish)
+    - cron: "0 21 * * *"   # 5 PM EDT
+    - cron: "0 22 * * *"   # 5 PM EST
+    - cron: "0 2 * * *"    # 10 PM EDT
+    - cron: "0 3 * * *"    # 10 PM EST
   workflow_dispatch:
     inputs:
       mode:
         description: "discover = print what the league feed returns (writes nothing); update-dry = fetch and match but don't write; update = write to the database"
         default: "discover"
         type: choice
-        options: [discover, update-dry, update]
+        options: [discover, discover-game, update-dry, update]
 
 jobs:
   stats:
     runs-on: ubuntu-latest
     steps:
+      - name: Check the Eastern hour
+        id: gate
+        run: |
+          H=$(TZ=America/Toronto date +%H)
+          echo "Eastern hour: $H"
+          if [ "$GITHUB_EVENT_NAME" = "schedule" ] && [ "$H" != "03" ] && [ "$H" != "04" ] && [ "$H" != "17" ] && [ "$H" != "18" ] && [ "$H" != "22" ] && [ "$H" != "23" ]; then
+            echo "Not a refresh hour, skipping"
+            echo "go=no" >> "$GITHUB_OUTPUT"
+          else
+            echo "go=yes" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/checkout@v4
+        if: steps.gate.outputs.go == 'yes'
       - uses: actions/setup-python@v5
+        if: steps.gate.outputs.go == 'yes'
         with:
           python-version: "3.12"
       - name: Run
+        if: steps.gate.outputs.go == 'yes'
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
@@ -28,6 +49,7 @@ jobs:
         run: |
           case "$MODE" in
             discover)   python stats/update_stats.py discover ;;
+            discover-game) python stats/update_stats.py discover-game ;;
             update-dry) python stats/update_stats.py update --dry ;;
             *)          python stats/update_stats.py update ;;
           esac
