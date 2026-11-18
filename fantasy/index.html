@@ -939,7 +939,7 @@ function plLeagueHtml(){
   var stTxt = { setup: "Setting up", scheduled: "Schedule set", drafting: "Drafting", active: "In season", complete: "Complete" }[lg.status] || lg.status;
   var h = '<div class="pl-head"><h2>' + esc(lg.name) + '</h2><span class="why">' + esc(lg.chl_league) + ' &middot; ' + modeTxt + ' &middot; ' + lg.weeks + ' weeks from ' + plWeekStart(lg, 1) + ' &middot; ' + esc(stTxt) + '</span></div>';
   h += '<div class="pl-sub">';
-  [["matchups","Matchups"],["myteam","My Team"],["players","Players"],["trades","Trades" + (plIncoming(me).length ? " (" + plIncoming(me).length + ")" : "")],["standings","Standings"],["trans","Transactions"],["draft","Draft" + (lg.status === "drafting" ? " (LIVE)" : "")],["league","League"]].forEach(function(s){ h += '<button class="pill' + (PL.sub === s[0] ? " on" : "") + '" data-plsub="' + s[0] + '">' + s[1] + '</button>'; });
+  [["matchups","Matchups"],["myteam","My Team"],["players","Players"],["trades","Trades" + (plTradeTodo(lg, me) ? " (" + plTradeTodo(lg, me) + ")" : "")],["standings","Standings"],["trans","Transactions"],["draft","Draft" + (lg.status === "drafting" ? " (LIVE)" : "")],["league","League"]].forEach(function(s){ h += '<button class="pill' + (PL.sub === s[0] ? " on" : "") + '" data-plsub="' + s[0] + '">' + s[1] + '</button>'; });
   h += '</div>';
   if (PL.sub === "standings") return h + plStandingsHtml(lg);
   if (PL.sub === "trans") return h + plTransHtml(lg);
@@ -1023,6 +1023,7 @@ function plManageHtml(lg, me){
       h += '<div class="why" style="margin-bottom:8px">Settings are locked now that the schedule is set.</div>';
       if (lg.status === "scheduled") h += '<div class="row"><button class="sec" data-plact="reopen">Reopen league (clears the schedule)</button></div>';
     }
+    if (lg.status !== "complete") h += plTradeSettingsHtml(lg);
     if (lg.status === "setup" || lg.status === "scheduled") h += '<div class="row" id="plDelRow"><button class="danger" data-plact="del">Delete league</button></div>';
   } else if (setup && me) h += '<div class="row" style="margin-top:14px"><button class="sec" data-plact="leave">Leave league</button></div>';
   return h;
@@ -1341,8 +1342,8 @@ function plEffTxt(lg){ var e = plEff(lg); return e > lg.weeks ? "The season is o
 async function plLoadRoster(){
   var lg = plLg(); if (!lg) return;
   if (lg.status === "active") await SB.rpc("waiver_tick", { p_league: lg.id });
-  var rs = await Promise.all([ SB.from("proster").select("*").eq("league_id", lg.id), SB.from("pwaiver_players").select("*").eq("league_id", lg.id), SB.from("pwaiver_claims").select("*").eq("league_id", lg.id).order("created_at", { ascending: false }), SB.from("ptrades").select("*").eq("league_id", lg.id).order("created_at", { ascending: false }) ]);
-  PL.roster = rs[0].data || []; PL.waivers = rs[1].data || []; PL.claims = rs[2].data || []; PL.trades = rs[3].data || [];
+  var rs = await Promise.all([ SB.from("proster").select("*").eq("league_id", lg.id), SB.from("pwaiver_players").select("*").eq("league_id", lg.id), SB.from("pwaiver_claims").select("*").eq("league_id", lg.id).order("created_at", { ascending: false }), SB.from("ptrades").select("*").eq("league_id", lg.id).order("created_at", { ascending: false }), SB.from("ptrade_votes").select("*") ]);
+  PL.roster = rs[0].data || []; PL.waivers = rs[1].data || []; PL.claims = rs[2].data || []; PL.trades = rs[3].data || []; PL.votes = {}; (rs[4].data || []).forEach(function(v){ PL.votes[v.trade_id] = v.approve; });
 }
 function plOwned(){ var m = {}; PL.roster.forEach(function(r){ if (r.to_week == null) m[r.player_id] = r.team_id; }); return m; }
 function plMyHold(me){ return PL.roster.filter(function(r){ return me && r.team_id === me.id && r.to_week == null; }); }
@@ -1469,69 +1470,154 @@ $("plView").addEventListener("click", async function(e){
 });
 
 /* ---- Private leagues: trades ---- */
-PL.trades = []; PL.tr = { to: "", give: [], get: [] };
+PL.trades = []; PL.votes = {}; PL.tr = { to: "", give: [], get: [], drop: [] }; PL.acc = null;
 function plIncoming(me){ return me ? PL.trades.filter(function(t){ return t.status === "pending" && t.to_team === me.id; }) : []; }
+function plTradeTodo(lg, me){
+  if (!me) return 0;
+  var n = plIncoming(me).length;
+  PL.trades.forEach(function(t){
+    if (t.status === "review" && lg.commissioner === user.id) n++;
+    if (t.status === "voting" && t.from_team !== me.id && t.to_team !== me.id && PL.votes[t.id] === undefined) n++;
+  });
+  return n;
+}
 function plTradeNames(ids){ return ids.map(function(id){ var p = BYID[id]; return p ? esc(p.name) + ' <span class="why">' + esc(p.pos) + '</span>' : ""; }).join("<br>"); }
-function plTradeBoxes(tid, key){
-  var rows = PL.roster.filter(function(r){ return r.team_id === tid && r.to_week == null; }).map(function(r){ return BYID[r.player_id]; }).filter(Boolean);
+function plTradeDrops(ids, who){ return ids && ids.length ? '<div class="why" style="margin-top:4px">' + who + ' drop' + (who === "You" ? "" : "s") + ':<br>' + plTradeNames(ids) + '</div>' : ""; }
+function plFit(tid, outIds, inIds){
+  var ids = PL.roster.filter(function(r){ return r.team_id === tid && r.to_week == null && outIds.indexOf(r.player_id) < 0; }).map(function(r){ return r.player_id; }).concat(inIds);
+  var c = { F: 0, D: 0, G: 0 }, m = [];
+  ids.forEach(function(id){ var p = BYID[id]; if (p) c[p.g]++; });
+  if (ids.length > 20) m.push(ids.length + " players (max 20)");
+  if (c.F > 12) m.push(c.F + " forwards (max 12)");
+  if (c.D > 6) m.push(c.D + " defencemen (max 6)");
+  if (c.G > 2) m.push(c.G + " goalies (max 2)");
+  return m.join(", ");
+}
+function plBoxes(tid, attr, key, sel, excl){
+  var rows = PL.roster.filter(function(r){ return r.team_id === tid && r.to_week == null && (!excl || excl.indexOf(r.player_id) < 0); }).map(function(r){ return BYID[r.player_id]; }).filter(Boolean);
   var order = { F: 0, D: 1, G: 2 };
   rows.sort(function(a, b){ return (order[a.g] - order[b.g]) || (b.fp - a.fp); });
   return rows.map(function(p){
-    return '<label style="display:block;padding:3px 0;cursor:pointer"><input type="checkbox" data-pltr="' + key + '" value="' + esc(p.id) + '"' + (PL.tr[key].indexOf(p.id) >= 0 ? " checked" : "") + '> ' + esc(p.name) + ' <span class="why">' + esc(p.pos) + ' &middot; ' + esc(p.team) + ' &middot; ' + (AGELBL[p.ay] || "") + '</span></label>';
+    return '<label style="display:block;padding:3px 0;cursor:pointer"><input type="checkbox" data-' + attr + '="' + key + '" value="' + esc(p.id) + '"' + (sel.indexOf(p.id) >= 0 ? " checked" : "") + '> ' + esc(p.name) + ' <span class="why">' + esc(p.pos) + ' &middot; ' + esc(p.team) + ' &middot; ' + (AGELBL[p.ay] || "") + '</span></label>';
   }).join("");
+}
+function plTradeRuleTxt(lg){
+  var rv = { commissioner: "The commissioner reviews every trade before it goes through.", vote: "The league votes on every trade (majority rules; the two teams involved don't vote, and a vote left open for 2 days goes to whichever side has more votes).", none: "A trade goes through as soon as the other manager accepts." }[lg.trade_review || "commissioner"];
+  return rv + " " + (lg.trade_deadline ? "Trade deadline: " + lg.trade_deadline + "." : "There is no trade deadline.");
+}
+function plTradeSettingsHtml(lg){
+  return '<h2 style="margin-top:18px">Trade settings</h2><div class="pl-form"><label>Who approves trades<select id="plTrRev">' +
+    [["commissioner", "Commissioner can veto"], ["vote", "League votes (majority rules)"], ["none", "No review"]].map(function(o){ return '<option value="' + o[0] + '"' + ((lg.trade_review || "commissioner") === o[0] ? " selected" : "") + '>' + o[1] + '</option>'; }).join("") +
+    '</select></label><label>Trade deadline (blank for none)<input id="plTrDl" type="date" value="' + esc(lg.trade_deadline || "") + '"></label></div><div class="row"><button class="sec" data-pltrset="1">Save trade settings</button></div>';
+}
+function plAccPanel(t, me){
+  var a = PL.acc, fit = plFit(me.id, t.get.concat(a.drop), t.give);
+  return '<tr><td colspan="4"><div class="pl-note" style="color:var(--tx)"><b>Accepting this trade</b>' + (a.msg ? '<br>' + esc(a.msg) : "") + '<br>' + (plFit(me.id, t.get, t.give) ? 'It would leave your roster with ' + esc(plFit(me.id, t.get, t.give)) + '. Tick the players you will drop to make room.' : 'Your roster fits. You can still drop players if you like.') +
+    '</div>' + plBoxes(me.id, "pltracc", "drop", a.drop, t.get) + '<div class="row" style="margin-top:10px"><button data-pltraccok="1"' + (fit ? " disabled" : "") + '>Confirm and accept</button><button class="sec" data-pltracccancel="1">Back</button>' + (fit ? ' <span class="why">Still over: ' + esc(fit) + '</span>' : "") + '</div></td></tr>';
 }
 function plTradesHtml(lg, me){
   if (lg.status !== "active") return '<div class="pl-note">Trades open once the draft is finished.</div>';
   if (!me) return '<div class="pl-note">Only managers in this league can trade.</div>';
-  var h = '<div class="pl-note">Trade the same number of players each way (1 to 5). The other manager accepts or declines. An accepted trade takes effect like any roster move, and trades don\'t use up your ' + ADDS_PER_WEEK + ' adds a week. Both rosters must stay legal.</div>';
+  var h = '<div class="pl-note">Swap players with another team, any numbers each way (1 to 5). The team taking on more players drops players to fit the roster limits (20 players, 12 F, 6 D, 2 G). A trade takes effect the next day, and trades don\'t use up your ' + ADDS_PER_WEEK + ' adds a week.<br>' + esc(plTradeRuleTxt(lg)) + '</div>';
   var inc = plIncoming(me), out = PL.trades.filter(function(t){ return t.status === "pending" && t.from_team === me.id; });
   if (inc.length){
     h += '<h2>Offers to you</h2><table><thead><tr><th>From</th><th>You give</th><th>You get</th><th></th></tr></thead><tbody>';
-    inc.forEach(function(t){ h += '<tr><td>' + plTeamName(t.from_team) + '</td><td>' + plTradeNames(t.get) + '</td><td>' + plTradeNames(t.give) + '</td><td><button data-pltrok="' + esc(t.id) + '">Accept</button> <button class="sec" data-pltrno="' + esc(t.id) + '">Decline</button></td></tr>'; });
+    inc.forEach(function(t){
+      h += '<tr><td>' + plTeamName(t.from_team) + '</td><td>' + plTradeNames(t.get) + '</td><td>' + plTradeNames(t.give) + plTradeDrops(t.from_drop, "They") + '</td><td>' + (PL.acc && PL.acc.id === t.id ? "" : '<button data-pltrok="' + esc(t.id) + '">Accept</button> <button class="sec" data-pltrno="' + esc(t.id) + '">Decline</button>') + '</td></tr>';
+      if (PL.acc && PL.acc.id === t.id) h += plAccPanel(t, me);
+    });
     h += '</tbody></table>';
   }
   if (out.length){
     h += '<h2 style="margin-top:18px">Your offers waiting</h2><table><thead><tr><th>To</th><th>You give</th><th>You get</th><th></th></tr></thead><tbody>';
-    out.forEach(function(t){ h += '<tr><td>' + plTeamName(t.to_team) + '</td><td>' + plTradeNames(t.give) + '</td><td>' + plTradeNames(t.get) + '</td><td><button class="sec" data-pltrcancel="' + esc(t.id) + '">Cancel</button></td></tr>'; });
+    out.forEach(function(t){ h += '<tr><td>' + plTeamName(t.to_team) + '</td><td>' + plTradeNames(t.give) + plTradeDrops(t.from_drop, "You") + '</td><td>' + plTradeNames(t.get) + '</td><td><button class="sec" data-pltrcancel="' + esc(t.id) + '">Cancel</button></td></tr>'; });
+    h += '</tbody></table>';
+  }
+  var rev = PL.trades.filter(function(t){ return t.status === "review" || t.status === "voting"; });
+  if (rev.length){
+    h += '<h2 style="margin-top:18px">Trades waiting for approval</h2><table><thead><tr><th>Teams</th><th>Moving</th><th>Status</th><th></th></tr></thead><tbody>';
+    rev.forEach(function(t){
+      var party = t.from_team === me.id || t.to_team === me.id, st, act = "";
+      if (t.status === "review"){ st = "Waiting for the commissioner"; if (lg.commissioner === user.id) act = '<button data-pltrcok="' + esc(t.id) + '">Approve</button> <button class="danger" data-pltrcno="' + esc(t.id) + '">Veto</button>'; }
+      else {
+        st = "League vote: " + t.votes_for + " for, " + t.votes_against + " against. Closes " + plWhenShort(t.review_until) + ".";
+        if (!party){ var mv = PL.votes[t.id]; st += mv === undefined ? " You haven't voted." : " You voted " + (mv ? "yes" : "veto") + "."; act = '<button data-pltrvy="' + esc(t.id) + '">Approve</button> <button class="danger" data-pltrvn="' + esc(t.id) + '">Veto</button>'; }
+      }
+      if (t.from_team === me.id) act += ' <button class="sec" data-pltrcancel="' + esc(t.id) + '">Cancel</button>';
+      h += '<tr><td>' + plTeamName(t.from_team) + ' &harr; ' + plTeamName(t.to_team) + '</td><td>' + plTeamName(t.from_team) + ' sends:<br>' + plTradeNames(t.give) + plTradeDrops(t.from_drop, "They") + '<div style="margin-top:6px">' + plTeamName(t.to_team) + ' sends:<br>' + plTradeNames(t.get) + plTradeDrops(t.to_drop, "They") + '</div></td><td>' + st + '</td><td>' + act + '</td></tr>';
+    });
     h += '</tbody></table>';
   }
   h += '<h2 style="margin-top:18px">Propose a trade</h2><div class="pl-form"><label>Trade with<select id="trTo"><option value="">Choose a team</option>' +
     PL.teams.filter(function(t){ return t.id !== me.id; }).map(function(t){ return '<option value="' + esc(t.id) + '"' + (PL.tr.to === t.id ? " selected" : "") + '>' + esc(t.name) + '</option>'; }).join("") + '</select></label></div>';
   if (PL.tr.to){
-    var ok = PL.tr.give.length >= 1 && PL.tr.give.length === PL.tr.get.length;
-    h += '<div style="display:flex;gap:22px;flex-wrap:wrap;margin-top:10px"><div style="flex:1;min-width:250px"><b>You give (' + PL.tr.give.length + ')</b>' + plTradeBoxes(me.id, "give") + '</div><div style="flex:1;min-width:250px"><b>You get (' + PL.tr.get.length + ')</b>' + plTradeBoxes(PL.tr.to, "get") + '</div></div>' +
-      '<div class="row" style="margin-top:12px"><button data-pltrsend="1"' + (ok ? "" : " disabled") + '>Send offer</button>' + (ok ? "" : ' <span class="why">Pick the same number of players on each side.</span>') + '</div>';
+    var T = PL.tr, fit = T.give.length && T.get.length ? plFit(me.id, T.give.concat(T.drop), T.get) : "", ok = T.give.length >= 1 && T.get.length >= 1 && T.give.length <= 5 && T.get.length <= 5 && !fit;
+    h += '<div style="display:flex;gap:22px;flex-wrap:wrap;margin-top:10px"><div style="flex:1;min-width:250px"><b>You give (' + T.give.length + ')</b>' + plBoxes(me.id, "pltr", "give", T.give, T.drop) + '</div><div style="flex:1;min-width:250px"><b>You get (' + T.get.length + ')</b>' + plBoxes(T.to, "pltr", "get", T.get) + '</div></div>';
+    if (T.give.length && T.get.length){
+      h += '<details style="margin-top:12px"' + (fit || T.drop.length ? " open" : "") + '><summary>' + (fit ? 'This leaves you with ' + esc(fit) + '. Choose players to drop' : "Players you will drop to make room (only if needed)") + '</summary>' + plBoxes(me.id, "pltr", "drop", T.drop, T.give) + '</details>';
+    }
+    h += '<div class="row" style="margin-top:12px"><button data-pltrsend="1"' + (ok ? "" : " disabled") + '>Send offer</button>' + (ok ? "" : ' <span class="why">' + (fit ? "Drop players so your roster fits." : "Pick at least one player on each side.") + '</span>') + '</div>';
   }
-  var done = PL.trades.filter(function(t){ return t.status !== "pending"; }).slice(0, 10);
+  var done = PL.trades.filter(function(t){ return ["pending", "review", "voting"].indexOf(t.status) < 0; }).slice(0, 12);
   if (done.length){
-    var lab = { accepted: "Accepted", declined: "Declined", cancelled: "Cancelled", failed: "Failed" };
-    h += '<h2 style="margin-top:18px">Past offers</h2><table><thead><tr><th>Date</th><th>From</th><th>To</th><th>Gave</th><th>Got</th><th>Result</th></tr></thead><tbody>';
-    done.forEach(function(t){ h += '<tr><td>' + esc(String(t.created_at).slice(0, 10)) + '</td><td>' + plTeamName(t.from_team) + '</td><td>' + plTeamName(t.to_team) + '</td><td>' + plTradeNames(t.give) + '</td><td>' + plTradeNames(t.get) + '</td><td>' + (lab[t.status] || t.status) + (t.note ? ' <span class="why">' + esc(t.note) + '</span>' : "") + '</td></tr>'; });
+    var lab = { accepted: "Done", declined: "Declined", cancelled: "Cancelled", failed: "Failed", vetoed: "Vetoed" };
+    h += '<h2 style="margin-top:18px">Trade history</h2><table><thead><tr><th>Date</th><th>Teams</th><th>Moved</th><th>Result</th></tr></thead><tbody>';
+    done.forEach(function(t){ h += '<tr><td>' + esc(String(t.created_at).slice(0, 10)) + '</td><td>' + plTeamName(t.from_team) + ' &harr; ' + plTeamName(t.to_team) + '</td><td>' + plTradeNames(t.give) + '<div class="why">for</div>' + plTradeNames(t.get) + '</td><td>' + (lab[t.status] || t.status) + (t.note ? ' <span class="why">' + esc(t.note) + '</span>' : "") + '</td></tr>'; });
     h += '</tbody></table>';
   }
   return h;
 }
+async function plTradeRespond(id, accept, drop){
+  var lg = plLg(), r = await SB.rpc("respond_trade", { p_trade: id, p_accept: accept, p_drop: drop || [] });
+  if (r.error){ plMsg(r.error.message); plRender(); return; }
+  await plLoadLeague();
+  var t = PL.trades.filter(function(x){ return x.id === id; })[0];
+  if (r.data && t && t.status === "pending"){ PL.acc = { id: id, drop: drop || [], msg: r.data }; plMsg(""); plRender(); return; }
+  PL.acc = null;
+  if (r.data) plMsg("That trade could not go through: " + r.data);
+  else if (!accept) plMsg("Offer declined.", true);
+  else if (t && t.status === "review") plMsg("Accepted. It now goes to the commissioner for review.", true);
+  else if (t && t.status === "voting") plMsg("Accepted. It now goes to a league vote.", true);
+  else plMsg("Trade done. The players change teams tomorrow.", true);
+  plRender();
+}
 $("plView").addEventListener("change", function(e){
-  var t = e.target;
-  if (t.id === "trTo"){ PL.tr = { to: t.value, give: [], get: [] }; plMsg(""); plRender(); return; }
-  if (t.dataset && t.dataset.pltr){ var a = PL.tr[t.dataset.pltr], i = a.indexOf(t.value); if (t.checked && i < 0) a.push(t.value); if (!t.checked && i >= 0) a.splice(i, 1); plRender(); }
+  var t = e.target, d = t.dataset || {};
+  if (t.id === "trTo"){ PL.tr = { to: t.value, give: [], get: [], drop: [] }; plMsg(""); plRender(); return; }
+  if (d.pltr || d.pltracc){
+    var a = d.pltr ? PL.tr[d.pltr] : PL.acc.drop, i = a.indexOf(t.value);
+    if (t.checked && i < 0) a.push(t.value); if (!t.checked && i >= 0) a.splice(i, 1);
+    if (d.pltr === "give"){ var j = PL.tr.drop.indexOf(t.value); if (j >= 0) PL.tr.drop.splice(j, 1); }
+    plRender();
+  }
 });
 $("plView").addEventListener("click", async function(e){
   var t = e.target.closest ? e.target.closest("button") : null; if (!t || t.disabled) return;
-  var d = t.dataset, lg = plLg(); if (!lg) return;
+  var d = t.dataset, lg = plLg(), me = plMine(); if (!lg) return;
+  var done = async function(res, okMsg){ if (res.error) plMsg(res.error.message); else if (res.data) plMsg("That trade could not go through: " + res.data); else plMsg(okMsg, true); await plLoadLeague(); plRender(); };
   if (d.pltrsend){
-    var r = await SB.rpc("propose_trade", { p_league: lg.id, p_to: PL.tr.to, p_give: PL.tr.give, p_get: PL.tr.get });
-    if (r.error) { plMsg(r.error.message); plRender(); return; }
-    PL.tr = { to: "", give: [], get: [] }; plMsg("Offer sent. " + "They can accept or decline it from the Trades tab.", true); await plLoadRoster(); plRender(); return;
+    var r = await SB.rpc("propose_trade", { p_league: lg.id, p_to: PL.tr.to, p_give: PL.tr.give, p_get: PL.tr.get, p_drop: PL.tr.drop });
+    if (r.error){ plMsg(r.error.message); plRender(); return; }
+    PL.tr = { to: "", give: [], get: [], drop: [] }; plMsg("Offer sent. They can accept or decline it from the Trades tab.", true); await plLoadRoster(); plRender(); return;
   }
-  if (d.pltrok || d.pltrno){
-    var r2 = await SB.rpc("respond_trade", { p_trade: d.pltrok || d.pltrno, p_accept: !!d.pltrok });
-    if (r2.error) plMsg(r2.error.message);
-    else if (r2.data) plMsg("That trade could not go through: " + r2.data);
-    else plMsg(d.pltrok ? "Trade accepted. " + plEffTxt(lg) : "Offer declined.", !!d.pltrok);
-    await plLoadLeague(); plRender(); return;
+  if (d.pltrok){
+    var tr = PL.trades.filter(function(x){ return x.id === d.pltrok; })[0];
+    if (tr && me && plFit(me.id, tr.get, tr.give)){ PL.acc = { id: tr.id, drop: [], msg: "" }; plMsg(""); plRender(); return; }
+    await plTradeRespond(d.pltrok, true, []); return;
   }
-  if (d.pltrcancel){ var r3 = await SB.rpc("cancel_trade", { p_trade: d.pltrcancel }); if (r3.error) plMsg(r3.error.message); else plMsg("Offer cancelled.", true); await plLoadRoster(); plRender(); return; }
+  if (d.pltraccok && PL.acc){ await plTradeRespond(PL.acc.id, true, PL.acc.drop); return; }
+  if (d.pltracccancel){ PL.acc = null; plRender(); return; }
+  if (d.pltrno){ await plTradeRespond(d.pltrno, false, []); return; }
+  if (d.pltrcancel){ await done(await SB.rpc("cancel_trade", { p_trade: d.pltrcancel }), "Offer cancelled."); return; }
+  if (d.pltrcok){ await done(await SB.rpc("commissioner_trade", { p_trade: d.pltrcok, p_approve: true }), "Trade approved. The players change teams tomorrow."); return; }
+  if (d.pltrcno){ await done(await SB.rpc("commissioner_trade", { p_trade: d.pltrcno, p_approve: false }), "Trade vetoed."); return; }
+  if (d.pltrvy || d.pltrvn){ var id = d.pltrvy || d.pltrvn; await done(await SB.rpc("vote_trade", { p_trade: id, p_approve: !!d.pltrvy }), "Vote recorded."); return; }
+  if (d.pltrset){
+    var dl = $("plTrDl").value;
+    var rs = await SB.rpc("set_trade_settings", { p_league: lg.id, p_review: $("plTrRev").value, p_deadline: dl || null });
+    if (rs.error) plMsg(rs.error.message); else plMsg("Trade settings saved.", true);
+    await plLoadLeagues(); await plLoadLeague(); plRender(); return;
+  }
 });
 
 /* ---- Start ---- */
