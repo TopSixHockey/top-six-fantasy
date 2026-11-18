@@ -1,0 +1,38 @@
+name: Update lineups
+
+on:
+  schedule:
+    # Every 10 minutes from 7 AM to midnight Eastern (UTC hours cover both EST and EDT).
+    # The script only does something when a game's puck drop is near; otherwise it just
+    # refreshes tomorrow's start times in lineups/schedule.json.
+    - cron: "*/10 11-23,0-4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-lineups
+  cancel-in-progress: false
+
+jobs:
+  lineups:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run lineup updater
+        run: |
+          which pdftotext || (sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils)
+          python lineups/update_lineups.py
+      - name: Commit changes
+        run: |
+          git config user.name "Top Six Hockey bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html lineups/schedule.json lineups/state.json
+          if git diff --cached --quiet; then echo "No changes"; exit 0; fi
+          git commit -m "Auto-update lineups"
+          git pull --rebase origin main
+          git push
