@@ -102,6 +102,7 @@ th.on{color:var(--tx);background:var(--panel2)}
 td.on{background:rgba(255,255,255,.04)}
 #pool td,#poolHead th{white-space:nowrap}
 table.pt{min-width:640px}
+.nmh{cursor:help}.nmh:hover{text-decoration:underline dotted}
 td.pos{color:var(--ok)}td.neg{color:var(--bad)}td.fp{font-weight:700}
 </style>
 </head>
@@ -341,7 +342,7 @@ function renderPool(){
       var v = statVal(p, c[0]), cls = "num" + (sortKey === c[0] ? " on" : "") + (c[0] === "pm" && v != null ? (v > 0 ? " pos" : v < 0 ? " neg" : "") : "") + (c[0] === "fp" ? " fp" : "");
       return '<td class="' + cls + '">' + fmtStat(c[0], v) + '</td>';
     }).join("");
-    return '<tr class="' + (why ? "dim" : "") + '" data-pid="' + esc(p.id) + '"><td>' + esc(p.name) + (p.imp ? '<span class="tag imp">IMP</span>' : '') + (p.dr ? '<span class="tag nhl">NHL</span>' : '') + '<span class="why" style="display:block">' + esc(p.team) + ' #' + esc(p.num) + '</span></td>' +
+    return '<tr class="' + (why ? "dim" : "") + '"><td><span class="nmh" data-pid="' + esc(p.id) + '">' + esc(p.name) + '</span>' + (p.imp ? '<span class="tag imp">IMP</span>' : '') + (p.dr ? '<span class="tag nhl">NHL</span>' : '') + '<span class="why" style="display:block">' + esc(p.team) + ' #' + esc(p.num) + '</span></td>' +
       '<td>' + esc(p.pos) + '</td><td><span class="age">' + ageLabel(p) + '</span></td>' + cells + '<td>' + action + '</td></tr>';
   }).join("") + (total > shown ? '<tr><td colspan="' + ncol + '"><button class="sec" data-more="1">Show more</button></td></tr>' : "") || '<tr><td colspan="' + ncol + '" class="why">No players match.</td></tr>';
 }
@@ -376,7 +377,7 @@ function renderRoster(){
     html += '<h3>' + g[1] + ' (' + c[g[0]] + '/' + RULES[g[0]] + ')</h3>';
     var mine = roster.map(function(id){ return BYID[id]; }).filter(function(p){ return p.g === g[0]; });
     mine.forEach(function(p){
-      html += '<div class="slot f" data-pid="' + esc(p.id) + '"><span class="nm">' + esc(p.name) + ' <span class="why">' + esc(p.team) + '</span>' + (p.imp ? '<span class="tag imp">IMP</span>' : '') + (p.dr ? '<span class="tag nhl">NHL</span>' : '') + '</span><span class="age">' + ageLabel(p) + '</span><span class="why">' + p.fp.toFixed(1) + '</span>' + (lk ? '' : '<button class="sec" data-rm="' + esc(p.id) + '">Remove</button>') + '</div>';
+      html += '<div class="slot f"><span class="nm"><span class="nmh" data-pid="' + esc(p.id) + '">' + esc(p.name) + '</span> <span class="why">' + esc(p.team) + '</span>' + (p.imp ? '<span class="tag imp">IMP</span>' : '') + (p.dr ? '<span class="tag nhl">NHL</span>' : '') + '</span><span class="age">' + ageLabel(p) + '</span><span class="why">' + p.fp.toFixed(1) + '</span>' + (lk ? '' : '<button class="sec" data-rm="' + esc(p.id) + '">Remove</button>') + '</div>';
     });
     for (var i = mine.length; i < RULES[g[0]]; i++) html += '<div class="slot"><span class="em">Open spot</span></div>';
   });
