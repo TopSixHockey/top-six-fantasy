@@ -129,6 +129,35 @@ td.pos{color:var(--ok)}td.neg{color:var(--bad)}td.fp{font-weight:700}
 .pl-st td.t{font-weight:700}
 .pl-empty{text-align:center;color:var(--mute);padding:34px 10px}
 .pl-note{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:12px;color:var(--mute)}
+.dr-bar{display:flex;gap:14px;align-items:center;flex-wrap:wrap;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:10px}
+.dr-bar.me{border-color:var(--ok);box-shadow:0 0 0 1px var(--ok) inset}
+.dr-now{flex:1;min-width:200px}
+.dr-now b{font-size:16px}
+.dr-clock{font-size:30px;font-weight:800;font-variant-numeric:tabular-nums;min-width:90px;text-align:center}
+.dr-clock.low{color:var(--bad)}
+.dr-order{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:10px}
+.dr-chip{flex:0 0 auto;min-width:104px;max-width:150px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:5px 8px;font-size:12px}
+.dr-chip i{display:block;font-style:normal;color:var(--mute);font-size:10px}
+.dr-chip b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dr-chip.cur{border-color:var(--acc);background:#16314d}
+.dr-chip.mine{border-color:var(--ok)}
+.dr-grid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(280px,1fr);gap:14px;align-items:start}
+@media(max-width:980px){.dr-grid{grid-template-columns:1fr}}
+.dr-scroll{max-height:560px;overflow:auto;border:1px solid var(--line);border-radius:10px}
+.dr-scroll table{margin:0}
+.dr-scroll td,.dr-scroll th{white-space:nowrap}
+.dr-scroll th[data-pldsort]{cursor:pointer}
+.dr-scroll td.pn{white-space:normal;min-width:150px}
+.dr-sub{font-size:11px;color:var(--mute)}
+.dr-tag{font-size:9px;border:1px solid var(--line);border-radius:4px;padding:0 3px;margin-left:4px;color:var(--mute)}
+.dr-res{max-height:560px;overflow:auto;border:1px solid var(--line);border-radius:10px}
+.dr-res div{padding:6px 10px;border-bottom:1px solid #212a37;font-size:13px}
+.dr-res div.mine{background:#12301f}
+.dr-res i{color:var(--mute);font-style:normal;font-size:11px;margin-right:6px}
+.dr-pos{margin-bottom:8px;font-size:13px}
+.dr-pos b{display:inline-block;min-width:92px}
+.dr-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.dr-filters input{flex:1;min-width:150px}
 </style>
 </head>
 <body>
@@ -881,6 +910,7 @@ function plRender(){
   else if (!plLg()) h += '<div class="pl-empty">You are not in any private leagues yet. Create one and invite your friends, or join with a code.</div>';
   else h += plLeagueHtml();
   box.innerHTML = h;
+  plSyncTimers(); if ($("drBar")) plDraftUpdate(true);
 }
 function plOpts(vals, sel){ return vals.map(function(v){ return '<option value="' + v + '"' + (String(v) === String(sel) ? " selected" : "") + '>' + v + '</option>'; }).join(""); }
 function plCreateHtml(){
@@ -906,10 +936,11 @@ function plLeagueHtml(){
   var stTxt = { setup: "Setting up", scheduled: "Schedule set", drafting: "Drafting", active: "In season", complete: "Complete" }[lg.status] || lg.status;
   var h = '<div class="pl-head"><h2>' + esc(lg.name) + '</h2><span class="why">' + esc(lg.chl_league) + ' &middot; ' + modeTxt + ' &middot; ' + lg.weeks + ' weeks from ' + plWeekStart(lg, 1) + ' &middot; ' + esc(stTxt) + '</span></div>';
   h += '<div class="pl-sub">';
-  [["matchups","Matchups"],["standings","Standings"],["trans","Transactions"],["league","League"]].forEach(function(s){ h += '<button class="pill' + (PL.sub === s[0] ? " on" : "") + '" data-plsub="' + s[0] + '">' + s[1] + '</button>'; });
+  [["matchups","Matchups"],["standings","Standings"],["trans","Transactions"],["draft","Draft" + (lg.status === "drafting" ? " (LIVE)" : "")],["league","League"]].forEach(function(s){ h += '<button class="pill' + (PL.sub === s[0] ? " on" : "") + '" data-plsub="' + s[0] + '">' + s[1] + '</button>'; });
   h += '</div>';
   if (PL.sub === "standings") return h + plStandingsHtml(lg);
   if (PL.sub === "trans") return h + plTransHtml(lg);
+  if (PL.sub === "draft") return h + plDraftHtml(lg, me);
   if (PL.sub === "league") return h + plManageHtml(lg, me);
   return h + plMatchupsHtml(lg, me);
 }
@@ -1040,6 +1071,259 @@ $("plView").addEventListener("click", async function(e){
   else if (d.plremove){ await plDo(function(){ return SB.rpc("remove_pteam", { p_team: d.plremove }); }, "Team removed."); await plLoadLeague(); plRender(); }
   else if (d.plact === "cancel"){ plRender(); }
   else if (d.plact){ await plAct(d.plact, t); }
+});
+
+/* ---- Private leagues: live draft room ---- */
+PL.picks = []; PL.queue = []; PL.skew = 0; PL.dt = "players"; PL.ds = "results"; PL.dq = ""; PL.dpos = ""; PL.dage = ""; PL.dsort = "fp"; PL.dshown = 60; PL.dsig = ""; PL.dmsg = "";
+function plLocalInput(iso){ if (!iso) return ""; var d = new Date(iso), p = function(n){ return (n < 10 ? "0" : "") + n; }; return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()) + "T" + p(d.getHours()) + ":" + p(d.getMinutes()); }
+function plWhen(iso){ return new Date(iso).toLocaleString(undefined, { weekday: "long", month: "long", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" }); }
+function plCountdown(iso){
+  var ms = new Date(iso).getTime() - (Date.now() + PL.skew); if (ms <= 0) return "any moment now";
+  var s = Math.floor(ms / 1000), d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60);
+  return "in " + (d ? d + "d " : "") + (h || d ? h + "h " : "") + m + "m " + (s % 60) + "s";
+}
+function plNT(){ var lg = plLg(); return lg && lg.draft_order ? lg.draft_order.length : PL.teams.length; }
+function plPickTeam(lg, n){ var o = lg.draft_order, k = o.length, r = Math.floor(n / k), i = n % k; return o[r % 2 === 0 ? i : k - 1 - i]; }
+function plRP(lg, n){ var k = lg.draft_order.length; return (Math.floor(n / k) + 1) + "." + (n % k + 1); }
+function plTotalPicks(lg){ return lg.draft_order ? lg.draft_order.length * 20 : 0; }
+function plDrafted(){ var m = {}; PL.picks.forEach(function(k){ if (k.player_id) m[k.player_id] = k.team_id; }); return m; }
+function plHave(tid){
+  var c = { F: 0, D: 0, G: 0, imp: 0, dr: 0, age: {} };
+  PL.picks.forEach(function(k){ if (k.team_id !== tid || !k.player_id) return; var p = BYID[k.player_id]; if (!p) return; c[p.g]++; if (p.imp) c.imp++; if (p.dr) c.dr++; if (p.g !== "G") c.age[p.ay] = (c.age[p.ay] || 0) + 1; });
+  return c;
+}
+/* mirrors the SQL pl_check_pick: "" means the pick is allowed */
+function plWhy(lg, tid, p){
+  var c = plHave(tid), cap = { F: 12, D: 6, G: 2 };
+  if (c[p.g] >= cap[p.g]) return "Your " + cap[p.g] + " " + (p.g === "F" ? "forward" : p.g === "D" ? "defence" : "goalie") + " spots are full";
+  if (lg.use_quotas){
+    if (p.imp && c.imp >= 3) return "Max 3 imports";
+    if (p.dr && c.dr >= 5) return "Max 5 NHL-drafted players";
+    if (p.g !== "G"){
+      var need = { 2010: 3, 2009: 4, 2008: 4, 2007: 4, 2006: 3 }[p.ay];
+      if (!need) return "Not eligible in this league";
+      if ((c.age[p.ay] || 0) >= need) return "Your spots for that age group are full";
+    }
+  }
+  return "";
+}
+function plMyTurn(lg, me){ return !!(me && lg.status === "drafting" && lg.draft_order && plPickTeam(lg, lg.cur_pick) === me.id); }
+
+function plDraftHtml(lg, me){
+  if (lg.status === "setup") return '<div class="pl-note">Set the schedule on the League tab first. The draft opens after that.</div>';
+  if (lg.status === "scheduled") return plLobbyHtml(lg, me);
+  return plRoomHtml(lg, me);
+}
+function plLobbyHtml(lg, me){
+  var isC = lg.commissioner === user.id, h = '';
+  h += '<div class="pl-note"><b>' + (lg.draft_at ? 'Draft: ' + esc(plWhen(lg.draft_at)) + ' &middot; <span id="drCount">' + esc(plCountdown(lg.draft_at)) + '</span>' : 'The commissioner hasn\'t picked a draft time yet.') + '</b><br>' +
+    '20 rounds, snake order (order is drawn at random when the draft starts). ' + (lg.pick_seconds ? lg.pick_seconds + ' seconds per pick' : 'No time limit per pick') + (lg.pick_seconds ? ', then the best available player is picked automatically.' : '.') +
+    '<br>' + (lg.use_quotas ? 'Quotas on: age groups (3 sixteen, 4 seventeen, 4 eighteen, 4 nineteen, 3 overage), max 3 imports, max 5 NHL-drafted.' : 'Roster: 12 forwards, 6 defence, 2 goalies. No age or import quotas.') + '</div>';
+  if (isC){
+    h += '<h2>Draft settings</h2><div class="pl-form">' +
+      '<label>Draft date and time<input id="pldAt" type="datetime-local" value="' + esc(plLocalInput(lg.draft_at)) + '"></label>' +
+      '<label>Time per pick<select id="pldSecs">' + [[30,"30 seconds"],[60,"60 seconds"],[90,"90 seconds"],[120,"2 minutes"],[180,"3 minutes"],[0,"No limit"]].map(function(o){ return '<option value="' + o[0] + '"' + (o[0] === lg.pick_seconds ? " selected" : "") + '>' + o[1] + '</option>'; }).join("") + '</select></label>' +
+      '<label>Roster quotas<select id="pldQ"><option value="0"' + (lg.use_quotas ? "" : " selected") + '>Off: positions only</option><option value="1"' + (lg.use_quotas ? " selected" : "") + '>On: age, import and NHL-draft quotas</option></select></label></div>' +
+      '<div class="why" style="margin-bottom:10px">Quotas make a draft much harder. They work best in 8 to 10 team leagues; with 12 or more teams some teams may run out of eligible players and finish with an incomplete roster.</div>' +
+      '<div class="row"><button class="sec" data-pldr="save">Save draft settings</button></div>' +
+      '<div class="row" id="pldStartRow"><button data-pldr="start">Start the draft now</button><span class="why">Everyone in the league can then open this tab to join the draft room.</span></div>';
+  } else h += '<div class="why">The commissioner will start the draft. Keep this tab open: the room appears here as soon as it begins.</div>';
+  return h;
+}
+function plRoomHtml(lg, me){
+  var h = '<div class="dr"><div class="dr-bar" id="drBar"><div class="dr-now" id="drNow"></div><div class="dr-clock" id="drClock"></div><div id="drBtns"></div></div>' +
+    '<div id="drMsg"></div><div class="dr-order" id="drOrder"></div><div class="dr-grid"><div>' +
+    '<div class="pl-sub"><button class="pill" data-pldt="players" id="drTP">Players</button><button class="pill" data-pldt="queue" id="drTQ">Queue</button></div>' +
+    '<div id="drFilt" class="dr-filters"><input type="search" id="drQ" placeholder="Search player or team" value="' + esc(PL.dq) + '">' +
+    '<select id="drPos"><option value="">All positions</option><option value="F">Forwards</option><option value="D">Defence</option><option value="G">Goalies</option></select>' +
+    '<select id="drAge"><option value="">All ages</option><option value="2010">16</option><option value="2009">17</option><option value="2008">18</option><option value="2007">19</option><option value="2006">20</option></select></div>' +
+    '<div class="dr-scroll" id="drList"></div></div><div>' +
+    '<div class="pl-sub"><button class="pill" data-plds="results" id="drSR">Draft results</button><button class="pill" data-plds="team" id="drST">My team</button></div>' +
+    '<div id="drSide"></div></div></div></div>';
+  return h;
+}
+function plDraftUpdate(force){
+  var lg = plLg(), me = plMine(); if (!lg || !$("drBar")) return;
+  if (PL.picksFor !== lg.id){ PL.picks = []; PL.queue = []; PL.picksFor = lg.id; }
+  if ($("drPos").value !== PL.dpos) $("drPos").value = PL.dpos;
+  if ($("drAge").value !== PL.dage) $("drAge").value = PL.dage;
+  var nt = plNT(), tot = plTotalPicks(lg), done = lg.status !== "drafting", my = plMyTurn(lg, me);
+  $("drBar").classList.toggle("me", my);
+  if (done) $("drNow").innerHTML = '<b>Draft complete</b><div class="dr-sub">' + PL.picks.length + ' picks made. Have a look at the results and your team.</div>';
+  else { var tid = plPickTeam(lg, lg.cur_pick), t = plTeam(tid); $("drNow").innerHTML = '<div class="dr-sub">Round ' + (Math.floor(lg.cur_pick / nt) + 1) + ' &middot; Pick ' + (lg.cur_pick + 1) + ' of ' + tot + '</div><b>' + (my ? "You're on the clock!" : "On the clock: " + (t ? esc(t.name) : "")) + '</b>' + (my ? "" : '<div class="dr-sub">' + esc(PL.names[(t || {}).user_id] || "") + '</div>'); }
+  var btn = "";
+  if (!done && lg.commissioner === user.id) btn = '<button class="sec" data-pldr="auto" title="Pick now for the team on the clock">Auto-pick for this team</button>';
+  if ($("drBtns").innerHTML !== btn) $("drBtns").innerHTML = btn;
+  plDraftClock();
+  var oh = "";
+  if (done) oh = "";
+  else for (var k = lg.cur_pick; k < Math.min(tot, lg.cur_pick + 12); k++){ var tt = plTeam(plPickTeam(lg, k)); oh += '<div class="dr-chip' + (k === lg.cur_pick ? " cur" : "") + (me && tt && tt.id === me.id ? " mine" : "") + '"><i>Rd ' + plRP(lg, k) + '</i><b>' + (tt ? esc(tt.name) : "") + '</b></div>'; }
+  if ($("drOrder").innerHTML !== oh) $("drOrder").innerHTML = oh;
+  $("drTP").classList.toggle("on", PL.dt === "players"); $("drTQ").classList.toggle("on", PL.dt === "queue");
+  $("drTQ").textContent = "Queue (" + PL.queue.length + ")";
+  $("drFilt").classList.toggle("hide", PL.dt !== "players");
+  $("drSR").classList.toggle("on", PL.ds === "results"); $("drST").classList.toggle("on", PL.ds === "team");
+  var sig = [PL.picks.length, PL.queue.length, my, PL.dt, PL.dq, PL.dpos, PL.dage, PL.dsort, PL.dshown, PL.ds, lg.status].join("|");
+  if (force || sig !== PL.dsig){ PL.dsig = sig; plDraftList(lg, me, my); plDraftSide(lg, me); }
+}
+function plDraftClock(){
+  var lg = plLg(); if (!lg || !$("drClock")) return;
+  var el = $("drClock");
+  if (lg.status !== "drafting"){ el.textContent = ""; return; }
+  if (!lg.pick_deadline){ el.textContent = "No limit"; el.className = "dr-clock"; el.style.fontSize = "16px"; return; }
+  el.style.fontSize = "";
+  var s = Math.max(0, Math.ceil((new Date(lg.pick_deadline).getTime() - (Date.now() + PL.skew)) / 1000));
+  el.textContent = Math.floor(s / 60) + ":" + (s % 60 < 10 ? "0" : "") + (s % 60);
+  el.className = "dr-clock" + (s <= 10 ? " low" : "");
+}
+function plDraftList(lg, me, my){
+  var box = $("drList"), h = "", drafted = plDrafted(), canPick = my && lg.status === "drafting";
+  var rk = {}, rn = 0; POOL.forEach(function(p){ if (p.lgn === lg.chl_league) rk[p.id] = ++rn; });
+  var qset = {}; PL.queue.forEach(function(q){ qset[q.player_id] = 1; });
+  var rows;
+  if (PL.dt === "queue"){
+    rows = PL.queue.map(function(q){ return BYID[q.player_id]; }).filter(function(p){ return p && !drafted[p.id]; });
+  } else {
+    var s = PL.dq.trim().toLowerCase();
+    rows = POOL.filter(function(p){
+      if (p.lgn !== lg.chl_league || drafted[p.id]) return false;
+      if (PL.dpos && p.g !== PL.dpos) return false;
+      if (PL.dage && String(p.ay) !== PL.dage) return false;
+      if (s && (p.name + " " + p.team).toLowerCase().indexOf(s) < 0) return false;
+      return true;
+    });
+    var key = PL.dsort;
+    rows = rows.slice().sort(function(a, b){ var x = key === "name" ? a.name : statVal(a, key), y = key === "name" ? b.name : statVal(b, key); if (key === "name") return x.localeCompare(y); if (x == null && y == null) return 0; if (x == null) return 1; if (y == null) return -1; return (key === "gaa" ? x - y : y - x) || (b.fp - a.fp); });
+  }
+  var cols = PL.dpos === "G" ? COLS_G : [["gp","GP"],["g","G"],["a","A"],["pts","P"],["pm","+/-"],["fp","FPts"]];
+  h += '<table><thead><tr><th>Rk</th><th data-pldsort="name">Player</th>';
+  cols.forEach(function(c){ h += '<th data-pldsort="' + c[0] + '">' + c[1] + (PL.dsort === c[0] ? " &#9660;" : "") + '</th>'; });
+  h += '<th></th></tr></thead><tbody>';
+  var more = rows.length > PL.dshown && PL.dt === "players";
+  rows.slice(0, PL.dt === "players" ? PL.dshown : rows.length).forEach(function(p){
+    var why = canPick ? plWhy(lg, me.id, p) : "";
+    var extra = p.g === "G" && PL.dpos !== "G" ? '<div class="dr-sub">W ' + num(p.s.wins) + ' &middot; SV% ' + (p.s.svp != null ? fmtStat("svp", p.s.svp) : "-") + ' &middot; GAA ' + (p.s.gaa != null ? fmtStat("gaa", p.s.gaa) : "-") + '</div>' : "";
+    h += '<tr><td class="why">' + rk[p.id] + '</td><td class="pn"><span class="nmh" data-pid="' + esc(p.id) + '">' + esc(p.name) + '</span><span class="dr-sub"> ' + esc(p.pos) + ' &middot; ' + esc(p.team) + '</span>' + (lg.use_quotas ? (p.imp ? '<span class="dr-tag">IMP</span>' : "") + (p.dr ? '<span class="dr-tag">NHL</span>' : "") : "") + extra + '</td>';
+    cols.forEach(function(c){ h += '<td>' + fmtStat(c[0], statVal(p, c[0])) + '</td>'; });
+    h += '<td>' + (canPick ? '<button data-pldraft="' + esc(p.id) + '"' + (why ? ' disabled title="' + esc(why) + '"' : "") + '>Draft</button> ' : "") +
+      (qset[p.id] ? '<button class="sec" data-pldqrm="' + esc(p.id) + '" title="Remove from queue">&minus;</button>' : '<button class="sec" data-pldq="' + esc(p.id) + '" title="Add to queue (auto-pick uses your queue first)">+</button>') + '</td></tr>';
+  });
+  if (!rows.length) h += '<tr><td colspan="' + (cols.length + 3) + '" class="pl-empty">' + (PL.dt === "queue" ? "Your queue is empty. Use + on a player to add them; auto-pick takes from your queue first." : "No players match.") + '</td></tr>';
+  h += '</tbody></table>' + (more ? '<div style="padding:8px;text-align:center"><button class="sec" data-pldmore="1">Show more</button></div>' : "");
+  box.innerHTML = h;
+}
+function plDraftSide(lg, me){
+  var box = $("drSide"), h = "";
+  if (PL.ds === "team"){
+    var c = plHave(me ? me.id : ""), lines = { F: [], D: [], G: [] };
+    PL.picks.forEach(function(k){ if (me && k.team_id === me.id && k.player_id && BYID[k.player_id]) lines[BYID[k.player_id].g].push(BYID[k.player_id]); });
+    [["F","Forwards",12],["D","Defence",6],["G","Goalies",2]].forEach(function(g){
+      h += '<div class="dr-pos"><b>' + g[1] + ' ' + c[g[0]] + '/' + g[2] + '</b></div><div class="dr-res" style="max-height:none;margin-bottom:10px">' +
+        (lines[g[0]].length ? lines[g[0]].map(function(p){ return '<div><span class="nmh" data-pid="' + esc(p.id) + '">' + esc(p.name) + '</span> <span class="dr-sub">' + esc(p.pos) + ' &middot; ' + esc(p.team) + '</span></div>'; }).join("") : '<div class="why">None yet</div>') + '</div>';
+    });
+    if (lg.use_quotas){
+      h += '<div class="why">Ages: ' + [[2010,"16",3],[2009,"17",4],[2008,"18",4],[2007,"19",4],[2006,"20",3]].map(function(a){ return a[1] + ': ' + (c.age[a[0]] || 0) + '/' + a[2]; }).join(" &middot; ") + '<br>Imports ' + c.imp + '/3 &middot; NHL-drafted ' + c.dr + '/5</div>';
+    }
+  } else {
+    h = '<div class="dr-res">';
+    if (!PL.picks.length) h += '<div class="why">No picks yet.</div>';
+    PL.picks.slice().reverse().forEach(function(k){
+      var t = plTeam(k.team_id), p = k.player_id ? BYID[k.player_id] : null;
+      h += '<div class="' + (me && k.team_id === me.id ? "mine" : "") + '"><i>' + plRP(lg, k.pick_no) + '</i><b>' + (t ? esc(t.name) : "") + '</b> &middot; ' +
+        (p ? '<span class="nmh" data-pid="' + esc(p.id) + '">' + esc(p.name) + '</span> <span class="dr-sub">' + esc(p.pos) + ' &middot; ' + esc(p.team) + (k.auto ? " &middot; auto" : "") + '</span>' : '<span class="why">skipped (no eligible player left)</span>') + '</div>';
+    });
+    h += '</div>';
+  }
+  box.innerHTML = h;
+}
+function plDMsg(m){ PL.dmsg = m || ""; var el = $("drMsg"); if (el) el.innerHTML = m ? '<div class="msg">' + esc(m) + '</div>' : ""; }
+
+async function plPoll(){
+  var lg = plLg();
+  if (!lg || PL.sub !== "draft" || $("plView").classList.contains("hide") || !user){ plSyncTimers(); return; }
+  if (PL.polling) return; PL.polling = true;
+  try {
+    var was = lg.status;
+    if (lg.status === "drafting"){ var t = await SB.rpc("draft_tick", { p_league: lg.id }); if (t.data) PL.skew = new Date(t.data).getTime() - Date.now(); }
+    var r = await SB.from("pleagues").select("*").eq("id", lg.id).single();
+    if (r.data){ for (var k in r.data) lg[k] = r.data[k]; }
+    var me = plMine();
+    if (lg.status === "drafting" || lg.status === "active"){
+      var res = await Promise.all([ SB.from("pdraft_picks").select("*").eq("league_id", lg.id).order("pick_no", { ascending: true }),
+        me ? SB.from("pdraft_queue").select("*").eq("team_id", me.id).order("added_at", { ascending: true }) : Promise.resolve({ data: [] }) ]);
+      if (res[0].data) PL.picks = res[0].data; if (res[1].data) PL.queue = res[1].data; PL.picksFor = lg.id;
+    }
+    if (lg.status !== was){
+      if (lg.status === "active" || was === "scheduled"){ await plLoadLeague(); }
+      plRender(); plDraftUpdate(true);
+    } else plDraftUpdate(false);
+  } catch (e){} finally { PL.polling = false; }
+}
+function plSyncTimers(){
+  var lg = plLg(), want = !!(lg && user && PL.sub === "draft" && PL.mode === "list" && $("plView") && !$("plView").classList.contains("hide") && (lg.status === "scheduled" || lg.status === "drafting"));
+  if (want && !PL.pt){ setTimeout(plPoll, 0); PL.pt = setInterval(plPoll, 2000); PL.ct = setInterval(function(){ plDraftClock(); var c = $("drCount"), l = plLg(); if (c && l && l.draft_at) c.textContent = plCountdown(l.draft_at); }, 1000); }
+  if (!want && PL.pt){ clearInterval(PL.pt); clearInterval(PL.ct); PL.pt = null; PL.ct = null; }
+}
+async function plEnterDraft(){
+  var lg = plLg(), me = plMine(); if (!lg) return;
+  PL.dsig = ""; PL.dmsg = "";
+  if (lg.status === "drafting" || lg.status === "active"){
+    var res = await Promise.all([ SB.from("pdraft_picks").select("*").eq("league_id", lg.id).order("pick_no", { ascending: true }),
+      me ? SB.from("pdraft_queue").select("*").eq("team_id", me.id).order("added_at", { ascending: true }) : Promise.resolve({ data: [] }) ]);
+    PL.picks = res[0].data || []; PL.queue = res[1].data || []; PL.picksFor = lg.id;
+  }
+  plRender(); plDraftUpdate(true); plPoll();
+}
+async function plDraftAct(a, el, d){
+  var lg = plLg(), me = plMine();
+  if (a === "save" || a === "start"){
+    if (a === "start"){ el.parentNode.innerHTML = '<span class="why">Start the draft right now? Teams will be taken to the draft room.</span><button data-pldr="startyes">Yes, start</button><button class="sec" data-pldr="cancel">Cancel</button>'; return; }
+    var at = $("pldAt").value ? new Date($("pldAt").value).toISOString() : null;
+    var r = await SB.rpc("set_pleague_draft", { p_league: lg.id, p_at: at, p_secs: +$("pldSecs").value, p_quotas: $("pldQ").value === "1" });
+    if (r.error){ plMsg(r.error.message); } else { plMsg("Draft settings saved.", true); var x = await SB.from("pleagues").select("*").eq("id", lg.id).single(); if (x.data) for (var k in x.data) lg[k] = x.data[k]; }
+    plRender();
+  } else if (a === "cancel"){ plRender();
+  } else if (a === "startyes"){
+    var r2 = await SB.rpc("start_pleague_draft", { p_league: lg.id });
+    if (r2.error){ plMsg(r2.error.message); plRender(); return; }
+    plMsg("");
+    var x2 = await SB.from("pleagues").select("*").eq("id", lg.id).single(); if (x2.data) for (var k2 in x2.data) lg[k2] = x2.data[k2];
+    await plEnterDraft();
+  } else if (a === "auto"){
+    var r3 = await SB.rpc("draft_autopick_now", { p_league: lg.id }); if (r3.error) plDMsg(r3.error.message); else plDMsg(""); plPoll();
+  }
+}
+$("plView").addEventListener("click", async function(e){
+  var t = e.target.closest ? e.target.closest("button, th[data-pldsort]") : null; if (!t || t.disabled) return;
+  var d = t.dataset, lg = plLg(), me = plMine();
+  if (d.plsub === "draft"){ setTimeout(plEnterDraft, 0); return; }
+  if (d.pldr){ await plDraftAct(d.pldr, t, d); return; }
+  if (d.pldt){ PL.dt = d.pldt; PL.dshown = 60; plDraftUpdate(true); return; }
+  if (d.plds){ PL.ds = d.plds; plDraftUpdate(true); return; }
+  if (d.pldsort){ PL.dsort = d.pldsort; PL.dshown = 60; plDraftUpdate(true); return; }
+  if (d.pldmore){ PL.dshown += 60; plDraftUpdate(true); return; }
+  if (d.pldraft){
+    plDMsg(""); t.disabled = true;
+    var r = await SB.rpc("draft_pick", { p_league: lg.id, p_player: d.pldraft });
+    if (r.error) plDMsg(r.error.message);
+    await plPoll(); plDraftUpdate(true); return;
+  }
+  if (d.pldq && me){
+    var q = await SB.from("pdraft_queue").insert({ league_id: lg.id, team_id: me.id, player_id: d.pldq });
+    if (q.error) plDMsg(q.error.message); else PL.queue.push({ league_id: lg.id, team_id: me.id, player_id: d.pldq });
+    plDraftUpdate(true); return;
+  }
+  if (d.pldqrm && me){
+    var q2 = await SB.from("pdraft_queue").delete().eq("team_id", me.id).eq("player_id", d.pldqrm);
+    if (q2.error) plDMsg(q2.error.message); else PL.queue = PL.queue.filter(function(x){ return x.player_id !== d.pldqrm; });
+    plDraftUpdate(true); return;
+  }
+});
+$("plView").addEventListener("input", function(e){
+  var id = e.target.id;
+  if (id === "drQ"){ PL.dq = e.target.value; PL.dshown = 60; plDraftUpdate(true); }
+  else if (id === "drPos"){ PL.dpos = e.target.value; PL.dshown = 60; if (PL.dpos === "G" && PL.dsort !== "name" && !{ gp:1, wins:1, so:1, svp:1, gaa:1, fp:1 }[PL.dsort]) PL.dsort = "fp"; plDraftUpdate(true); }
+  else if (id === "drAge"){ PL.dage = e.target.value; PL.dshown = 60; plDraftUpdate(true); }
 });
 
 /* ---- Start ---- */
