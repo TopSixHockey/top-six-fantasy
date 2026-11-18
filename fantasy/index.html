@@ -77,7 +77,10 @@ small.note{display:block;color:var(--mute);margin-top:10px}
 #pop .pt{margin:8px 0 4px;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:rgba(255,255,255,.7)}
 #pop .pst{display:flex;gap:2px}#pop .pst div{flex:1;text-align:center;background:rgba(255,255,255,.16);border-radius:6px;padding:3px 0}
 #pop .pst b{display:block;font-size:10px;color:rgba(255,255,255,.7)}#pop .pst span{font-weight:800}
-#pop .pst .fp span{color:#ff9f2e}
+#pop .pst .fp span{color:#fff;font-size:15px;font-weight:900}
+#pop .pst .pp span{color:#ff9f43}
+#pop .pst .pos span{color:#3ecf8e}
+#pop .pst .neg span{color:#ff6b6b}
 #pop .pb{display:flex;gap:8px;margin:3px 0;align-items:baseline}#pop .pb span{min-width:84px;flex:none}#pop .pb i{font-style:normal;flex:1;color:rgba(255,255,255,.7);font-size:11px}#pop .pb b{min-width:44px;text-align:right}
 #pop .pb.tot{margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.3);font-size:13px}#pop .pb.tot b{color:#8ef0b8}
 #pop .pn2{color:rgba(255,255,255,.65);font-size:11px;margin-top:6px}
@@ -702,7 +705,7 @@ $("lbMonthSel").addEventListener("change", loadLeaderboard);
 /* ---- Hover pop-up: stat line and how the fantasy points add up ---- */
 function f1(v){ return (Math.round(Math.abs(v) * 10) / 10).toFixed(1); }
 function pline(label, detail, pts){ return '<div class="pb"><span>' + label + '</span><i>' + detail + '</i><b>' + (pts < -0.049 ? "\u2212" : "+") + f1(pts) + '</b></div>'; }
-function pstat(label, v){ return '<div><b>' + label + '</b><span>' + v + '</span></div>'; }
+function pstat(label, v, cls){ return '<div' + (cls ? ' class="' + cls + '"' : '') + '><b>' + label + '</b><span>' + v + '</span></div>'; }
 function popHtml(p){
   var s = p.s, gp = num(s.gp), h = '<div class="ph"><span class="pn">' + esc(p.name) + '</span><span class="pm">' + esc(p.team) + ' \u00b7 #' + esc(p.num) + ' \u00b7 ' + esc(p.pos) + '</span>' + (p.imp ? '<span class="pi">Import</span>' : '') + (p.dr ? '<span class="pi">NHL drafted</span>' : '') + '</div>';
   var st = "", rows = "";
@@ -714,7 +717,7 @@ function popHtml(p){
     rows += s.gaa != null ? pline("GAA bonus", gp + " GP \u00d7 (3.00 \u2212 " + gaa + ") \u00d7 " + SCORE.gaaMult, gp * (SCORE.gaaBase - num(s.gaa)) * SCORE.gaaMult) : pline("GAA bonus", "no GAA yet", 0);
   } else {
     var pts = num(s.g) + num(s.a);
-    st = pstat("GP", gp) + pstat("G", num(s.g)) + pstat("A", num(s.a)) + pstat("PTS", pts) + pstat("+/-", (num(s.pm) > 0 ? "+" : "") + num(s.pm)) + pstat("SOG", s.shots == null ? "\u2014" : num(s.shots)) + pstat("PIM", num(s.pim));
+    st = pstat("GP", gp) + pstat("G", num(s.g)) + pstat("A", num(s.a)) + pstat("PTS", pts, "pp") + pstat("+/-", (num(s.pm) > 0 ? "+" : "") + num(s.pm), num(s.pm) > 0 ? "pos" : num(s.pm) < 0 ? "neg" : "") + pstat("SOG", s.shots == null ? "\u2014" : num(s.shots)) + pstat("PIM", num(s.pim));
     rows = pline("Goals", num(s.g) + " \u00d7 " + SCORE.g, num(s.g) * SCORE.g) + pline("Assists", num(s.a) + " \u00d7 " + SCORE.a, num(s.a) * SCORE.a) +
       pline("Plus/minus", (num(s.pm) > 0 ? "+" : "") + num(s.pm) + " \u00d7 " + SCORE.pm, num(s.pm) * SCORE.pm) +
       pline("Shots", s.shots == null ? "not tracked yet" : num(s.shots) + " \u00d7 " + SCORE.shots, num(s.shots) * SCORE.shots) +
