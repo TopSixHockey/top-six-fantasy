@@ -95,6 +95,12 @@ small.note{display:block;color:var(--mute);margin-top:10px}
 .lu-p.drag{opacity:.4}
 .lu-p.open svg{opacity:.28}
 .lu-p.open .lu-nm{opacity:.6}
+th[data-sort]{cursor:pointer;user-select:none;white-space:nowrap}
+th[data-sort]:hover{color:var(--tx)}
+th.num,td.num{text-align:right;padding-left:8px;padding-right:10px;font-variant-numeric:tabular-nums;white-space:nowrap}
+th.on{color:var(--tx);background:var(--panel2)}
+td.on{background:rgba(255,255,255,.04)}
+td.pos{color:var(--ok)}td.neg{color:var(--bad)}td.fp{font-weight:700}
 </style>
 </head>
 <body>
@@ -124,7 +130,7 @@ small.note{display:block;color:var(--mute);margin-top:10px}
       <label class="chk"><input type="checkbox" id="el" checked> Only players I can add</label>
     </div>
     <div class="tbl"><table>
-      <thead><tr><th>Player</th><th>Pos</th><th>Age</th><th>Fantasy pts</th><th></th></tr></thead>
+      <thead id="poolHead"></thead>
       <tbody id="pool"><tr><td colspan="5" class="why">Loading players…</td></tr></tbody>
     </table></div>
     <small class="note">Fantasy points shown here are season to date. On the leaderboard, only points from the contest start date count (or from when you lock your team, if that is later).</small>
@@ -266,11 +272,53 @@ function msg(text, good){ $("msg").innerHTML = text ? '<div class="msg ' + (good
 function authMsg(text, good){ $("authMsg").innerHTML = text ? '<div class="msg ' + (good ? "good" : "") + '">' + esc(text) + '</div>' : ""; }
 
 /* ---- Pool ---- */
-var SHOW = 120;
+var SHOW = 120, shown = SHOW, sortKey = "fp", sortDir = -1;
+var COLS_S = [["gp","GP"],["g","G"],["a","A"],["pts","P"],["pm","+/-"],["shots","SOG"],["pim","PIM"],["fp","FPts"]];
+var COLS_G = [["gp","GP"],["wins","W"],["so","SO"],["svp","SV%"],["gaa","GAA"],["fp","FPts"]];
+function statVal(p, k){
+  var s = p.s;
+  if (k === "fp") return p.fp;
+  if (k === "name") return p.name;
+  if (k === "pts") return p.g === "G" ? null : num(s.g) + num(s.a);
+  if (p.g === "G"){
+    if (k === "gp" || k === "wins" || k === "so") return num(s[k]);
+    if (k === "svp" || k === "gaa") return s[k] == null ? null : num(s[k]);
+    return null;
+  }
+  if (k === "shots") return s.shots == null ? null : num(s.shots);
+  if (k === "gp" || k === "g" || k === "a" || k === "pm" || k === "pim") return num(s[k]);
+  return null;
+}
+function fmtStat(k, v){
+  if (v == null) return "—";
+  if (k === "svp") return v.toFixed(3).replace(/^0/, "");
+  if (k === "gaa") return v.toFixed(2);
+  if (k === "fp") return v.toFixed(1);
+  if (k === "pm") return (v > 0 ? "+" : "") + v;
+  return String(v);
+}
+function cmpRows(a, b){
+  var x = statVal(a, sortKey), y = statVal(b, sortKey);
+  if (x == null && y == null) return b.fp - a.fp;
+  if (x == null) return 1;
+  if (y == null) return -1;
+  var c = typeof x === "string" ? x.localeCompare(y) : x - y;
+  return c * sortDir || b.fp - a.fp;
+}
+function setSort(k){
+  if (sortKey === k) sortDir = -sortDir; else { sortKey = k; sortDir = (k === "gaa" || k === "name") ? 1 : -1; }
+  shown = SHOW; renderPool();
+}
 function renderPool(){
   if (!POOL.length) return;
   var q = $("q").value.trim().toLowerCase(), lg = (entry && entry.league) ? entry.league : $("lg").value, ps = $("ps").value, ag = $("ag").value, el = $("el").checked;
-  var out = [], total = 0, canAdd = !!(user && entry && !locked());
+  var cols = ps === "G" ? COLS_G : COLS_S;
+  if (sortKey !== "name" && !cols.some(function(c){ return c[0] === sortKey; })){ sortKey = "fp"; sortDir = -1; }
+  var arrow = function(k){ return sortKey === k ? (sortDir < 0 ? " ▼" : " ▲") : ""; };
+  $("poolHead").innerHTML = '<tr><th data-sort="name" class="' + (sortKey === "name" ? "on" : "") + '">Player' + arrow("name") + '</th><th>Pos</th><th>Age</th>' +
+    cols.map(function(c){ return '<th data-sort="' + c[0] + '" class="num ' + (sortKey === c[0] ? "on" : "") + '">' + c[1] + arrow(c[0]) + '</th>'; }).join("") + '<th></th></tr>';
+  var ncol = cols.length + 4;
+  var list = [], canAdd = !!(user && entry && !locked());
   for (var i = 0; i < POOL.length; i++){
     var p = POOL[i];
     if (lg && p.lgn !== lg) continue;
@@ -279,17 +327,22 @@ function renderPool(){
     if (q && (p.name + " " + p.team).toLowerCase().indexOf(q) < 0) continue;
     var why = canAdd ? whyNot(p) : "";
     if (el && why) continue;
-    total++;
-    if (out.length < SHOW) out.push([p, why]);
+    list.push([p, why]);
   }
-  $("count").textContent = "· " + total + " players" + (total > SHOW ? " (top " + SHOW + " shown, use filters)" : "");
+  list.sort(function(x, y){ return cmpRows(x[0], y[0]); });
+  var total = list.length, out = list.slice(0, shown);
+  $("count").textContent = "· " + total + " players" + (total > shown ? " (showing " + shown + ")" : "");
   $("pool").innerHTML = out.map(function(x){
     var p = x[0], why = x[1];
     var action = !user ? '<span class="why">Sign in</span>' : locked() ? '<span class="why">Team locked</span>' : why ? '<span class="why">' + esc(why) + '</span>' : '<button data-add="' + esc(p.id) + '">Add</button>';
+    var cells = cols.map(function(c){
+      var v = statVal(p, c[0]), cls = "num" + (sortKey === c[0] ? " on" : "") + (c[0] === "pm" && v != null ? (v > 0 ? " pos" : v < 0 ? " neg" : "") : "") + (c[0] === "fp" ? " fp" : "");
+      return '<td class="' + cls + '">' + fmtStat(c[0], v) + '</td>';
+    }).join("");
     return '<tr class="' + (why ? "dim" : "") + '" data-pid="' + esc(p.id) + '"><td>' + esc(p.name) + ' <span class="why">' + esc(p.team) + ' #' + esc(p.num) + '</span>' +
       (p.imp ? '<span class="tag imp">IMP</span>' : '') + (p.dr ? '<span class="tag nhl">NHL</span>' : '') + '</td>' +
-      '<td>' + esc(p.pos) + '</td><td><span class="age">' + ageLabel(p) + '</span></td><td>' + p.fp.toFixed(1) + '</td><td>' + action + '</td></tr>';
-  }).join("") || '<tr><td colspan="5" class="why">No players match.</td></tr>';
+      '<td>' + esc(p.pos) + '</td><td><span class="age">' + ageLabel(p) + '</span></td>' + cells + '<td>' + action + '</td></tr>';
+  }).join("") + (total > shown ? '<tr><td colspan="' + ncol + '"><button class="sec" data-more="1">Show more</button></td></tr>' : "") || '<tr><td colspan="' + ncol + '" class="why">No players match.</td></tr>';
 }
 
 /* ---- Roster ---- */
@@ -510,6 +563,8 @@ $("signout").addEventListener("click", function(){ SB.auth.signOut(); });
 document.addEventListener("click", function(e){
   var t = e.target, d = t.dataset || {};
   if (d.add) addPlayer(d.add);
+  if (d.sort) setSort(d.sort);
+  if (d.more){ shown += SHOW; renderPool(); }
   if (d.switch) setActive(d.switch);
   if (d.addleague){ picking = true; pendingPick = null; refresh(); }
   if (d.pick){ pendingPick = d.pick; renderLeagueBar(); }
@@ -533,7 +588,7 @@ document.addEventListener("click", function(e){
     if (d.tab === "lb"){ if (!lbPicked && active) lbLeague = active; loadLeaderboard(); }
   }
 });
-["q","lg","ps","ag","el"].forEach(function(id){ $(id).addEventListener("input", renderPool); });
+["q","lg","ps","ag","el"].forEach(function(id){ $(id).addEventListener("input", function(){ shown = SHOW; renderPool(); }); });
 $("tn").addEventListener("input", saveName);
 $("lbMonthSel").addEventListener("change", loadLeaderboard);
 
