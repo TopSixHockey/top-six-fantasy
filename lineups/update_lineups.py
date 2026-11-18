@@ -25,10 +25,22 @@ LEAD_MIN = 10      # start checking this many minutes before puck drop
 GIVE_UP_H = 6      # stop trying this many hours after puck drop
 
 LEAGUES = {
-    "ohl": {"client": "ohl", "season": 88, "label": "OHL", "league_id": 1,
+    "ohl": {"client": "ohl", "season": 88, "label": "OHL", "league_id": 1, "keys": None, "what": "sheet",
             "pdf": "https://cluster.leaguestat.com/game-lineups/ohl/{gid}/{code}_{date}.pdf"},
+    "whl": {"client": "whl", "season": 295, "label": "WHL", "league_id": 2, "keys": None, "what": "card",
+            "pdf": "https://cluster.leaguestat.com/game-lineups/whl/{gid}/{code}_{date}.pdf"},
 }
 # team-name keyword -> key used in index.html (L / CAP)
+WHL_KEYS = {
+ "Brandon": "whl_brandon", "Calgary": "whl_calgary", "Edmonton": "whl_edmonton", "Everett": "whl_everett",
+ "Kamloops": "whl_kamloops", "Kelowna": "whl_kelowna", "Lethbridge": "whl_lethbridge",
+ "Medicine Hat": "whl_medhat", "Moose Jaw": "whl_moosejaw", "Penticton": "whl_penticton",
+ "Portland": "whl_portland", "Prince Albert": "whl_pa", "Prince George": "whl_pg",
+ "Red Deer": "whl_reddeer", "Regina": "whl_regina", "Saskatoon": "whl_saskatoon",
+ "Seattle": "whl_seattle", "Spokane": "whl_spokane", "Swift Current": "whl_swift",
+ "Tri-City": "whl_tricity", "Vancouver": "whl_vancouver", "Victoria": "whl_victoria",
+ "Wenatchee": "whl_wenatchee",
+}
 OHL_KEYS = {
  "Barrie": "barrie", "Brampton": "brampton", "Erie": "erie", "Flint": "flint",
  "Guelph": "guelph", "Hamilton": "hamilton", "Kingston": "kingston",
@@ -51,13 +63,13 @@ def feed(client, view, **kw):
     if t.startswith("("): t = t[1:-1]
     return json.loads(t)["SiteKit"]
 
-def team_key(name):
-    for k, v in OHL_KEYS.items():
+def team_key(name, lg="ohl"):
+    for k, v in (WHL_KEYS if lg == "whl" else OHL_KEYS).items():
         if k in name: return v
     return None
 
 # ---------------------------------------------------------------- PDF parsing
-ROW = re.compile(r"^\s*\d+\s+(\d+)\s+(X\s+)?(G|LD|RD|LW|RW|C)\s+(.+?)\s*$")
+ROW = re.compile(r"^\s*\d+\s+(\d+)\s+(X\s+)?(G|LD|RD|LW|RW|C|D)\s+(.+?)\s*$")
 
 def parse_card(text):
     """-> dict(players={num:(first,last,pos,starter,mark)}, F=[[lw,c,rw]..], D=[[ld,rd]..])"""
@@ -70,7 +82,8 @@ def parse_card(text):
         num, x, pos, nm = int(m.group(1)), bool(m.group(2)), m.group(3), m.group(4)
         mark = None
         mm = re.search(r"\((C|A)\)", nm)
-        if mm: mark, nm = mm.group(1), (nm[:mm.start()] + " " + nm[mm.end():]).strip()
+        if mm: mark = mm.group(1)
+        nm = re.sub(r"\s*\([^)]*\)", "", nm).strip()
         nm = re.split(r"\s{2,}", nm)[0].strip()
         last, _, first = nm.partition(",")
         players[num] = (first.strip(), last.strip(), pos, x, mark)
@@ -116,8 +129,8 @@ def build_entry(card, roster_prev=None):
         D.append([nm(n) for n in row if n is not None and n in P])
     # dressed skaters missing from the pairings table
     left = [n for n in card["order"] if P[n][2] != "G" and n not in used]
-    lf = [n for n in left if P[n][2] not in ("LD", "RD")]
-    ld = [n for n in left if P[n][2] in ("LD", "RD")]
+    lf = [n for n in left if P[n][2] not in ("LD", "RD", "D")]
+    ld = [n for n in left if P[n][2] in ("LD", "RD", "D")]
     for i in range(0, len(lf), 3):
         grp = lf[i:i+3]
         F.append([nm(n) for n in grp] if len(grp) == 3 else (["h"] + [nm(n) for n in grp] + ["h"] if len(grp) == 2 else [None, None, nm(grp[0])]))
@@ -164,6 +177,13 @@ def update_cap(src, key, caps):
     return src[:i] + js(obj) + src[i + end:]
 
 # ------------------------------------------------------------------- the run
+def game_start(g):
+    try:
+        return datetime.datetime.fromisoformat(g["GameDateISO8601"])
+    except Exception:
+        return datetime.datetime.combine(datetime.date.fromisoformat(g["date_played"]),
+                                         datetime.time.fromisoformat(g["schedule_time"]), ET)
+
 def fmt_date(d): return d.strftime("%b ") + str(d.day) + d.strftime(", %Y")
 
 def pdf_text(url):
@@ -189,19 +209,18 @@ def main():
         except Exception as e:
             print(lg, "schedule fetch failed:", e); continue
         # tomorrow's times (anticipation)
-        sched_out[lg] = [{"id": g["game_id"], "time": g["schedule_time"][:5],
+        sched_out[lg] = [{"id": g["game_id"], "time": g["schedule_time"][:5], "et": game_start(g).astimezone(ET).strftime("%H:%M"),
                           "home": g["home_team_name"], "away": g["visiting_team_name"]}
                          for g in games if g["date_played"] == str(tomorrow)]
         sched_out[lg].sort(key=lambda x: x["time"])
         for g in games:
             if g["date_played"] not in (str(today), str(today - datetime.timedelta(days=1))): continue
-            start = datetime.datetime.combine(datetime.date.fromisoformat(g["date_played"]),
-                      datetime.time.fromisoformat(g["schedule_time"]), ET)
+            start = game_start(g)
             gid = g["game_id"]; final = g.get("final") == "1"
             sides = [("home", g["home_team_name"], g["home_team_code"], g["visiting_team_name"], "vs"),
                      ("away", g["visiting_team_name"], g["visiting_team_code"], g["home_team_name"], "at")]
             for side, tname, code, opp, vsat in sides:
-                key = team_key(tname)
+                key = team_key(tname, lg)
                 if not key: continue
                 sk = f"{lg}:{gid}:{side}"
                 st = state.get(sk, {})
@@ -229,9 +248,11 @@ def main():
                 d = datetime.date.fromisoformat(g["date_played"])
                 label = "Last game" if final else "Tonight"
                 game = f"{label}: <b>{vsat} {opp}</b> · {fmt_date(d)}"
-                note = (f"Lines are from the {cfg['label']}’s official lineup sheet for the {d.strftime('%b')} {d.day} game. "
-                        "The sheet doesn’t list scratches, so the scratch list is the players on the team’s roster "
-                        "who weren’t on the sheet (some may be injured or away).")
+                w = cfg["what"]
+                note = (f"Lines are from the {cfg['label']}’s official lineup {w} for the " +
+                        (f"{d.strftime('%b')} {d.day} game. " if lg == "ohl" else "game. ") +
+                        f"The {w} doesn’t list scratches, so the scratch list is the players on the team’s roster "
+                        f"who weren’t on the {w} (some may be injured or away).")
                 b = find_block(src, key)
                 if not b: print("no block for", key); continue
                 src = src[:b[0]] + emit(game, fmt_date(d), note, ent, scr) + src[b[1]:]
