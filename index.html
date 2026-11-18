@@ -1127,7 +1127,7 @@ function injFor(k, p) {
     var full = injNrm(p[1] + " " + p[2]), last = injNrm(p[2]).split(" ").pop(), f0 = injNrm(p[1]).charAt(0);
     for (var i = 0; i < list.length; i++) {
       var e = list[i], en = injNrm(e[0] + " " + e[1]);
-      if (en === full || (en.split(" ").pop() === last && injNrm(e[0]).charAt(0) === f0)) return e;
+      if ((e[5] && String(e[5]) === String(p[0])) || en === full || (en.split(" ").pop() === last && injNrm(e[0]).charAt(0) === f0)) return e;
     }
   } catch (x) {}
   return null;
