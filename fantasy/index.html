@@ -863,7 +863,7 @@ function plStandings(lg){
     if (lg.scoring_mode === "points"){ A.pf += num(sa.pts); B.pf += num(sb.pts); } else { A.pf += r.a; B.pf += r.b; }
     A.last += " " + plNum(r.a) + "-" + plNum(r.b); B.last += " " + plNum(r.b) + "-" + plNum(r.a);
   });
-  PL.trans.forEach(function(x){ if (x.team_id && rows[x.team_id] && (x.kind === "add" || x.kind === "drop")) rows[x.team_id].moves++; });
+  PL.trans.forEach(function(x){ if (x.team_id && rows[x.team_id] && x.kind === "add") rows[x.team_id].moves++; });
   var list = Object.keys(rows).map(function(k){ var r = rows[k], g = r.w + r.l + r.tie; r.pct = g ? (r.w + r.tie / 2) / g : 0; r.pts = lg.scoring_mode === "points" ? r.pf : r.w * 2 + r.tie; return r; });
   list.sort(function(x, y){ return (y.pct - x.pct) || (y.pf - x.pf) || x.t.name.localeCompare(y.t.name); });
   return list;
@@ -878,6 +878,7 @@ async function plLoadLeagues(){
 async function plLoadLeague(){
   var lg = plLg(); if (!lg) return;
   var id = lg.id;
+  if (lg.status === "active") await SB.rpc("waiver_tick", { p_league: id });
   var res = await Promise.all([
     SB.from("pteams").select("*").eq("league_id", id).order("created_at", { ascending: true }),
     SB.from("pmatchups").select("*").eq("league_id", id).order("week", { ascending: true }),
@@ -979,7 +980,7 @@ function plStandingsHtml(lg){
   var h = '<div class="tbl"><table class="pl-st"><thead><tr><th>Rank</th><th>Team</th><th>W-L-T</th><th>Pct</th><th>' + ptsLbl + '</th><th>Last week</th><th>Waiver</th><th>Moves</th></tr></thead><tbody>';
   rows.forEach(function(r, i){
     var pct = r.pct.toFixed(3).replace(/^0/, "");
-    h += '<tr><td>' + (i + 1) + '</td><td class="t">' + esc(r.t.name) + '<div class="why">' + esc(PL.names[r.t.user_id] || "") + '</div></td><td>' + r.w + '-' + r.l + '-' + r.tie + '</td><td>' + pct + '</td><td>' + plNum(r.pts) + '</td><td>' + esc(r.last || "-") + '</td><td>-</td><td>' + r.moves + '</td></tr>';
+    h += '<tr><td>' + (i + 1) + '</td><td class="t">' + esc(r.t.name) + '<div class="why">' + esc(PL.names[r.t.user_id] || "") + '</div></td><td>' + r.w + '-' + r.l + '-' + r.tie + '</td><td>' + pct + '</td><td>' + plNum(r.pts) + '</td><td>' + esc(r.last || "-") + '</td><td>' + (r.t.waiver_pos || "-") + '</td><td>' + r.moves + '</td></tr>';
   });
   h += '</tbody></table></div><small class="note">' + (lg.scoring_mode === "points" ? 'Pts = total fantasy points scored in completed weeks.' : 'Pts = 2 per matchup win and 1 per tie.') + ' Only completed weeks count. Ranked by win percentage, then Pts.</small>';
   return rows.length ? h : '<div class="pl-empty">No teams yet.</div>';
@@ -987,6 +988,7 @@ function plStandingsHtml(lg){
 function plTransHtml(lg){
   var tabs = [["all","All Transactions"],["add","Added Players"],["drop","Dropped Players"],["trade","Trades"],["waiver","Waiver Offers"]];
   var h = '<div class="pl-sub">' + tabs.map(function(t){ return '<button class="pill' + (PL.tf === t[0] ? " on" : "") + '" data-pltf="' + t[0] + '">' + t[1] + '</button>'; }).join("") + '</div>';
+  if (PL.tf === "waiver") return h + plClaimsHtml();
   var rows = PL.trans.filter(function(x){ return PL.tf === "all" || x.kind === PL.tf || (PL.tf === "add" && x.kind === "draft"); });
   if (!rows.length) return h + '<div class="pl-empty">There are no transactions to display.</div>';
   var kinds = { add: "Added", drop: "Dropped", draft: "Drafted", trade: "Trade", waiver: "Waiver" };
@@ -1335,13 +1337,18 @@ PL.roster = []; PL.fq = ""; PL.fpos = ""; PL.fage = ""; PL.fsort = "fp"; PL.fsho
 var AGELBL = { 2010: 16, 2009: 17, 2008: 18, 2007: 19, 2006: 20 };
 function plEff(lg){ var t = plDay(plToday()); return t < plDay(lg.start_date) ? 1 : Math.floor((t - plDay(lg.start_date)) / 7) + 2; }
 function plEffTxt(lg){ var e = plEff(lg); return e > lg.weeks ? "The season is over." : "Moves take effect Monday " + plWeekStart(lg, e) + " (Week " + e + "). A dropped player keeps scoring for you until then, and an added player starts scoring then."; }
-async function plLoadRoster(){ var lg = plLg(); if (!lg) return; var r = await SB.from("proster").select("*").eq("league_id", lg.id); PL.roster = r.data || []; }
+async function plLoadRoster(){
+  var lg = plLg(); if (!lg) return;
+  if (lg.status === "active") await SB.rpc("waiver_tick", { p_league: lg.id });
+  var rs = await Promise.all([ SB.from("proster").select("*").eq("league_id", lg.id), SB.from("pwaiver_players").select("*").eq("league_id", lg.id), SB.from("pwaiver_claims").select("*").eq("league_id", lg.id).order("created_at", { ascending: false }) ]);
+  PL.roster = rs[0].data || []; PL.waivers = rs[1].data || []; PL.claims = rs[2].data || [];
+}
 function plOwned(){ var m = {}; PL.roster.forEach(function(r){ if (r.to_week == null) m[r.player_id] = r.team_id; }); return m; }
 function plMyHold(me){ return PL.roster.filter(function(r){ return me && r.team_id === me.id && r.to_week == null; }); }
 function plPlayerCell(p, lg){ return '<span class="nmh" data-pid="' + esc(p.id) + '">' + esc(p.name) + '</span><span class="dr-sub"> ' + esc(p.pos) + ' &middot; ' + esc(p.team) + ' &middot; ' + (AGELBL[p.ay] || "") + '</span>' + (lg.use_quotas ? (p.imp ? '<span class="dr-tag">IMP</span>' : "") + (p.dr ? '<span class="dr-tag">NHL</span>' : "") : ""); }
 function plMyTeamHtml(lg, me){
   if (lg.status !== "active") return '<div class="pl-note">Rosters open once the draft is finished.</div>';
-  var hold = plMyHold(me), eff = plEff(lg), started = plStarted(lg), h = '<div class="pl-note">' + esc(plEffTxt(lg)) + '</div>';
+  var hold = plMyHold(me), eff = plEff(lg), started = plStarted(lg), h = '<div class="pl-note">' + esc(plEffTxt(lg)) + plMoveInfo(lg, me) + '</div>';
   if (PL.dropPid && BYID[PL.dropPid]) h += '<div class="pl-note" style="color:var(--tx)">Drop <b>' + esc(BYID[PL.dropPid].name) + '</b>? <button class="danger" data-plmtyes="1">Yes, drop</button> <button class="sec" data-plmtcancel="1">Cancel</button></div>';
   var leaving = PL.roster.filter(function(r){ return me && r.team_id === me.id && r.to_week === eff && started; });
   [["F","Forwards",12],["D","Defence",6],["G","Goalies",2]].forEach(function(g){
@@ -1359,7 +1366,7 @@ function plMyTeamHtml(lg, me){
 }
 function plPlayersHtml(lg, me){
   if (lg.status !== "active") return '<div class="pl-note">Free agents open once the draft is finished.</div>';
-  var h = '<div class="pl-note">' + esc(plEffTxt(lg)) + ' Your roster stays at 12 forwards, 6 defence and 2 goalies' + (lg.use_quotas ? ', and the age, import and NHL-draft quotas still apply' : "") + ', so an add needs a drop at the same position unless you have an open spot.</div>';
+  var h = '<div class="pl-note">' + esc(plEffTxt(lg)) + plMoveInfo(lg, me) + ' Your roster stays at 12 forwards, 6 defence and 2 goalies' + (lg.use_quotas ? ', and the age, import and NHL-draft quotas still apply' : "") + ', so an add needs a drop at the same position unless you have an open spot.</div>';
   h += '<div id="faAdd">' + plAddPanel(lg, me) + '</div>';
   h += '<div class="dr-filters"><input type="search" id="faQ" placeholder="Search player or team" value="' + esc(PL.fq) + '">' +
     '<select id="faPos"><option value="">All positions</option><option value="F">Forwards</option><option value="D">Defence</option><option value="G">Goalies</option></select>' +
@@ -1370,15 +1377,15 @@ function plPlayersHtml(lg, me){
 function plAddPanel(lg, me){
   var p = PL.addPid ? BYID[PL.addPid] : null; if (!p || !me) return "";
   var hold = plMyHold(me), same = hold.map(function(r){ return BYID[r.player_id]; }).filter(function(q){ return q && q.g === p.g; });
-  var cap = { F: 12, D: 6, G: 2 }[p.g], h = '<div class="pl-note" style="color:var(--tx)">Adding <b>' + esc(p.name) + '</b> (' + esc(p.pos) + '). ';
+  var cap = { F: 12, D: 6, G: 2 }[p.g], h = '<div class="pl-note" style="color:var(--tx)">' + (PL.claimMode ? "Claiming" : "Adding") + ' <b>' + esc(p.name) + '</b> (' + esc(p.pos) + '). ';
   if (same.length >= cap) h += 'Your ' + (p.g === "F" ? "forward" : p.g === "D" ? "defence" : "goalie") + ' spots are full, so choose who to drop:<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">';
-  else h += 'You have an open spot. You can add without dropping, or swap someone out:<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><button data-pladdgo="">Add (no drop)</button>';
+  else h += 'You have an open spot. You can add without dropping, or swap someone out:<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><button data-pladdgo="">' + (PL.claimMode ? "Claim" : "Add") + ' (no drop)</button>';
   same.sort(function(a, b){ return a.fp - b.fp; }).forEach(function(q){ h += '<button class="sec" data-pladdgo="' + esc(q.id) + '">Drop ' + esc(q.name) + ' (' + q.fp.toFixed(1) + ')</button>'; });
   return h + '</div><div style="margin-top:8px"><button class="sec" data-pladdcancel="1">Cancel</button></div></div>';
 }
 function plFaList(){
   var lg = plLg(), me = plMine(), box = $("faList"); if (!lg || !box) return;
-  var owned = plOwned(), s = PL.fq.trim().toLowerCase(), rk = {}, rn = 0;
+  var owned = plOwned(), wv = plWaiverMap(), capped = plCapped(lg, me), s = PL.fq.trim().toLowerCase(), rk = {}, rn = 0;
   POOL.forEach(function(p){ if (p.lgn === lg.chl_league) rk[p.id] = ++rn; });
   var rows = POOL.filter(function(p){
     if (p.lgn !== lg.chl_league || owned[p.id]) return false;
@@ -1393,7 +1400,7 @@ function plFaList(){
   var h = '<table><thead><tr><th>Rk</th><th data-plfsort="name">Player</th>' + cols.map(function(c){ return '<th data-plfsort="' + c[0] + '">' + c[1] + (PL.fsort === c[0] ? " &#9660;" : "") + '</th>'; }).join("") + '<th></th></tr></thead><tbody>';
   rows.slice(0, PL.fshown).forEach(function(p){
     var extra = p.g === "G" && PL.fpos !== "G" ? '<div class="dr-sub">W ' + num(p.s.wins) + ' &middot; SV% ' + (p.s.svp != null ? fmtStat("svp", p.s.svp) : "-") + ' &middot; GAA ' + (p.s.gaa != null ? fmtStat("gaa", p.s.gaa) : "-") + '</div>' : "";
-    h += '<tr><td class="why">' + rk[p.id] + '</td><td class="pn">' + plPlayerCell(p, lg) + extra + '</td>' + cols.map(function(c){ return '<td>' + fmtStat(c[0], statVal(p, c[0])) + '</td>'; }).join("") + '<td><button data-pladd="' + esc(p.id) + '">Add</button></td></tr>';
+    h += '<tr><td class="why">' + rk[p.id] + '</td><td class="pn">' + plPlayerCell(p, lg) + extra + (wv[p.id] ? '<div class="dr-sub">On waivers until ' + esc(plWhenShort(wv[p.id].until)) + '</div>' : "") + '</td>' + cols.map(function(c){ return '<td>' + fmtStat(c[0], statVal(p, c[0])) + '</td>'; }).join("") + '<td>' + plAddBtn(p, wv, capped) + '</td></tr>';
   });
   if (!rows.length) h += '<tr><td colspan="' + (cols.length + 3) + '" class="pl-empty">No free agents match.</td></tr>';
   h += '</tbody></table>' + (rows.length > PL.fshown ? '<div style="padding:8px;text-align:center"><button class="sec" data-plfmore="1">Show more</button></div>' : "");
@@ -1401,9 +1408,10 @@ function plFaList(){
 }
 async function plMove(add, drop){
   var lg = plLg(); if (!lg) return;
-  var r = await SB.rpc("pl_add_drop", { p_league: lg.id, p_add: add || null, p_drop: drop || null });
-  PL.addPid = null; PL.dropPid = null;
-  if (r.error) plMsg(r.error.message); else plMsg("Done. " + plEffTxt(lg), true);
+  var wasClaim = PL.claimMode;
+  var r = await SB.rpc(wasClaim ? "place_waiver_claim" : "pl_add_drop", { p_league: lg.id, p_add: add || null, p_drop: drop || null });
+  PL.addPid = null; PL.dropPid = null; PL.claimMode = false;
+  if (r.error) plMsg(r.error.message); else plMsg(wasClaim ? "Claim placed. It is processed when the waiver period ends; check Transactions, then Waiver Offers." : "Done. " + plEffTxt(lg), true);
   await plLoadLeague(); plRender();
 }
 $("plView").addEventListener("click", async function(e){
@@ -1413,8 +1421,8 @@ $("plView").addEventListener("click", async function(e){
   if (d.plmtdrop){ PL.dropPid = d.plmtdrop; plMsg(""); plRender(); return; }
   if (d.plmtcancel){ PL.dropPid = null; plRender(); return; }
   if (d.plmtyes){ await plMove(null, PL.dropPid); return; }
-  if (d.pladd !== undefined){ PL.addPid = d.pladd; plMsg(""); plRender(); var a = $("faAdd"); if (a && a.scrollIntoView) a.scrollIntoView({ block: "nearest" }); return; }
-  if (d.pladdcancel){ PL.addPid = null; plRender(); return; }
+  if (d.pladd !== undefined){ PL.addPid = d.pladd; PL.claimMode = false; plMsg(""); plRender(); var a = $("faAdd"); if (a && a.scrollIntoView) a.scrollIntoView({ block: "nearest" }); return; }
+  if (d.pladdcancel){ PL.addPid = null; PL.claimMode = false; plRender(); return; }
   if (d.pladdgo !== undefined){ await plMove(PL.addPid, d.pladdgo); return; }
   if (d.plfsort){ PL.fsort = d.plfsort; PL.fshown = 60; plFaList(); return; }
   if (d.plfmore){ PL.fshown += 60; plFaList(); return; }
@@ -1424,6 +1432,39 @@ $("plView").addEventListener("input", function(e){
   if (id === "faQ"){ PL.fq = e.target.value; PL.fshown = 60; plFaList(); }
   else if (id === "faPos"){ PL.fpos = e.target.value; PL.fshown = 60; if (PL.fpos === "G" && PL.fsort !== "name" && !{ gp:1, wins:1, so:1, svp:1, gaa:1, fp:1 }[PL.fsort]) PL.fsort = "fp"; plFaList(); }
   else if (id === "faAge"){ PL.fage = e.target.value; PL.fshown = 60; plFaList(); }
+});
+
+/* ---- Private leagues: waivers + weekly add limit ---- */
+PL.waivers = []; PL.claims = []; PL.claimMode = false;
+var ADDS_PER_WEEK = 2;
+function plWhenShort(iso){ return new Date(iso).toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }); }
+function plWaiverMap(){ var m = {}; PL.waivers.forEach(function(w){ m[w.player_id] = w; }); return m; }
+function plAddsUsed(lg, me){ var e = plEff(lg); return me ? PL.trans.filter(function(x){ return x.kind === "add" && x.team_id === me.id && x.week === e; }).length : 0; }
+function plCapped(lg, me){ return plStarted(lg) && plAddsUsed(lg, me) >= ADDS_PER_WEEK; }
+function plMoveInfo(lg, me){
+  if (!me) return "";
+  return '<br>Waiver priority: <b>#' + (me.waiver_pos || "-") + '</b>' + (plStarted(lg) ? ' &middot; Adds for Week ' + plEff(lg) + ': <b>' + plAddsUsed(lg, me) + ' of ' + ADDS_PER_WEEK + '</b> used (waiver wins count)' : ' &middot; Up to ' + ADDS_PER_WEEK + ' adds a week once the season starts');
+}
+function plAddBtn(p, wv, capped){
+  var dis = capped ? ' disabled title="You have used your ' + ADDS_PER_WEEK + ' adds for this week"' : "";
+  return wv[p.id] ? '<button class="sec" data-plclaim="' + esc(p.id) + '"' + dis + '>Claim</button>' : '<button data-pladd="' + esc(p.id) + '"' + dis + '>Add</button>';
+}
+function plClaimsHtml(){
+  var me = plMine(), rows = PL.claims.filter(function(c){ return me && c.team_id === me.id; });
+  if (!rows.length) return '<div class="pl-empty">There are no transactions to display. Claims you place on players on waivers show up here.</div>';
+  var h = '<table><thead><tr><th>Placed</th><th>Claim</th><th>Drop</th><th>Status</th><th></th></tr></thead><tbody>';
+  rows.forEach(function(c){
+    var p = BYID[c.player_id], d = c.drop_player_id ? BYID[c.drop_player_id] : null, w = plWaiverMap()[c.player_id];
+    var st = c.status === "pending" ? "Pending" + (w ? ' <span class="why">(processes ' + esc(plWhenShort(w.until)) + ')</span>' : "") : c.status === "won" ? "Won" : c.status === "lost" ? "Lost" : "Failed";
+    h += '<tr><td>' + esc(String(c.created_at).slice(0, 10)) + '</td><td>' + esc(p ? p.name : "") + '</td><td>' + (d ? esc(d.name) : '<span class="why">none</span>') + '</td><td>' + st + (c.note && c.status !== "pending" ? ' <span class="why">' + esc(c.note) + '</span>' : "") + '</td><td>' + (c.status === "pending" ? '<button class="sec" data-plclaimcancel="' + esc(c.id) + '">Cancel</button>' : "") + '</td></tr>';
+  });
+  return h + '</tbody></table>';
+}
+$("plView").addEventListener("click", async function(e){
+  var t = e.target.closest ? e.target.closest("button") : null; if (!t || t.disabled) return;
+  var d = t.dataset;
+  if (d.plclaim){ PL.addPid = d.plclaim; PL.claimMode = true; plMsg(""); plRender(); var a = $("faAdd"); if (a && a.scrollIntoView) a.scrollIntoView({ block: "nearest" }); return; }
+  if (d.plclaimcancel){ var r = await SB.rpc("cancel_waiver_claim", { p_claim: d.plclaimcancel }); if (r.error) plMsg(r.error.message); else plMsg("Claim cancelled.", true); await plLoadRoster(); plRender(); return; }
 });
 
 /* ---- Start ---- */
