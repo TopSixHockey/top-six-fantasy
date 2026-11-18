@@ -103,7 +103,7 @@ td.on{background:rgba(255,255,255,.04)}
 #pool td,#poolHead th{white-space:nowrap}
 table.pt{min-width:640px}
 .nmh{cursor:help}.nmh:hover{text-decoration:underline dotted}
-td.pos{color:var(--ok)}td.neg{color:var(--bad)}td.fp{font-weight:700}
+td.pos{color:var(--ok)}td.neg{color:var(--bad)}td.pts{color:#ff9f43}td.fp{font-weight:700}
 .pl-top{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
 .pl-sub{display:flex;gap:6px;margin:0 0 14px;flex-wrap:wrap}
 .pl-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-bottom:12px}
@@ -398,7 +398,7 @@ function renderPool(){
     var p = x[0], why = x[1];
     var action = !user ? '<span class="why">Sign in</span>' : locked() ? '<span class="why">Team locked</span>' : why ? '<span class="why">' + esc(why) + '</span>' : '<button data-add="' + esc(p.id) + '">Add</button>';
     var cells = cols.map(function(c){
-      var v = statVal(p, c[0]), cls = "num" + (sortKey === c[0] ? " on" : "") + (c[0] === "pm" && v != null ? (v > 0 ? " pos" : v < 0 ? " neg" : "") : "") + (c[0] === "fp" ? " fp" : "");
+      var v = statVal(p, c[0]), cls = "num" + (sortKey === c[0] ? " on" : "") + (c[0] === "pm" && v != null ? (v > 0 ? " pos" : v < 0 ? " neg" : "") : "") + (c[0] === "fp" ? " fp" : "") + (c[0] === "pts" ? " pts" : "");
       return '<td class="' + cls + '">' + fmtStat(c[0], v) + '</td>';
     }).join("");
     return '<tr class="' + (why ? "dim" : "") + '"><td><span class="nmh" data-pid="' + esc(p.id) + '">' + esc(p.name) + '</span>' + (p.imp ? '<span class="tag imp">IMP</span>' : '') + (p.dr ? '<span class="tag nhl">NHL</span>' : '') + '<span class="why" style="display:block">' + esc(p.team) + ' #' + esc(p.num) + '</span></td>' +
@@ -1212,7 +1212,7 @@ function plDraftList(lg, me, my){
     var why = canPick ? plWhy(lg, me.id, p) : "";
     var extra = p.g === "G" && PL.dpos !== "G" ? '<div class="dr-sub">W ' + num(p.s.wins) + ' &middot; SV% ' + (p.s.svp != null ? fmtStat("svp", p.s.svp) : "-") + ' &middot; GAA ' + (p.s.gaa != null ? fmtStat("gaa", p.s.gaa) : "-") + '</div>' : "";
     h += '<tr><td class="why">' + rk[p.id] + '</td><td class="pn"><span class="nmh" data-pid="' + esc(p.id) + '">' + esc(p.name) + '</span><span class="dr-sub"> ' + esc(p.pos) + ' &middot; ' + esc(p.team) + '</span>' + (lg.use_quotas ? (p.imp ? '<span class="dr-tag">IMP</span>' : "") + (p.dr ? '<span class="dr-tag">NHL</span>' : "") : "") + extra + '</td>';
-    cols.forEach(function(c){ h += '<td>' + fmtStat(c[0], statVal(p, c[0])) + '</td>'; });
+    cols.forEach(function(c){ h += '<td' + (c[0] === "pts" ? ' class="pts"' : '') + '>' + fmtStat(c[0], statVal(p, c[0])) + '</td>'; });
     h += '<td>' + (canPick ? '<button data-pldraft="' + esc(p.id) + '"' + (why ? ' disabled title="' + esc(why) + '"' : "") + '>Draft</button> ' : "") +
       (qset[p.id] ? '<button class="sec" data-pldqrm="' + esc(p.id) + '" title="Remove from queue">&minus;</button>' : '<button class="sec" data-pldq="' + esc(p.id) + '" title="Add to queue (auto-pick uses your queue first)">+</button>') + '</td></tr>';
   });
@@ -1402,7 +1402,7 @@ function plFaList(){
   var h = '<table><thead><tr><th>Rk</th><th data-plfsort="name">Player</th>' + cols.map(function(c){ return '<th data-plfsort="' + c[0] + '">' + c[1] + (PL.fsort === c[0] ? " &#9660;" : "") + '</th>'; }).join("") + '<th></th></tr></thead><tbody>';
   rows.slice(0, PL.fshown).forEach(function(p){
     var extra = p.g === "G" && PL.fpos !== "G" ? '<div class="dr-sub">W ' + num(p.s.wins) + ' &middot; SV% ' + (p.s.svp != null ? fmtStat("svp", p.s.svp) : "-") + ' &middot; GAA ' + (p.s.gaa != null ? fmtStat("gaa", p.s.gaa) : "-") + '</div>' : "";
-    h += '<tr><td class="why">' + rk[p.id] + '</td><td class="pn">' + plPlayerCell(p, lg) + extra + (wv[p.id] ? '<div class="dr-sub">On waivers until ' + esc(plWhenShort(wv[p.id].until)) + '</div>' : "") + '</td>' + cols.map(function(c){ return '<td>' + fmtStat(c[0], statVal(p, c[0])) + '</td>'; }).join("") + '<td>' + plAddBtn(p, wv, capped) + '</td></tr>';
+    h += '<tr><td class="why">' + rk[p.id] + '</td><td class="pn">' + plPlayerCell(p, lg) + extra + (wv[p.id] ? '<div class="dr-sub">On waivers until ' + esc(plWhenShort(wv[p.id].until)) + '</div>' : "") + '</td>' + cols.map(function(c){ return '<td' + (c[0] === "pts" ? ' class="pts"' : '') + '>' + fmtStat(c[0], statVal(p, c[0])) + '</td>'; }).join("") + '<td>' + plAddBtn(p, wv, capped) + '</td></tr>';
   });
   if (!rows.length) h += '<tr><td colspan="' + (cols.length + 3) + '" class="pl-empty">No free agents match.</td></tr>';
   h += '</tbody></table>' + (rows.length > PL.fshown ? '<div style="padding:8px;text-align:center"><button class="sec" data-plfmore="1">Show more</button></div>' : "");
