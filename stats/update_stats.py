@@ -345,6 +345,20 @@ def sb_get_players():
         start += 1000
 
 
+def sb_snapshot():
+    """After a stats update, record today's season fantasy points per player (powers the monthly leaders)."""
+    base = os.environ["SUPABASE_URL"].rstrip("/")
+    req = urllib.request.Request(base + "/rest/v1/rpc/snapshot_points", data=b"{}",
+                                 headers=sb_headers({}), method="POST")
+    try:
+        with urllib.request.urlopen(req, timeout=60) as r:
+            print("Snapshot saved for", r.read().decode().strip() or "?", "players")
+    except urllib.error.HTTPError as e:
+        print("Snapshot skipped: HTTP %s %s %s" % (e.code, e.reason, e.read().decode("utf-8", "replace")[:300]))
+    except Exception as e:
+        print("Snapshot skipped:", e)
+
+
 def sb_upsert_stats(rows):
     """Upsert in batches of rows that all have the same columns (so no column is ever blanked by accident).
     On failure, print the database's own error message."""
@@ -511,6 +525,7 @@ def cmd_update(dry):
         print("dry run: nothing written")
         return
     sb_upsert_stats(list(out.values()))
+    sb_snapshot()
     print("done: wrote %d stat rows" % len(out))
 
 
