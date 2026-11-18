@@ -1085,12 +1085,12 @@ function popHtml(k, n, nm) {
   var lab = g ? ["GP", "GAA", "SV%", "W", "L", "OTL", "SO"] : ["GP", "G", "A", "PTS", "+/-", "PIM"];
   var st = '<div class="pst">' + d.st.map(function (v, i) { return '<div><b>' + lab[i] + '</b><span>' + (!g && i === 4 && v > 0 ? "+" + v : v) + '</span></div>'; }).join("") + '</div>';
   return '<div class="ph"><span class="pn">' + nm + '</span><span class="pm">#' + n + ' · ' + d.pos + '</span>' + (d.imp ? '<span class="pi">Import</span>' : '') + (CAP[k] && CAP[k][n] ? '<span class="pi">' + (CAP[k][n] === "C" ? "Captain" : "Assistant Captain") + '</span>' : '') + '</div>' +
-    (function () { var q = String(nm).split(" "), e = injFor(k, [n, q.slice(0, -1).join(" "), q[q.length - 1]]); return e ? '<div class="pr"><i>Injury</i><span style="color:#ff7b7b;font-weight:700">\u271A ' + injEsc(e[3]) + ' · ' + injEsc(e[4]) + '</span></div>' : ''; })() + '<div class="pr"><i>Born</i>' + MON[+a[1] - 1] + ' ' + (+a[2]) + ', ' + a[0] + ' (' + ageOf(d.dob) + ')</div>' +
+    '<div class="pr"><i>Born</i>' + MON[+a[1] - 1] + ' ' + (+a[2]) + ', ' + a[0] + ' (' + ageOf(d.dob) + ')</div>' +
     '<div class="pr"><i>Size</i>' + d.ht + ' · ' + d.wt + ' lb</div>' +
     '<div class="pr"><i>From</i>' + d.home + '</div>' +
     (d.od ? '<div class="pr"><i>' + d.od[0] + '</i>' + d.od[1] + '</div>' : '') +
     (d.nhl === "Undrafted" ? '' : '<div class="pr"><i class="tp">NHL Draft</i><span>' + d.nhl.replace("Top Prospect", '<b class="tp">Top Prospect</b>') + '</span></div>') +
-    '<div class="pt">2026-27 regular season</div>' + st;
+    (function () { var q = String(nm).split(" "), e = injFor(k, [n, q.slice(0, -1).join(" "), q[q.length - 1]]); return e ? '<div class="pr"><i>Injury</i><span style="color:#ff7b7b;font-weight:700">' + injEsc(e[3]) + ' · ' + injEsc(e[4]) + '</span></div>' : ''; })() + '<div class="pt">2026-27 regular season</div>' + st;
 }
 var pop = document.createElement("div"); pop.id = "pop"; document.body.appendChild(pop);
 var popFor = null;
