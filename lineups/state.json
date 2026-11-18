@@ -3,19 +3,19 @@
  "inj:whl": 1794973042.196959,
  "whl:1023305:away": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "whl:1023305:home": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "whl:1023306:away": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "whl:1023306:home": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "whl:1023307:away": {
   "done": true,
@@ -27,18 +27,18 @@
  },
  "whl:1023308:away": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "whl:1023308:home": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "whl:1023309:away": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "whl:1023309:home": {
   "done": true,
-  "flipped": false
+  "flipped": true
  }
 }
