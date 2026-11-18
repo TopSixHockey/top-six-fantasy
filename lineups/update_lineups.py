@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Automatic lineup updates for Top Six Hockey (OHL first).
+"""Automatic lineup updates for Top Six Hockey (OHL, WHL, QMJHL).
 
 Each run:
   1. Reads the league schedule (HockeyTech feed) and saves tomorrow's puck-drop
@@ -27,6 +27,8 @@ GIVE_UP_H = 6      # stop trying this many hours after puck drop
 LEAGUES = {
     "ohl": {"client": "ohl", "season": 88, "label": "OHL", "league_id": 1, "keys": None, "what": "sheet",
             "pdf": "https://cluster.leaguestat.com/game-lineups/ohl/{gid}/{code}_{date}.pdf"},
+    "qmjhl": {"client": "lhjmq", "season": 214, "label": "QMJHL", "league_id": 3, "keys": None, "what": "card", "combined": True,
+              "pdf": "https://cluster.leaguestat.com/game-lineups/lhjmq/{gid}/{vis}@{loc}_{date}.pdf"},
     "whl": {"client": "whl", "season": 295, "label": "WHL", "league_id": 2, "keys": None, "what": "card",
             "pdf": "https://cluster.leaguestat.com/game-lineups/whl/{gid}/{code}_{date}.pdf"},
 }
@@ -40,6 +42,15 @@ WHL_KEYS = {
  "Seattle": "whl_seattle", "Spokane": "whl_spokane", "Swift Current": "whl_swift",
  "Tri-City": "whl_tricity", "Vancouver": "whl_vancouver", "Victoria": "whl_victoria",
  "Wenatchee": "whl_wenatchee",
+}
+QMJHL_KEYS = {
+ "Baie-Comeau": "qmjhl_baiecomeau", "Blainville": "qmjhl_blainville", "Cape Breton": "qmjhl_capbreton",
+ "Charlottetown": "qmjhl_charlottetown", "Chicoutimi": "qmjhl_chicoutimi", "Drummondville": "qmjhl_drummondville",
+ "Gatineau": "qmjhl_gatineau", "Halifax": "qmjhl_halifax", "Moncton": "qmjhl_moncton",
+ "Newfoundland": "qmjhl_newfoundland", "Québec": "qmjhl_quebec", "Quebec": "qmjhl_quebec",
+ "Rimouski": "qmjhl_rimouski", "Rouyn": "qmjhl_rouyn", "Saint John": "qmjhl_saintjohn",
+ "Shawinigan": "qmjhl_shawinigan", "Sherbrooke": "qmjhl_sherbrooke", "Val-d": "qmjhl_valdor",
+ "Victoriaville": "qmjhl_victoriaville",
 }
 OHL_KEYS = {
  "Barrie": "barrie", "Brampton": "brampton", "Erie": "erie", "Flint": "flint",
@@ -64,7 +75,7 @@ def feed(client, view, **kw):
     return json.loads(t)["SiteKit"]
 
 def team_key(name, lg="ohl"):
-    for k, v in (WHL_KEYS if lg == "whl" else OHL_KEYS).items():
+    for k, v in {"whl": WHL_KEYS, "qmjhl": QMJHL_KEYS}.get(lg, OHL_KEYS).items():
         if k in name: return v
     return None
 
@@ -142,6 +153,68 @@ def build_entry(card, roster_prev=None):
     caps = {str(n): P[n][4] for n in P if P[n][4]}
     return {"F": F, "D": D, "G": G}, caps, set(P)
 
+# ------------------------------------------------- QMJHL combined game sheet
+def parse_qmjhl(text):
+    """The QMJHL posts one PDF per game with both rosters. -> {"vis": card, "loc": card}"""
+    lines = text.splitlines()
+    idx = {k: next((i for i, l in enumerate(lines) if l.strip() == k), None) for k in ("VIS", "LOC")}
+    end = next((i for i, l in enumerate(lines) if "OFFICIELS SUR GLACE" in l), len(lines))
+    out = {}
+    for key, name in (("VIS", "vis"), ("LOC", "loc")):
+        a = idx[key]
+        if a is None: continue
+        b = min([i for i in (idx["LOC"] if key == "VIS" else None, end) if i is not None and i > a] or [len(lines)])
+        sec = lines[a:b]
+        tc = next((l.index("Trio / Line 1") for l in sec if "Trio / Line 1" in l), None)
+        if tc is None: continue
+        players, order, goalies = {}, [], []
+        F, D = [], []
+        hdr_f = hdr_d = None
+        mode = None
+        right_txt = []
+        for l in sec:
+            left, right = l[:tc - 1], l[tc - 1:]
+            m = re.match(r"^\s*(GB|GK|\d{1,2})\s+(\d{1,2})\s+(.+?)\s*$", left)
+            if m:
+                chunks = re.split(r"\s{2,}", m.group(3).strip())
+                last, _, first = chunks[0].partition(",")
+                toks = " ".join(chunks[1:]).split()
+                mark = "C" if "C" in toks else ("A" if "A" in toks else None)
+                n = int(m.group(2))
+                players[n] = [first.strip(), last.strip(), "G" if m.group(1) in ("GB", "GK") else "S", False, mark]
+                order.append(n)
+            if re.search(r"AG / LW", l):
+                hdr_f = [l.index("AG / LW"), re.search(r"\sC\s", l[l.index("AG / LW"):]).start() + l.index("AG / LW") + 1, l.index("AD / RW")]; mode = "F"
+            elif re.search(r"DG / LD", l):
+                hdr_d = [l.index("DG / LD"), l.index("DD / RD")]; mode = "D"
+            mm = re.search(r"(Trio / Line \d|Def \d)(.*)$", right) if mode else None
+            if mm:
+                kind = mm.group(1)
+                rest = re.sub(r"#\s*\d+.*$", "", mm.group(2))
+                base = right.index(kind) + len(kind) + (tc - 1)
+                nums = [(base + x.start(), int(x.group())) for x in re.finditer(r"\d+", rest)]
+                hdr = hdr_f if kind.startswith("Trio") else hdr_d
+                if nums and hdr:
+                    row = [None] * len(hdr)
+                    for pos_, n in nums:
+                        row[min(range(len(hdr)), key=lambda k: abs(hdr[k] - pos_))] = n
+                    (F if kind.startswith("Trio") else D).append(row)
+            right_txt.append(right)
+        rt = "\n".join(right_txt)
+        cut = min([rt.find(k) for k in ("Retrait du 19e", "Scratches") if rt.find(k) >= 0] or [len(rt)])
+        head, tail = rt[:cut], rt[cut:]
+        starter = re.search(r"Partant[^#]*#\s*(\d+)", head, re.S)
+        if starter and int(starter.group(1)) in players: players[int(starter.group(1))][3] = True
+        scratch = [int(x) for x in re.findall(r"#(\d+)\s+\D", tail)]
+        lined = {n for row in F + D for n in row if n is not None}
+        gk = [n for n in order if players[n][2] == "G"]
+        keep = [n for n in order if n in lined or n in gk]
+        S = [[n, players[n][0], players[n][1]] for n in dict.fromkeys(scratch)
+             if n in players and n not in keep and players[n][2] != "G"]
+        card = {"players": {n: tuple(players[n]) for n in keep}, "order": keep, "F": F, "D": D, "scratch": S}
+        out[name] = card
+    return out
+
 def js(v):
     return json.dumps(v, ensure_ascii=False, separators=(",", ":"))
 
@@ -202,7 +275,7 @@ def main():
     today, tomorrow = now.date(), now.date() + datetime.timedelta(days=1)
     state = json.load(open(STATE)) if os.path.exists(STATE) else {}
     src = open(INDEX, encoding="utf-8").read()
-    sched_out, changed = {}, False
+    sched_out, changed, cache = {}, False, {}
     for lg, cfg in LEAGUES.items():
         try:
             games = feed(cfg["client"], "schedule", season_id=cfg["season"], team_id=0, league_id=cfg["league_id"])["Schedule"]
@@ -230,26 +303,39 @@ def main():
                     state[sk] = st; continue
                 due = start - datetime.timedelta(minutes=LEAD_MIN) <= now <= start + datetime.timedelta(hours=GIVE_UP_H)
                 if not due: continue
-                text = pdf_text(cfg["pdf"].format(gid=gid, code=code, date=g["date_played"]))
-                if not text: print("not posted yet:", tname, gid); continue
-                card = parse_card(text)
+                if cfg.get("combined"):
+                    if (lg, gid) not in cache:
+                        t = pdf_text(cfg["pdf"].format(gid=gid, vis=g["visiting_team_code"].upper(), loc=g["home_team_code"].upper(), date=g["date_played"]))
+                        cache[(lg, gid)] = parse_qmjhl(t) if t else None
+                    card = (cache[(lg, gid)] or {}).get("loc" if side == "home" else "vis")
+                    if not card: print("not posted yet:", tname, gid); continue
+                else:
+                    text = pdf_text(cfg["pdf"].format(gid=gid, code=code, date=g["date_played"]))
+                    if not text: print("not posted yet:", tname, gid); continue
+                    card = parse_card(text)
                 if len(card["players"]) < 12 or len(card["F"]) < 2:
                     print("could not parse card:", tname, gid); continue
                 ent, caps, nums = build_entry(card)
                 scr = []
                 try:
+                    if cfg.get("combined"): raise StopIteration
                     tid = g["home_team"] if side == "home" else g["visiting_team"]
                     ros = feed(cfg["client"], "roster", season_id=cfg["season"], team_id=tid)["Roster"]
                     scr = sorted([[int(r["tp_jersey_number"]), r["first_name"], r["last_name"]] for r in ros
                                   if r.get("active") == "1" and r.get("tp_jersey_number", "").isdigit()
                                   and int(r["tp_jersey_number"]) not in nums])
+                except StopIteration:
+                    scr = card["scratch"]
                 except Exception as e:
                     print("roster fetch failed", tname, e)
                 d = datetime.date.fromisoformat(g["date_played"])
                 label = "Last game" if final else "Tonight"
+                opp = opp.replace(", ", " ")
                 game = f"{label}: <b>{vsat} {opp}</b> · {fmt_date(d)}"
                 w = cfg["what"]
-                note = (f"Lines are from the {cfg['label']}’s official lineup {w} for the " +
+                if lg == "qmjhl":
+                    note = "Lines are from the QMJHL’s official lineup card for the game. Scratches are the players the card lists as out of the lineup (healthy scratches, injured or ill)."
+                else: note = (f"Lines are from the {cfg['label']}’s official lineup {w} for the " +
                         (f"{d.strftime('%b')} {d.day} game. " if lg == "ohl" else "game. ") +
                         f"The {w} doesn’t list scratches, so the scratch list is the players on the team’s roster "
                         f"who weren’t on the {w} (some may be injured or away).")
