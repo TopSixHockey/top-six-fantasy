@@ -890,6 +890,7 @@ async function plLoadLeague(){
   PL.names = {};
   if (ids.length){ var p = await SB.from("profiles").select("id,display_name").in("id", ids); (p.data || []).forEach(function(x){ PL.names[x.id] = x.display_name; }); }
   PL.week = plCurWeek(lg);
+  await plLoadRoster();
 }
 async function plOpen(){
   if (!user){ PL.mode = "list"; plRender(); return; }
@@ -911,6 +912,7 @@ function plRender(){
   else h += plLeagueHtml();
   box.innerHTML = h;
   plSyncTimers(); if ($("drBar")) plDraftUpdate(true);
+  if ($("faList")){ plFaList(); if ($("faPos")){ $("faPos").value = PL.fpos; $("faAge").value = PL.fage; } }
 }
 function plOpts(vals, sel){ return vals.map(function(v){ return '<option value="' + v + '"' + (String(v) === String(sel) ? " selected" : "") + '>' + v + '</option>'; }).join(""); }
 function plCreateHtml(){
@@ -936,10 +938,12 @@ function plLeagueHtml(){
   var stTxt = { setup: "Setting up", scheduled: "Schedule set", drafting: "Drafting", active: "In season", complete: "Complete" }[lg.status] || lg.status;
   var h = '<div class="pl-head"><h2>' + esc(lg.name) + '</h2><span class="why">' + esc(lg.chl_league) + ' &middot; ' + modeTxt + ' &middot; ' + lg.weeks + ' weeks from ' + plWeekStart(lg, 1) + ' &middot; ' + esc(stTxt) + '</span></div>';
   h += '<div class="pl-sub">';
-  [["matchups","Matchups"],["standings","Standings"],["trans","Transactions"],["draft","Draft" + (lg.status === "drafting" ? " (LIVE)" : "")],["league","League"]].forEach(function(s){ h += '<button class="pill' + (PL.sub === s[0] ? " on" : "") + '" data-plsub="' + s[0] + '">' + s[1] + '</button>'; });
+  [["matchups","Matchups"],["myteam","My Team"],["players","Players"],["standings","Standings"],["trans","Transactions"],["draft","Draft" + (lg.status === "drafting" ? " (LIVE)" : "")],["league","League"]].forEach(function(s){ h += '<button class="pill' + (PL.sub === s[0] ? " on" : "") + '" data-plsub="' + s[0] + '">' + s[1] + '</button>'; });
   h += '</div>';
   if (PL.sub === "standings") return h + plStandingsHtml(lg);
   if (PL.sub === "trans") return h + plTransHtml(lg);
+  if (PL.sub === "myteam") return h + plMyTeamHtml(lg, me);
+  if (PL.sub === "players") return h + plPlayersHtml(lg, me);
   if (PL.sub === "draft") return h + plDraftHtml(lg, me);
   if (PL.sub === "league") return h + plManageHtml(lg, me);
   return h + plMatchupsHtml(lg, me);
@@ -987,7 +991,7 @@ function plTransHtml(lg){
   if (!rows.length) return h + '<div class="pl-empty">There are no transactions to display.</div>';
   var kinds = { add: "Added", drop: "Dropped", draft: "Drafted", trade: "Trade", waiver: "Waiver" };
   h += '<table><thead><tr><th>Date</th><th>Team</th><th>Move</th><th>Player</th></tr></thead><tbody>';
-  rows.forEach(function(x){ var p = BYID[x.player_id]; h += '<tr><td>' + esc(String(x.created_at).slice(0, 10)) + '</td><td>' + plTeamName(x.team_id) + '</td><td>' + (kinds[x.kind] || x.kind) + '</td><td>' + esc(p ? p.name : (x.note || "")) + '</td></tr>'; });
+  rows.forEach(function(x){ var p = BYID[x.player_id]; h += '<tr><td>' + esc(String(x.created_at).slice(0, 10)) + '</td><td>' + plTeamName(x.team_id) + '</td><td>' + (kinds[x.kind] || x.kind) + '</td><td>' + esc(p ? p.name : "") + (x.note ? ' <span class="why">' + esc(x.note) + '</span>' : "") + '</td></tr>'; });
   return h + '</tbody></table>';
 }
 function plManageHtml(lg, me){
@@ -1324,6 +1328,102 @@ $("plView").addEventListener("input", function(e){
   if (id === "drQ"){ PL.dq = e.target.value; PL.dshown = 60; plDraftUpdate(true); }
   else if (id === "drPos"){ PL.dpos = e.target.value; PL.dshown = 60; if (PL.dpos === "G" && PL.dsort !== "name" && !{ gp:1, wins:1, so:1, svp:1, gaa:1, fp:1 }[PL.dsort]) PL.dsort = "fp"; plDraftUpdate(true); }
   else if (id === "drAge"){ PL.dage = e.target.value; PL.dshown = 60; plDraftUpdate(true); }
+});
+
+/* ---- Private leagues: My team and free agents (add / drop) ---- */
+PL.roster = []; PL.fq = ""; PL.fpos = ""; PL.fage = ""; PL.fsort = "fp"; PL.fshown = 60; PL.addPid = null; PL.dropPid = null;
+var AGELBL = { 2010: 16, 2009: 17, 2008: 18, 2007: 19, 2006: 20 };
+function plEff(lg){ var t = plDay(plToday()); return t < plDay(lg.start_date) ? 1 : Math.floor((t - plDay(lg.start_date)) / 7) + 2; }
+function plEffTxt(lg){ var e = plEff(lg); return e > lg.weeks ? "The season is over." : "Moves take effect Monday " + plWeekStart(lg, e) + " (Week " + e + "). A dropped player keeps scoring for you until then, and an added player starts scoring then."; }
+async function plLoadRoster(){ var lg = plLg(); if (!lg) return; var r = await SB.from("proster").select("*").eq("league_id", lg.id); PL.roster = r.data || []; }
+function plOwned(){ var m = {}; PL.roster.forEach(function(r){ if (r.to_week == null) m[r.player_id] = r.team_id; }); return m; }
+function plMyHold(me){ return PL.roster.filter(function(r){ return me && r.team_id === me.id && r.to_week == null; }); }
+function plPlayerCell(p, lg){ return '<span class="nmh" data-pid="' + esc(p.id) + '">' + esc(p.name) + '</span><span class="dr-sub"> ' + esc(p.pos) + ' &middot; ' + esc(p.team) + ' &middot; ' + (AGELBL[p.ay] || "") + '</span>' + (lg.use_quotas ? (p.imp ? '<span class="dr-tag">IMP</span>' : "") + (p.dr ? '<span class="dr-tag">NHL</span>' : "") : ""); }
+function plMyTeamHtml(lg, me){
+  if (lg.status !== "active") return '<div class="pl-note">Rosters open once the draft is finished.</div>';
+  var hold = plMyHold(me), eff = plEff(lg), started = plStarted(lg), h = '<div class="pl-note">' + esc(plEffTxt(lg)) + '</div>';
+  if (PL.dropPid && BYID[PL.dropPid]) h += '<div class="pl-note" style="color:var(--tx)">Drop <b>' + esc(BYID[PL.dropPid].name) + '</b>? <button class="danger" data-plmtyes="1">Yes, drop</button> <button class="sec" data-plmtcancel="1">Cancel</button></div>';
+  var leaving = PL.roster.filter(function(r){ return me && r.team_id === me.id && r.to_week === eff && started; });
+  [["F","Forwards",12],["D","Defence",6],["G","Goalies",2]].forEach(function(g){
+    var rows = hold.map(function(r){ return { r: r, p: BYID[r.player_id] }; }).filter(function(x){ return x.p && x.p.g === g[0]; }).sort(function(a, b){ return b.p.fp - a.p.fp; });
+    var cols = g[0] === "G" ? COLS_G : [["gp","GP"],["g","G"],["a","A"],["pts","P"],["pm","+/-"],["fp","FPts"]];
+    h += '<h2 style="margin:14px 0 6px">' + g[1] + ' <span class="why">' + rows.length + '/' + g[2] + '</span></h2><div class="dr-scroll" style="max-height:none"><table><thead><tr><th>Player</th>' + cols.map(function(c){ return '<th>' + c[1] + '</th>'; }).join("") + '<th></th></tr></thead><tbody>';
+    rows.forEach(function(x){
+      h += '<tr><td class="pn">' + plPlayerCell(x.p, lg) + (started && x.r.from_week === eff ? ' <span class="dr-tag">joins Week ' + eff + '</span>' : "") + '</td>' + cols.map(function(c){ return '<td>' + fmtStat(c[0], statVal(x.p, c[0])) + '</td>'; }).join("") + '<td><button class="sec" data-plmtdrop="' + esc(x.p.id) + '">Drop</button></td></tr>';
+    });
+    if (!rows.length) h += '<tr><td colspan="' + (cols.length + 2) + '" class="why">No ' + g[1].toLowerCase() + '. Add one from the Players tab.</td></tr>';
+    h += '</tbody></table></div>';
+  });
+  if (leaving.length) h += '<div class="why" style="margin-top:12px">Leaving after this week (still scoring until then): ' + leaving.map(function(r){ return BYID[r.player_id] ? esc(BYID[r.player_id].name) : ""; }).join(", ") + '</div>';
+  return h;
+}
+function plPlayersHtml(lg, me){
+  if (lg.status !== "active") return '<div class="pl-note">Free agents open once the draft is finished.</div>';
+  var h = '<div class="pl-note">' + esc(plEffTxt(lg)) + ' Your roster stays at 12 forwards, 6 defence and 2 goalies' + (lg.use_quotas ? ', and the age, import and NHL-draft quotas still apply' : "") + ', so an add needs a drop at the same position unless you have an open spot.</div>';
+  h += '<div id="faAdd">' + plAddPanel(lg, me) + '</div>';
+  h += '<div class="dr-filters"><input type="search" id="faQ" placeholder="Search player or team" value="' + esc(PL.fq) + '">' +
+    '<select id="faPos"><option value="">All positions</option><option value="F">Forwards</option><option value="D">Defence</option><option value="G">Goalies</option></select>' +
+    '<select id="faAge"><option value="">All ages</option><option value="2010">16</option><option value="2009">17</option><option value="2008">18</option><option value="2007">19</option><option value="2006">20</option></select></div>' +
+    '<div class="dr-scroll" id="faList"></div>';
+  return h;
+}
+function plAddPanel(lg, me){
+  var p = PL.addPid ? BYID[PL.addPid] : null; if (!p || !me) return "";
+  var hold = plMyHold(me), same = hold.map(function(r){ return BYID[r.player_id]; }).filter(function(q){ return q && q.g === p.g; });
+  var cap = { F: 12, D: 6, G: 2 }[p.g], h = '<div class="pl-note" style="color:var(--tx)">Adding <b>' + esc(p.name) + '</b> (' + esc(p.pos) + '). ';
+  if (same.length >= cap) h += 'Your ' + (p.g === "F" ? "forward" : p.g === "D" ? "defence" : "goalie") + ' spots are full, so choose who to drop:<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">';
+  else h += 'You have an open spot. You can add without dropping, or swap someone out:<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><button data-pladdgo="">Add (no drop)</button>';
+  same.sort(function(a, b){ return a.fp - b.fp; }).forEach(function(q){ h += '<button class="sec" data-pladdgo="' + esc(q.id) + '">Drop ' + esc(q.name) + ' (' + q.fp.toFixed(1) + ')</button>'; });
+  return h + '</div><div style="margin-top:8px"><button class="sec" data-pladdcancel="1">Cancel</button></div></div>';
+}
+function plFaList(){
+  var lg = plLg(), me = plMine(), box = $("faList"); if (!lg || !box) return;
+  var owned = plOwned(), s = PL.fq.trim().toLowerCase(), rk = {}, rn = 0;
+  POOL.forEach(function(p){ if (p.lgn === lg.chl_league) rk[p.id] = ++rn; });
+  var rows = POOL.filter(function(p){
+    if (p.lgn !== lg.chl_league || owned[p.id]) return false;
+    if (PL.fpos && p.g !== PL.fpos) return false;
+    if (PL.fage && String(p.ay) !== PL.fage) return false;
+    if (s && (p.name + " " + p.team).toLowerCase().indexOf(s) < 0) return false;
+    return true;
+  });
+  var key = PL.fsort;
+  rows = rows.slice().sort(function(a, b){ var x = key === "name" ? a.name : statVal(a, key), y = key === "name" ? b.name : statVal(b, key); if (key === "name") return x.localeCompare(y); if (x == null && y == null) return 0; if (x == null) return 1; if (y == null) return -1; return (key === "gaa" ? x - y : y - x) || (b.fp - a.fp); });
+  var cols = PL.fpos === "G" ? COLS_G : [["gp","GP"],["g","G"],["a","A"],["pts","P"],["pm","+/-"],["fp","FPts"]];
+  var h = '<table><thead><tr><th>Rk</th><th data-plfsort="name">Player</th>' + cols.map(function(c){ return '<th data-plfsort="' + c[0] + '">' + c[1] + (PL.fsort === c[0] ? " &#9660;" : "") + '</th>'; }).join("") + '<th></th></tr></thead><tbody>';
+  rows.slice(0, PL.fshown).forEach(function(p){
+    var extra = p.g === "G" && PL.fpos !== "G" ? '<div class="dr-sub">W ' + num(p.s.wins) + ' &middot; SV% ' + (p.s.svp != null ? fmtStat("svp", p.s.svp) : "-") + ' &middot; GAA ' + (p.s.gaa != null ? fmtStat("gaa", p.s.gaa) : "-") + '</div>' : "";
+    h += '<tr><td class="why">' + rk[p.id] + '</td><td class="pn">' + plPlayerCell(p, lg) + extra + '</td>' + cols.map(function(c){ return '<td>' + fmtStat(c[0], statVal(p, c[0])) + '</td>'; }).join("") + '<td><button data-pladd="' + esc(p.id) + '">Add</button></td></tr>';
+  });
+  if (!rows.length) h += '<tr><td colspan="' + (cols.length + 3) + '" class="pl-empty">No free agents match.</td></tr>';
+  h += '</tbody></table>' + (rows.length > PL.fshown ? '<div style="padding:8px;text-align:center"><button class="sec" data-plfmore="1">Show more</button></div>' : "");
+  box.innerHTML = h;
+}
+async function plMove(add, drop){
+  var lg = plLg(); if (!lg) return;
+  var r = await SB.rpc("pl_add_drop", { p_league: lg.id, p_add: add || null, p_drop: drop || null });
+  PL.addPid = null; PL.dropPid = null;
+  if (r.error) plMsg(r.error.message); else plMsg("Done. " + plEffTxt(lg), true);
+  await plLoadLeague(); plRender();
+}
+$("plView").addEventListener("click", async function(e){
+  var t = e.target.closest ? e.target.closest("button, th[data-plfsort]") : null; if (!t || t.disabled) return;
+  var d = t.dataset, lg = plLg();
+  if (d.plsub === "myteam" || d.plsub === "players"){ PL.addPid = null; PL.dropPid = null; await plLoadRoster(); plRender(); return; }
+  if (d.plmtdrop){ PL.dropPid = d.plmtdrop; plMsg(""); plRender(); return; }
+  if (d.plmtcancel){ PL.dropPid = null; plRender(); return; }
+  if (d.plmtyes){ await plMove(null, PL.dropPid); return; }
+  if (d.pladd !== undefined){ PL.addPid = d.pladd; plMsg(""); plRender(); var a = $("faAdd"); if (a && a.scrollIntoView) a.scrollIntoView({ block: "nearest" }); return; }
+  if (d.pladdcancel){ PL.addPid = null; plRender(); return; }
+  if (d.pladdgo !== undefined){ await plMove(PL.addPid, d.pladdgo); return; }
+  if (d.plfsort){ PL.fsort = d.plfsort; PL.fshown = 60; plFaList(); return; }
+  if (d.plfmore){ PL.fshown += 60; plFaList(); return; }
+});
+$("plView").addEventListener("input", function(e){
+  var id = e.target.id;
+  if (id === "faQ"){ PL.fq = e.target.value; PL.fshown = 60; plFaList(); }
+  else if (id === "faPos"){ PL.fpos = e.target.value; PL.fshown = 60; if (PL.fpos === "G" && PL.fsort !== "name" && !{ gp:1, wins:1, so:1, svp:1, gaa:1, fp:1 }[PL.fsort]) PL.fsort = "fp"; plFaList(); }
+  else if (id === "faAge"){ PL.fage = e.target.value; PL.fshown = 60; plFaList(); }
 });
 
 /* ---- Start ---- */
