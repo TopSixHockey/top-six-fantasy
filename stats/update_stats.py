@@ -24,6 +24,7 @@ import sys
 import unicodedata
 import urllib.parse
 import urllib.request
+from zoneinfo import ZoneInfo
 
 # Public client key that the league websites themselves use for their stats widgets.
 HT_KEY = "f1aa699db3d81487"
@@ -525,7 +526,13 @@ def cmd_update(dry):
         print("dry run: nothing written")
         return
     sb_upsert_stats(list(out.values()))
-    sb_snapshot()
+    # Only the overnight (3 AM Eastern) run saves the daily snapshot: it is the start-of-day baseline the leagues
+    # score weeks from. The 5 PM and 10 PM runs just refresh player_stats; league scores read those live.
+    hour = datetime.datetime.now(ZoneInfo("America/Toronto")).hour
+    if hour < 9 or os.environ.get("FORCE_SNAPSHOT"):
+        sb_snapshot()
+    else:
+        print("Snapshot skipped: only the overnight run saves the daily snapshot (Eastern hour %d)" % hour)
     print("done: wrote %d stat rows" % len(out))
 
 
