@@ -206,10 +206,11 @@ def parse_qmjhl(text):
         starter = re.search(r"Partant[^#]*#\s*(\d+)", head, re.S)
         if starter and int(starter.group(1)) in players: players[int(starter.group(1))][3] = True
         scratch = [int(x) for x in re.findall(r"#(\d+)\s+\D", tail)]
+        sick = {int(m.group(1)) for m in re.finditer(r"#(\d+)\s+[^#(]*?\(\s*B\s*/\s*I\s*\)", tail)}
         lined = {n for row in F + D for n in row if n is not None}
         gk = [n for n in order if players[n][2] == "G"]
         keep = [n for n in order if n in lined or n in gk]
-        S = [[n, players[n][0], players[n][1]] for n in dict.fromkeys(scratch)
+        S = [[n, players[n][0], players[n][1]] + (["I"] if n in sick else []) for n in dict.fromkeys(scratch)
              if n in players and n not in keep and players[n][2] != "G"]
         card = {"players": {n: tuple(players[n]) for n in keep}, "order": keep, "F": F, "D": D, "scratch": S}
         out[name] = card
