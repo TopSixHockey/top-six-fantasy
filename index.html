@@ -1085,7 +1085,7 @@ function popHtml(k, n, nm) {
   var lab = g ? ["GP", "GAA", "SV%", "W", "L", "OTL", "SO"] : ["GP", "G", "A", "PTS", "+/-", "PIM"];
   var st = '<div class="pst">' + d.st.map(function (v, i) { return '<div><b>' + lab[i] + '</b><span>' + (!g && i === 4 && v > 0 ? "+" + v : v) + '</span></div>'; }).join("") + '</div>';
   return '<div class="ph"><span class="pn">' + nm + '</span><span class="pm">#' + n + ' · ' + d.pos + '</span>' + (d.imp ? '<span class="pi">Import</span>' : '') + (CAP[k] && CAP[k][n] ? '<span class="pi">' + (CAP[k][n] === "C" ? "Captain" : "Assistant Captain") + '</span>' : '') + '</div>' +
-    '<div class="pr"><i>Born</i>' + MON[+a[1] - 1] + ' ' + (+a[2]) + ', ' + a[0] + ' (' + ageOf(d.dob) + ')</div>' +
+    (function () { var q = String(nm).split(" "), e = injFor(k, [n, q.slice(0, -1).join(" "), q[q.length - 1]]); return e ? '<div class="pr"><i>Injury</i><span style="color:#ff7b7b;font-weight:700">\u271A ' + injEsc(e[3]) + ' · ' + injEsc(e[4]) + '</span></div>' : ''; })() + '<div class="pr"><i>Born</i>' + MON[+a[1] - 1] + ' ' + (+a[2]) + ', ' + a[0] + ' (' + ageOf(d.dob) + ')</div>' +
     '<div class="pr"><i>Size</i>' + d.ht + ' · ' + d.wt + ' lb</div>' +
     '<div class="pr"><i>From</i>' + d.home + '</div>' +
     (d.od ? '<div class="pr"><i>' + d.od[0] + '</i>' + d.od[1] + '</div>' : '') +
@@ -1161,7 +1161,7 @@ function render(k) {
   if (d) {
     document.getElementById("game").innerHTML = d.game;
     document.getElementById("note").textContent = d.note + " Updated " + d.updated + ".";
-    out.innerHTML = section("Forwards", ["LW", "C", "RW"], d.F, c) + section("Defence", ["LD", "RD"], d.D, c) + section("Goalies", ["Starter", "Backup"], [d.G], c) + scratches(d.S, c) + injArea(k);
+    out.innerHTML = section("Forwards", ["LW", "C", "RW"], d.F, c) + section("Defence", ["LD", "RD"], d.D, c) + section("Goalies", ["Starter", "Backup"], [d.G], c) + scratches(d.S, c);
   } else {
     document.getElementById("game").textContent = "";
     document.getElementById("note").textContent = "";
