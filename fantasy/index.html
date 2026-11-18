@@ -888,7 +888,7 @@ function plCreateHtml(){
     '<label>League name<input id="plcName" maxlength="40" placeholder="e.g. The Boys"></label>' +
     '<label>Your team name<input id="plcTeam" maxlength="40" placeholder="e.g. Top Shelf"></label>' +
     '<label>Junior league<select id="plcChl"><option>OHL</option><option>WHL</option><option>QMJHL</option></select></label>' +
-    '<label>Teams<select id="plcMax">' + plOpts([4,6,8,10,12,14,16], 10) + '</select></label>' +
+    '<label>Teams<select id="plcMax">' + plOpts([8,10,12,14,16], 10) + '</select></label>' +
     '<label>Scoring<select id="plcMode"><option value="points">Total fantasy points</option><option value="categories">Categories (G, A, +/-, SOG, PIM, W, SO)</option></select></label>' +
     '<label>Week 1 starts (a Monday)<input id="plcStart" type="date" value="' + plNextMonday() + '"></label>' +
     '<label>Weeks in season<select id="plcWeeks">' + plOpts([4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20], 10) + '</select></label></div>' +
@@ -974,13 +974,13 @@ function plManageHtml(lg, me){
     h += '<h2 style="margin-top:18px">League settings</h2>';
     if (setup){
       h += '<div class="pl-form"><label>League name<input id="plsName" maxlength="40" value="' + esc(lg.name) + '"></label>' +
-        '<label>Teams<select id="plsMax">' + plOpts([4,6,8,10,12,14,16], lg.max_teams) + '</select></label>' +
+        '<label>Teams<select id="plsMax">' + plOpts([8,10,12,14,16], lg.max_teams) + '</select></label>' +
         '<label>Scoring<select id="plsMode"><option value="points"' + (lg.scoring_mode === "points" ? " selected" : "") + '>Total fantasy points</option><option value="categories"' + (lg.scoring_mode === "categories" ? " selected" : "") + '>Categories</option></select></label>' +
         '<label>Week 1 starts (a Monday)<input id="plsStart" type="date" value="' + esc(lg.start_date) + '"></label>' +
         '<label>Weeks<select id="plsWeeks">' + plOpts([4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20], lg.weeks) + '</select></label></div>' +
         '<div class="row"><button class="sec" data-plact="save">Save settings</button></div>' +
-        '<h2 style="margin-top:18px">Set the schedule</h2><div class="why" style="margin-bottom:8px">Needs at least 4 teams. This closes the league to new teams and draws the weekly matchups at random. You can reopen it until the draft starts.</div>' +
-        '<div class="row" id="plSchedRow"><button data-plact="sched"' + (PL.teams.length < 4 ? " disabled" : "") + '>Set schedule</button></div>';
+        '<h2 style="margin-top:18px">Set the schedule</h2><div class="why" style="margin-bottom:8px">Needs at least 8 teams. This closes the league to new teams and draws the weekly matchups at random. You can reopen it until the draft starts.</div>' +
+        '<div class="row" id="plSchedRow"><button data-plact="sched"' + (PL.teams.length < 8 ? " disabled" : "") + '>Set schedule</button></div>';
     } else {
       h += '<div class="why" style="margin-bottom:8px">Settings are locked now that the schedule is set.</div>';
       if (lg.status === "scheduled") h += '<div class="row"><button class="sec" data-plact="reopen">Reopen league (clears the schedule)</button></div>';
