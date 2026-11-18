@@ -127,7 +127,7 @@ small.note{display:block;color:var(--mute);margin-top:10px}
       <thead><tr><th>Player</th><th>Pos</th><th>Age</th><th>Fantasy pts</th><th></th></tr></thead>
       <tbody id="pool"><tr><td colspan="5" class="why">Loading players…</td></tr></tbody>
     </table></div>
-    <small class="note">Fantasy points shown here are season to date. Once your team is locked, only points earned after that count toward the leaderboard.</small>
+    <small class="note">Fantasy points shown here are season to date. On the leaderboard, only points from the contest start date count (or from when you lock your team, if that is later).</small>
   </section>
 
   <section class="card">
@@ -145,6 +145,7 @@ small.note{display:block;color:var(--mute);margin-top:10px}
       <div id="leagueBar"></div>
       <div id="teamDetail">
       <div class="row"><input id="tn" placeholder="Team name" maxlength="40" style="flex:1"></div>
+      <div id="contestBar"></div>
       <div id="banner"></div>
       <div class="rules" id="rules"></div>
       <div class="total"><span class="why">Team total (season to date)</span><big id="tot">0.0</big></div>
@@ -204,6 +205,12 @@ function num(v){ var n = Number(v); return isNaN(n) ? 0 : n; }
 
 var SB = (window.supabase && window.supabase.createClient) ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
 var POOL = [], BYID = {}, user = null, entry = null, roster = [];
+var CONTESTS = {};   // league -> { starts_on, tentative, label, note }
+function ymd(s){ var a = String(s).split("-"); return new Date(+a[0], +a[1] - 1, +a[2]); }
+function startTxt(l){ var c = CONTESTS[l]; return c ? ymd(c.starts_on).toLocaleDateString("en-CA", { month: "long", day: "numeric", year: "numeric" }) : ""; }
+function contestLine(l){ var c = CONTESTS[l]; return c ? (c.label || "Contest") + " starts " + startTxt(l) + (c.note ? " · " + c.note : "") : ""; }
+function notStarted(l){ var c = CONTESTS[l]; return !!c && new Date() < ymd(c.starts_on); }
+async function loadContests(){ try { var r = await SB.from("contests").select("*"); if (!r.error) r.data.forEach(function(c){ CONTESTS[c.league] = c; }); } catch (e) {} }
 var entries = {}, active = null, picking = false, pendingPick = null;   // entries: league -> this user's team in that league
 
 function fpts(p){
@@ -301,6 +308,8 @@ function renderRoster(){
   r.push('<div class="rule ' + (c.imp > RULES.maxImports ? "over" : "") + '"><span>Imports (max ' + RULES.maxImports + ')</span><b>' + c.imp + '</b></div>');
   r.push('<div class="rule ' + (c.dr > RULES.maxDrafted ? "over" : "") + '"><span>NHL drafted (max ' + RULES.maxDrafted + ')</span><b>' + c.dr + '</b></div>');
   $("rules").innerHTML = r.join("");
+  var cl = contestLine(entry.league);
+  $("contestBar").innerHTML = cl ? '<div class="banner lock">' + esc(cl) + '. ' + (notStarted(entry.league) ? 'Everyone starts at 0.0 on that date. ' : '') + 'Only points from the start date count, or from when you lock if that is later.</div>' : "";
   var need = RULES.F + RULES.D + RULES.G, done = roster.length === need;
   $("banner").innerHTML = lk ? '<div class="banner lock">Team locked on ' + esc(new Date(entry.locked_at).toLocaleDateString()) + '. It can\'t be changed.</div>'
     : done ? '<div class="banner">Roster complete. Lock it in to enter the leaderboard.</div>'
@@ -360,7 +369,7 @@ function renderLeagueBar(){
     html += '<div class="lgbox"><h3>Choose your league</h3><div class="why">Each league is its own fantasy game. Your team can only use players from the league you pick, and the choice can\'t be changed afterwards.</div>';
     open.forEach(function(l){
       var sure = pendingPick === l;
-      html += '<div class="lgrow"><div><b>' + l + '</b><span class="why">' + Object.keys(info.t[l]).length + ' teams · ' + info.n[l] + ' players</span></div>' +
+      html += '<div class="lgrow"><div><b>' + l + '</b><span class="why">' + Object.keys(info.t[l]).length + ' teams · ' + info.n[l] + ' players</span><span class="why">' + esc(contestLine(l)) + '</span></div>' +
         (sure ? '<div><span class="why" style="display:inline">Start your ' + l + ' team?</span> <button data-confirmpick="' + l + '">Yes</button> <button class="sec" data-cancelpick="1">No</button></div>'
               : '<button data-pick="' + l + '">Play in the ' + l + '</button>') + '</div>';
     });
@@ -468,7 +477,7 @@ async function loadLeaderboard(){
       return '<tr><td>' + (i + 1) + '</td><td>' + esc(x.name) + '</td><td>' + esc(x.team) + ' <span class="tag">' + esc(x.league) + '</span></td><td>' + esc(x.pos_group) + '</td><td>' + num(x.points).toFixed(1) + '</td></tr>';
     }).join("") : '<tr><td colspan="5" class="why">Monthly tracking starts with the first daily snapshot. Check back after the next stats update.</td></tr>';
   } else {
-    $("lbNote").textContent = "Points earned since each team was locked. Only locked " + lbLeague + " teams appear.";
+    $("lbNote").textContent = (CONTESTS[lbLeague] ? contestLine(lbLeague) + ". " + (notStarted(lbLeague) ? "Everyone is at 0.0 until then. " : "") : "") + "Points count from the start date, or from when a team was locked if that is later. Only locked " + lbLeague + " teams appear.";
     r = await SB.from("leaderboard").select("*").eq("league", lbLeague).limit(200);
   }
   if (r.error){ $("lb").innerHTML = '<tr><td colspan="4" class="why">' + esc(r.error.message) + '</td></tr>'; return; }
@@ -694,6 +703,7 @@ $("luReset").addEventListener("click", function(){
 /* ---- Start ---- */
 (async function(){
   if (!SB){ $("pool").innerHTML = '<tr><td colspan="5" class="why">Could not load the database library. Check your connection and refresh.</td></tr>'; return; }
+  await loadContests();
   try { await loadPool(); } catch (e){ $("pool").innerHTML = '<tr><td colspan="5" class="why">Could not load players: ' + esc(e.message || e) + '</td></tr>'; return; }
   var lastId = "__none__";
   SB.auth.onAuthStateChange(function(ev, session){
