@@ -250,11 +250,11 @@ def update_cap(src, key, caps):
     return src[:i] + js(obj) + src[i + end:]
 
 # ------------------------------------------------------------ injury reports
-INJ_URL = {"ohl": "https://chl.ca/ohl/ohl-weekly-report/"}
-INJ_EVERY_H = 3     # re-read the weekly report at most every 3 hours
+INJ_URL = {"ohl": "https://chl.ca/ohl/ohl-weekly-report/", "whl": "https://chl.ca/whl/whl-weekly-report/"}
+INJ_EVERY_H = 3     # re-read the weekly reports at most every 3 hours
 
 def parse_injuries_html(html, lg="ohl"):
-    """Weekly-report page -> (as-of text, {team key: [[first,last,pos,injury,status],..]}).
+    """OHL weekly-report page -> (as-of text, {team key: [[first,last,pos,injury,status],..]}).
     Day-to-day players are left out: only week-to-week or longer counts as injured."""
     import html as H
     html = re.sub(r"<!--.*?-->", "", html, flags=re.S)
@@ -281,6 +281,49 @@ def parse_injuries_html(html, lg="ohl"):
         out.setdefault(key, []).append([first, last, f[1], f[3], status])
     return m.group(1), out
 
+WHL_SECTION = re.compile(r"^\s*(?:(\S.*?)\s{2,})?(Injuries|Injury|Returns?|Deletions?|Additions?|Suspensions?|Changes?)\s+(#.*)?$")
+WHL_ROW = re.compile(r"#(\S+)\s+(.+?),\s*(G|D|F|C|LW|RW),\s*([^,]+),\s*([A-Za-z\- ]+?)\s*$")
+
+def parse_injuries_whl(text):
+    """WHL weekly-report PDF text -> (as-of text, {team key: [[first,last,pos,injury,status,num],..]})."""
+    m = re.search(r"([A-Z][a-z]+ \d{1,2}, \d{4})", text)
+    asof = m.group(1) if m else ""
+    out, key, in_inj = {}, None, False
+    for ln in text.splitlines():
+        if not ln.strip() or "WHL Weekly Report" in ln: continue
+        sec = WHL_SECTION.match(ln)
+        if sec:
+            if sec.group(1):
+                k = team_key(sec.group(1), "whl")
+                if k: key = k
+            in_inj = sec.group(2) in ("Injuries", "Injury")
+            body = sec.group(3)
+        else:
+            if ln[:1] != " ":                       # a new team's name column
+                k = team_key(re.split(r"\s{2,}", ln.strip())[0], "whl")
+                if k: key, in_inj = k, False
+            body = ln
+        if not (key and in_inj and body): continue
+        r = WHL_ROW.search(body)
+        if not r: continue
+        status = r.group(5).strip().lower()
+        if "day-to-day" in status: continue
+        first, _, last = r.group(2).partition(" ")
+        num = int(r.group(1)) if r.group(1).isdigit() else None
+        out.setdefault(key, []).append([first, last, r.group(3), r.group(4).strip().capitalize(), "-".join("to" if w == "to" else w.capitalize() for w in status.split("-")), num])
+    return asof, out
+
+def load_injuries(lg):
+    url = INJ_URL[lg]
+    if lg == "ohl":
+        return parse_injuries_html(get(url), lg) + (url,)
+    page = get(url)
+    m = re.search(r'href="(https://media\.chl\.ca/[^"]*Weekly-Report[^"]*\.pdf)"', page)
+    if not m: return "", {}, url
+    text = pdf_text(m.group(1))
+    if not text: return "", {}, url
+    return parse_injuries_whl(text) + (m.group(1),)
+
 def update_inj(src, lg, asof, data, url):
     i = src.index("var INJ = ") + len("var INJ = ")
     obj, end = json.JSONDecoder().raw_decode(src[i:])
@@ -291,11 +334,11 @@ def update_inj(src, lg, asof, data, url):
 
 def refresh_injuries(src, state, now):
     changed = False
-    for lg, url in INJ_URL.items():
+    for lg in INJ_URL:
         k = "inj:" + lg
         if now.timestamp() - state.get(k, 0) < INJ_EVERY_H * 3600: continue
         try:
-            asof, data = parse_injuries_html(get(url), lg)
+            asof, data, url = load_injuries(lg)
         except Exception as e:
             print("injury report fetch failed:", lg, e); continue
         if not data:
