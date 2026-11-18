@@ -104,13 +104,38 @@ td.on{background:rgba(255,255,255,.04)}
 table.pt{min-width:640px}
 .nmh{cursor:help}.nmh:hover{text-decoration:underline dotted}
 td.pos{color:var(--ok)}td.neg{color:var(--bad)}td.fp{font-weight:700}
+.pl-top{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.pl-sub{display:flex;gap:6px;margin:0 0 14px;flex-wrap:wrap}
+.pl-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-bottom:12px}
+.pl-form label{display:flex;flex-direction:column;gap:4px;color:var(--mute);font-size:12px}
+.pl-form input,.pl-form select{width:100%}
+.pl-head{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.pl-head h2{margin:0}
+.pl-code{font-family:ui-monospace,Menlo,Consolas,monospace;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:3px 9px;letter-spacing:.08em}
+.pl-wk{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+.pl-wk b{min-width:190px;text-align:center}
+.pl-mu{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px}
+.pl-m{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px}
+.pl-m .vs{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;text-align:center}
+.pl-m .nm{font-weight:700;overflow:hidden;text-overflow:ellipsis}
+.pl-m .sc{font-size:26px;font-weight:800}
+.pl-m .sc.w{color:var(--ok)}
+.pl-m .mg{font-size:11px;color:var(--mute)}
+.pl-m table{margin-top:8px;font-size:12px}
+.pl-m td,.pl-m th{padding:3px 6px;text-align:center}
+.pl-m td.w{color:var(--ok);font-weight:700}
+.pl-me{outline:2px solid var(--acc)}
+.pl-st td:nth-child(n+3),.pl-st th:nth-child(n+3){text-align:center}
+.pl-st td.t{font-weight:700}
+.pl-empty{text-align:center;color:var(--mute);padding:34px 10px}
+.pl-note{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:12px;color:var(--mute)}
 </style>
 </head>
 <body>
 <div id="pop"></div>
 <header>
   <h1>Top Six Fantasy</h1>
-  <p>Three public points leagues: OHL, WHL &amp; QMJHL</p>
+  <p>Public leagues for the OHL, WHL &amp; QMJHL, plus private head-to-head leagues</p>
   <a class="back" href="../">&larr; Line combinations</a>
   <span class="sp"></span>
   <span id="who" class="why"></span>
@@ -120,6 +145,7 @@ td.pos{color:var(--ok)}td.neg{color:var(--bad)}td.fp{font-weight:700}
   <div class="tab on" data-tab="build">Build my team</div>
   <div class="tab" data-tab="lineup">My lineup</div>
   <div class="tab" data-tab="lb">Leaderboard</div>
+  <div class="tab" data-tab="pl">Private leagues</div>
 </div>
 
 <main id="buildView">
@@ -192,6 +218,10 @@ td.pos{color:var(--ok)}td.neg{color:var(--bad)}td.fp{font-weight:700}
       <table><thead><tr><th>#</th><th>Player</th><th>Team</th><th>Pos</th><th>Points</th></tr></thead><tbody id="lbp"></tbody></table>
     </div>
   </section>
+</main>
+
+<main id="plView" class="hide" style="grid-template-columns:1fr">
+  <section class="card" id="plBox"></section>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -546,6 +576,7 @@ async function applySession(session){
   $("who").textContent = user ? (user.user_metadata && user.user_metadata.display_name) || user.email : "";
   $("signout").classList.toggle("hide", !user);
   await loadEntries(); refresh();
+  if (typeof plOnAuth === "function") plOnAuth();
 }
 $("login").addEventListener("click", async function(){
   authMsg("");
@@ -586,6 +617,7 @@ document.addEventListener("click", function(e){
     $("buildView").classList.toggle("hide", d.tab !== "build");
     $("lbView").classList.toggle("hide", d.tab !== "lb");
     $("lineupView").classList.toggle("hide", d.tab !== "lineup");
+    $("plView").classList.toggle("hide", d.tab !== "pl"); if (d.tab === "pl") plOpen();
     lineupOpen = d.tab === "lineup"; if (lineupOpen) renderLineup();
     if (d.tab === "lb"){ if (!lbPicked && active) lbLeague = active; loadLeaderboard(); }
   }
@@ -755,6 +787,259 @@ $("luReset").addEventListener("click", function(){
   if (!entry) return;
   try { localStorage.removeItem(lineupKey()); } catch (e) {}
   delete lineups[lineupKey()]; selSlot = null; renderLineup();
+});
+
+/* ---- Private head-to-head leagues (phase 1: setup, schedule, matchups, standings) ---- */
+var PL = { leagues: [], cur: null, sub: "matchups", week: 1, tf: "all", teams: [], mu: [], scores: {}, trans: [], names: {}, mode: "list", msg: "", good: false };
+var PCATS = [["g","G"],["a","A"],["pm","+/-"],["shots","SOG"],["pim","PIM"],["wins","W"],["so","SO"]];
+function plToday(){ return new Date().toLocaleDateString("en-CA", { timeZone: "America/Toronto" }); }
+function plDay(s){ var p = String(s).split("-"); return Date.UTC(+p[0], +p[1] - 1, +p[2]) / 864e5; }
+function plWeekStart(lg, w){ var d = new Date((plDay(lg.start_date) + (w - 1) * 7) * 864e5); return d.toLocaleDateString("en-US", { timeZone: "UTC", month: "short", day: "numeric" }); }
+function plWeekEnd(lg, w){ var d = new Date((plDay(lg.start_date) + (w - 1) * 7 + 6) * 864e5); return d.toLocaleDateString("en-US", { timeZone: "UTC", month: "short", day: "numeric" }); }
+function plCurWeek(lg){ var w = Math.floor((plDay(plToday()) - plDay(lg.start_date)) / 7) + 1; return Math.max(1, Math.min(lg.weeks, w)); }
+function plStarted(lg){ return plDay(plToday()) >= plDay(lg.start_date); }
+function plDone(lg, w){ return plDay(plToday()) >= plDay(lg.start_date) + w * 7; }
+function plLg(){ for (var i = 0; i < PL.leagues.length; i++) if (PL.leagues[i].id === PL.cur) return PL.leagues[i]; return null; }
+function plTeam(id){ for (var i = 0; i < PL.teams.length; i++) if (PL.teams[i].id === id) return PL.teams[i]; return null; }
+function plMine(){ for (var i = 0; i < PL.teams.length; i++) if (user && PL.teams[i].user_id === user.id) return PL.teams[i]; return null; }
+function plSc(w, t){ return PL.scores[w + "|" + t] || { pts: 0, g: 0, a: 0, pm: 0, shots: 0, pim: 0, wins: 0, so: 0 }; }
+function plNextMonday(){ var d = plDay(plToday()); var dow = new Date(d * 864e5).getUTCDay(); var add = (8 - dow) % 7; if (add === 0) add = 7; return new Date((d + add) * 864e5).toISOString().slice(0, 10); }
+function plMsg(m, good){ PL.msg = m || ""; PL.good = !!good; }
+function plMsgHtml(){ return PL.msg ? '<div class="msg' + (PL.good ? " good" : "") + '">' + esc(PL.msg) + '</div>' : ""; }
+function plNum(v){ var n = Math.round(num(v) * 10) / 10; return String(n); }
+
+/* result of one matchup: scores to show, category tallies, winner "a" | "b" | "t" */
+function plResult(lg, w, a, b){
+  var sa = plSc(w, a), sb = b ? plSc(w, b) : null, r = { a: 0, b: 0, w: "t", cats: [] };
+  if (!sb) return r;
+  if (lg.scoring_mode === "points"){ r.a = num(sa.pts); r.b = num(sb.pts); r.w = r.a > r.b ? "a" : r.a < r.b ? "b" : "t"; return r; }
+  var ca = 0, cb = 0;
+  PCATS.forEach(function(c){
+    var x = num(sa[c[0]]), y = num(sb[c[0]]), win = x > y ? "a" : x < y ? "b" : "t";
+    if (win === "a") ca++; if (win === "b") cb++;
+    r.cats.push({ k: c[1], a: x, b: y, w: win });
+  });
+  r.a = ca; r.b = cb; r.w = ca > cb ? "a" : ca < cb ? "b" : "t";
+  return r;
+}
+function plStandings(lg){
+  var rows = {};
+  PL.teams.forEach(function(t){ rows[t.id] = { t: t, w: 0, l: 0, tie: 0, pf: 0, last: "" , moves: 0 }; });
+  PL.mu.slice().sort(function(x, y){ return x.week - y.week; }).forEach(function(m){
+    if (!m.team_b || !plDone(lg, m.week)) return;
+    var r = plResult(lg, m.week, m.team_a, m.team_b), A = rows[m.team_a], B = rows[m.team_b];
+    if (!A || !B) return;
+    if (r.w === "a"){ A.w++; B.l++; A.last = "W"; B.last = "L"; } else if (r.w === "b"){ B.w++; A.l++; B.last = "W"; A.last = "L"; } else { A.tie++; B.tie++; A.last = "T"; B.last = "T"; }
+    var sa = plSc(m.week, m.team_a), sb = plSc(m.week, m.team_b);
+    if (lg.scoring_mode === "points"){ A.pf += num(sa.pts); B.pf += num(sb.pts); } else { A.pf += r.a; B.pf += r.b; }
+    A.last += " " + plNum(r.a) + "-" + plNum(r.b); B.last += " " + plNum(r.b) + "-" + plNum(r.a);
+  });
+  PL.trans.forEach(function(x){ if (x.team_id && rows[x.team_id] && (x.kind === "add" || x.kind === "drop")) rows[x.team_id].moves++; });
+  var list = Object.keys(rows).map(function(k){ var r = rows[k], g = r.w + r.l + r.tie; r.pct = g ? (r.w + r.tie / 2) / g : 0; r.pts = lg.scoring_mode === "points" ? r.pf : r.w * 2 + r.tie; return r; });
+  list.sort(function(x, y){ return (y.pct - x.pct) || (y.pf - x.pf) || x.t.name.localeCompare(y.t.name); });
+  return list;
+}
+
+async function plLoadLeagues(){
+  var r = await SB.from("pleagues").select("*").order("created_at", { ascending: true });
+  PL.leagues = r.data || [];
+  if (r.error) plMsg(r.error.message);
+  if (!plLg()) PL.cur = PL.leagues.length ? PL.leagues[0].id : null;
+}
+async function plLoadLeague(){
+  var lg = plLg(); if (!lg) return;
+  var id = lg.id;
+  var res = await Promise.all([
+    SB.from("pteams").select("*").eq("league_id", id).order("created_at", { ascending: true }),
+    SB.from("pmatchups").select("*").eq("league_id", id).order("week", { ascending: true }),
+    SB.from("ptrans").select("*").eq("league_id", id).order("created_at", { ascending: false }),
+    SB.rpc("pleague_scores", { p_league: id })
+  ]);
+  PL.teams = res[0].data || []; PL.mu = res[1].data || []; PL.trans = res[2].data || [];
+  PL.scores = {}; (res[3].data || []).forEach(function(s){ PL.scores[s.week + "|" + s.team_id] = s; });
+  var ids = PL.teams.map(function(t){ return t.user_id; });
+  PL.names = {};
+  if (ids.length){ var p = await SB.from("profiles").select("id,display_name").in("id", ids); (p.data || []).forEach(function(x){ PL.names[x.id] = x.display_name; }); }
+  PL.week = plCurWeek(lg);
+}
+async function plOpen(){
+  if (!user){ PL.mode = "list"; plRender(); return; }
+  await plLoadLeagues(); await plLoadLeague(); plRender();
+  var m = /[?&]join=([A-Za-z0-9]+)/.exec(location.search);
+  if (m && !PL.joinSeen){ PL.joinSeen = true; PL.mode = "join"; PL.code = m[1].toUpperCase(); plRender(); }
+}
+function plOnAuth(){ PL.leagues = []; PL.cur = null; PL.mode = "list"; PL.msg = ""; if (!$("plView").classList.contains("hide")) plOpen(); }
+
+function plRender(){
+  var box = $("plBox");
+  if (!user){ box.innerHTML = '<h2>Private leagues</h2><div class="pl-empty">Sign in (on the Build my team tab) to create or join a private head-to-head league with friends.</div>'; return; }
+  var h = '<div class="pl-top"><h2 style="margin:0">Private leagues</h2><span class="sp"></span>';
+  PL.leagues.forEach(function(l){ h += '<button class="pill' + (l.id === PL.cur && PL.mode === "list" ? " on" : "") + '" data-plsel="' + esc(l.id) + '">' + esc(l.name) + '</button>'; });
+  h += '<button class="pill add" data-plmode="create">+ Create league</button><button class="pill add" data-plmode="join">Join with code</button></div>' + plMsgHtml();
+  if (PL.mode === "create") h += plCreateHtml();
+  else if (PL.mode === "join") h += plJoinHtml();
+  else if (!plLg()) h += '<div class="pl-empty">You are not in any private leagues yet. Create one and invite your friends, or join with a code.</div>';
+  else h += plLeagueHtml();
+  box.innerHTML = h;
+}
+function plOpts(vals, sel){ return vals.map(function(v){ return '<option value="' + v + '"' + (String(v) === String(sel) ? " selected" : "") + '>' + v + '</option>'; }).join(""); }
+function plCreateHtml(){
+  return '<h2>Create a league</h2><div class="pl-form">' +
+    '<label>League name<input id="plcName" maxlength="40" placeholder="e.g. The Boys"></label>' +
+    '<label>Your team name<input id="plcTeam" maxlength="40" placeholder="e.g. Top Shelf"></label>' +
+    '<label>Junior league<select id="plcChl"><option>OHL</option><option>WHL</option><option>QMJHL</option></select></label>' +
+    '<label>Teams<select id="plcMax">' + plOpts([4,6,8,10,12,14,16], 10) + '</select></label>' +
+    '<label>Scoring<select id="plcMode"><option value="points">Total fantasy points</option><option value="categories">Categories (G, A, +/-, SOG, PIM, W, SO)</option></select></label>' +
+    '<label>Week 1 starts (a Monday)<input id="plcStart" type="date" value="' + plNextMonday() + '"></label>' +
+    '<label>Weeks in season<select id="plcWeeks">' + plOpts([4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20], 10) + '</select></label></div>' +
+    '<div class="row"><button data-plact="create">Create league</button><button class="sec" data-plmode="list">Cancel</button></div>' +
+    '<small class="note">Players are drafted (one owner per player) from the league you pick. The draft room is the next feature to arrive.</small>';
+}
+function plJoinHtml(){
+  return '<h2>Join a league</h2><div class="pl-form"><label>Invite code<input id="pljCode" maxlength="12" value="' + esc(PL.code || "") + '" placeholder="8-character code"></label>' +
+    '<label>Your team name<input id="pljTeam" maxlength="40" placeholder="e.g. Top Shelf"></label></div>' +
+    '<div class="row"><button data-plact="join">Join league</button><button class="sec" data-plmode="list">Cancel</button></div>';
+}
+function plLeagueHtml(){
+  var lg = plLg(), me = plMine();
+  var modeTxt = lg.scoring_mode === "points" ? "Total fantasy points" : "Categories";
+  var stTxt = { setup: "Setting up", scheduled: "Schedule set", drafting: "Drafting", active: "In season", complete: "Complete" }[lg.status] || lg.status;
+  var h = '<div class="pl-head"><h2>' + esc(lg.name) + '</h2><span class="why">' + esc(lg.chl_league) + ' &middot; ' + modeTxt + ' &middot; ' + lg.weeks + ' weeks from ' + plWeekStart(lg, 1) + ' &middot; ' + esc(stTxt) + '</span></div>';
+  h += '<div class="pl-sub">';
+  [["matchups","Matchups"],["standings","Standings"],["trans","Transactions"],["league","League"]].forEach(function(s){ h += '<button class="pill' + (PL.sub === s[0] ? " on" : "") + '" data-plsub="' + s[0] + '">' + s[1] + '</button>'; });
+  h += '</div>';
+  if (PL.sub === "standings") return h + plStandingsHtml(lg);
+  if (PL.sub === "trans") return h + plTransHtml(lg);
+  if (PL.sub === "league") return h + plManageHtml(lg, me);
+  return h + plMatchupsHtml(lg, me);
+}
+function plTeamName(id){ var t = plTeam(id); return t ? esc(t.name) : "Team removed"; }
+function plMatchupsHtml(lg, me){
+  if (lg.status === "setup") return '<div class="pl-note">The schedule isn\'t set yet. ' + (lg.commissioner === user.id ? 'Once everyone has joined, open the League tab and set the schedule.' : 'The commissioner will set it once everyone has joined.') + '</div>';
+  var w = PL.week, h = '<div class="pl-wk"><button class="sec" data-plwk="-1"' + (w <= 1 ? " disabled" : "") + '>&lsaquo;</button><b>Week ' + w + ' &middot; ' + plWeekStart(lg, w) + ' &ndash; ' + plWeekEnd(lg, w) + '</b><button class="sec" data-plwk="1"' + (w >= lg.weeks ? " disabled" : "") + '>&rsaquo;</button></div>';
+  var ms = PL.mu.filter(function(m){ return m.week === w; });
+  if (!ms.length) return h + '<div class="pl-empty">No matchups this week.</div>';
+  if (!plStarted(lg) || (!plDone(lg, w) && plDay(plToday()) < plDay(lg.start_date) + (w - 1) * 7)) h += '<div class="pl-note">This week hasn\'t started. Scores begin counting on ' + plWeekStart(lg, w) + '.</div>';
+  h += '<div class="pl-mu">';
+  ms.sort(function(x, y){ var mx = me && (x.team_a === me.id || x.team_b === me.id) ? 0 : 1, my = me && (y.team_a === me.id || y.team_b === me.id) ? 0 : 1; return mx - my; });
+  ms.forEach(function(m){
+    var r = plResult(lg, w, m.team_a, m.team_b), mine = me && (m.team_a === me.id || m.team_b === me.id), fin = plDone(lg, w);
+    var wa = fin && r.w === "a" ? " w" : "", wb = fin && r.w === "b" ? " w" : "";
+    h += '<div class="pl-m' + (mine ? " pl-me" : "") + '"><div class="vs"><div><div class="nm">' + plTeamName(m.team_a) + '</div><div class="mg">' + esc(PL.names[(plTeam(m.team_a) || {}).user_id] || "") + '</div></div>';
+    if (!m.team_b){ h += '<div class="why">BYE</div><div></div></div></div>'; return; }
+    var big = lg.scoring_mode === "points";
+    h += '<div class="sc"><span class="' + wa.trim() + '">' + (big ? plNum(r.a) : r.a) + '</span> <span class="mg">:</span> <span class="' + wb.trim() + '">' + (big ? plNum(r.b) : r.b) + '</span></div>';
+    h += '<div><div class="nm">' + plTeamName(m.team_b) + '</div><div class="mg">' + esc(PL.names[(plTeam(m.team_b) || {}).user_id] || "") + '</div></div></div>';
+    if (!big){
+      h += '<table><tbody>';
+      r.cats.forEach(function(c){ h += '<tr><td class="' + (c.w === "a" ? "w" : "") + '">' + plNum(c.a) + '</td><th>' + c.k + '</th><td class="' + (c.w === "b" ? "w" : "") + '">' + plNum(c.b) + '</td></tr>'; });
+      h += '</tbody></table>';
+    }
+    h += '</div>';
+  });
+  return h + '</div>';
+}
+function plStandingsHtml(lg){
+  var rows = plStandings(lg), ptsLbl = lg.scoring_mode === "points" ? "Pts" : "Pts";
+  var h = '<div class="tbl"><table class="pl-st"><thead><tr><th>Rank</th><th>Team</th><th>W-L-T</th><th>Pct</th><th>' + ptsLbl + '</th><th>Last week</th><th>Waiver</th><th>Moves</th></tr></thead><tbody>';
+  rows.forEach(function(r, i){
+    var pct = r.pct.toFixed(3).replace(/^0/, "");
+    h += '<tr><td>' + (i + 1) + '</td><td class="t">' + esc(r.t.name) + '<div class="why">' + esc(PL.names[r.t.user_id] || "") + '</div></td><td>' + r.w + '-' + r.l + '-' + r.tie + '</td><td>' + pct + '</td><td>' + plNum(r.pts) + '</td><td>' + esc(r.last || "-") + '</td><td>-</td><td>' + r.moves + '</td></tr>';
+  });
+  h += '</tbody></table></div><small class="note">' + (lg.scoring_mode === "points" ? 'Pts = total fantasy points scored in completed weeks.' : 'Pts = 2 per matchup win and 1 per tie.') + ' Only completed weeks count. Ranked by win percentage, then Pts.</small>';
+  return rows.length ? h : '<div class="pl-empty">No teams yet.</div>';
+}
+function plTransHtml(lg){
+  var tabs = [["all","All Transactions"],["add","Added Players"],["drop","Dropped Players"],["trade","Trades"],["waiver","Waiver Offers"]];
+  var h = '<div class="pl-sub">' + tabs.map(function(t){ return '<button class="pill' + (PL.tf === t[0] ? " on" : "") + '" data-pltf="' + t[0] + '">' + t[1] + '</button>'; }).join("") + '</div>';
+  var rows = PL.trans.filter(function(x){ return PL.tf === "all" || x.kind === PL.tf || (PL.tf === "add" && x.kind === "draft"); });
+  if (!rows.length) return h + '<div class="pl-empty">There are no transactions to display.</div>';
+  var kinds = { add: "Added", drop: "Dropped", draft: "Drafted", trade: "Trade", waiver: "Waiver" };
+  h += '<table><thead><tr><th>Date</th><th>Team</th><th>Move</th><th>Player</th></tr></thead><tbody>';
+  rows.forEach(function(x){ var p = BYID[x.player_id]; h += '<tr><td>' + esc(String(x.created_at).slice(0, 10)) + '</td><td>' + plTeamName(x.team_id) + '</td><td>' + (kinds[x.kind] || x.kind) + '</td><td>' + esc(p ? p.name : (x.note || "")) + '</td></tr>'; });
+  return h + '</tbody></table>';
+}
+function plManageHtml(lg, me){
+  var isC = lg.commissioner === user.id, setup = lg.status === "setup", h = "";
+  var link = location.origin + location.pathname + "?join=" + lg.invite_code;
+  h += '<div class="pl-note">Invite friends with this code: <span class="pl-code">' + esc(lg.invite_code) + '</span> &nbsp; or send them this link:<br><span class="pl-code" style="display:inline-block;margin-top:6px;word-break:break-all">' + esc(link) + '</span></div>';
+  h += '<h2>Teams (' + PL.teams.length + ' of ' + lg.max_teams + ')</h2><table><thead><tr><th>Team</th><th>Manager</th><th></th></tr></thead><tbody>';
+  PL.teams.forEach(function(t){
+    h += '<tr><td>' + esc(t.name) + '</td><td>' + esc(PL.names[t.user_id] || "") + (t.user_id === lg.commissioner ? ' <span class="why">(commissioner)</span>' : "") + '</td><td>' +
+      (isC && setup && t.user_id !== lg.commissioner ? '<button class="sec" data-plremove="' + esc(t.id) + '">Remove</button>' : "") + '</td></tr>';
+  });
+  h += '</tbody></table>';
+  if (me) h += '<h2 style="margin-top:18px">My team name</h2><div class="row"><input id="plRename" maxlength="40" value="' + esc(me.name) + '" style="flex:1;max-width:320px"><button class="sec" data-plact="rename">Save name</button></div>';
+  if (isC){
+    h += '<h2 style="margin-top:18px">League settings</h2>';
+    if (setup){
+      h += '<div class="pl-form"><label>League name<input id="plsName" maxlength="40" value="' + esc(lg.name) + '"></label>' +
+        '<label>Teams<select id="plsMax">' + plOpts([4,6,8,10,12,14,16], lg.max_teams) + '</select></label>' +
+        '<label>Scoring<select id="plsMode"><option value="points"' + (lg.scoring_mode === "points" ? " selected" : "") + '>Total fantasy points</option><option value="categories"' + (lg.scoring_mode === "categories" ? " selected" : "") + '>Categories</option></select></label>' +
+        '<label>Week 1 starts (a Monday)<input id="plsStart" type="date" value="' + esc(lg.start_date) + '"></label>' +
+        '<label>Weeks<select id="plsWeeks">' + plOpts([4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20], lg.weeks) + '</select></label></div>' +
+        '<div class="row"><button class="sec" data-plact="save">Save settings</button></div>' +
+        '<h2 style="margin-top:18px">Set the schedule</h2><div class="why" style="margin-bottom:8px">Needs at least 4 teams. This closes the league to new teams and draws the weekly matchups at random. You can reopen it until the draft starts.</div>' +
+        '<div class="row" id="plSchedRow"><button data-plact="sched"' + (PL.teams.length < 4 ? " disabled" : "") + '>Set schedule</button></div>';
+    } else {
+      h += '<div class="why" style="margin-bottom:8px">Settings are locked now that the schedule is set.</div>';
+      if (lg.status === "scheduled") h += '<div class="row"><button class="sec" data-plact="reopen">Reopen league (clears the schedule)</button></div>';
+    }
+    if (lg.status === "setup" || lg.status === "scheduled") h += '<div class="row" id="plDelRow"><button class="danger" data-plact="del">Delete league</button></div>';
+  } else if (setup && me) h += '<div class="row" style="margin-top:14px"><button class="sec" data-plact="leave">Leave league</button></div>';
+  return h;
+}
+
+async function plDo(fn, okMsg){
+  plMsg("");
+  try { var r = await fn(); if (r && r.error) throw r.error; if (okMsg) plMsg(okMsg, true); return r; }
+  catch (e){ plMsg((e && e.message) || String(e)); return null; }
+}
+async function plAct(a, el){
+  var lg = plLg(), v = function(id){ return ($(id) ? $(id).value : "").trim(); };
+  if (a === "create"){
+    var st = v("plcStart"); if (!st || new Date(st + "T00:00:00Z").getUTCDay() !== 1){ plMsg("Week 1 must start on a Monday."); return plRender(); }
+    var r = await plDo(function(){ return SB.rpc("create_pleague", { p_name: v("plcName"), p_chl: v("plcChl"), p_max: +v("plcMax"), p_mode: v("plcMode"), p_start: st, p_weeks: +v("plcWeeks"), p_team: v("plcTeam") }); });
+    if (r && r.data){ PL.cur = r.data; PL.mode = "list"; PL.sub = "league"; await plLoadLeagues(); await plLoadLeague(); plMsg("League created. Share the invite code with your friends.", true); }
+  } else if (a === "join"){
+    var r2 = await plDo(function(){ return SB.rpc("join_pleague", { p_code: v("pljCode"), p_team: v("pljTeam") }); });
+    if (r2 && r2.data){ PL.cur = r2.data; PL.mode = "list"; PL.sub = "matchups"; PL.code = ""; await plLoadLeagues(); await plLoadLeague(); plMsg("You're in!", true); }
+  } else if (a === "rename"){
+    var me = plMine(); if (me){ await plDo(function(){ return SB.rpc("rename_pteam", { p_team: me.id, p_name: v("plRename") }); }, "Team name saved."); await plLoadLeague(); }
+  } else if (a === "save"){
+    var s2 = v("plsStart"); if (!s2 || new Date(s2 + "T00:00:00Z").getUTCDay() !== 1){ plMsg("Week 1 must start on a Monday."); return plRender(); }
+    await plDo(function(){ return SB.rpc("update_pleague", { p_league: lg.id, p_name: v("plsName"), p_max: +v("plsMax"), p_mode: v("plsMode"), p_start: s2, p_weeks: +v("plsWeeks") }); }, "Settings saved.");
+    await plLoadLeagues(); await plLoadLeague();
+  } else if (a === "sched"){
+    el.parentNode.innerHTML = '<span class="why">Close the league and draw the schedule?</span><button data-plact="schedyes">Yes, set it</button><button class="sec" data-plact="cancel">Cancel</button>'; return;
+  } else if (a === "schedyes"){
+    await plDo(function(){ return SB.rpc("generate_pleague_schedule", { p_league: lg.id }); }, "Schedule set. See the Matchups tab.");
+    await plLoadLeagues(); await plLoadLeague(); PL.sub = "matchups";
+  } else if (a === "reopen"){
+    await plDo(function(){ return SB.rpc("reopen_pleague", { p_league: lg.id }); }, "League reopened.");
+    await plLoadLeagues(); await plLoadLeague();
+  } else if (a === "del"){
+    el.parentNode.innerHTML = '<span class="why">Delete this league for everyone? This can\'t be undone.</span><button class="danger" data-plact="delyes">Yes, delete</button><button class="sec" data-plact="cancel">Cancel</button>'; return;
+  } else if (a === "delyes"){
+    var r3 = await plDo(function(){ return SB.rpc("delete_pleague", { p_league: lg.id }); }, "League deleted.");
+    if (r3){ PL.cur = null; await plLoadLeagues(); await plLoadLeague(); }
+  } else if (a === "leave"){
+    var r4 = await plDo(function(){ return SB.rpc("leave_pleague", { p_league: lg.id }); }, "You left the league.");
+    if (r4){ PL.cur = null; await plLoadLeagues(); await plLoadLeague(); }
+  }
+  plRender();
+}
+$("plView").addEventListener("click", async function(e){
+  var t = e.target.closest ? e.target.closest("button") : null; if (!t || t.disabled) return;
+  var d = t.dataset;
+  if (d.plsel){ PL.cur = d.plsel; PL.mode = "list"; plMsg(""); await plLoadLeague(); plRender(); }
+  else if (d.plmode){ PL.mode = d.plmode; plMsg(""); plRender(); }
+  else if (d.plsub){ PL.sub = d.plsub; plMsg(""); plRender(); }
+  else if (d.pltf){ PL.tf = d.pltf; plRender(); }
+  else if (d.plwk){ PL.week = Math.max(1, Math.min(plLg().weeks, PL.week + (+d.plwk))); plRender(); }
+  else if (d.plremove){ await plDo(function(){ return SB.rpc("remove_pteam", { p_team: d.plremove }); }, "Team removed."); await plLoadLeague(); plRender(); }
+  else if (d.plact === "cancel"){ plRender(); }
+  else if (d.plact){ await plAct(d.plact, t); }
 });
 
 /* ---- Start ---- */
