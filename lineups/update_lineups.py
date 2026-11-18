@@ -59,7 +59,7 @@ OHL_KEYS = {
  "North Bay": "northbay", "Oshawa": "oshawa", "Ottawa": "ottawa",
  "Owen Sound": "owensound", "Peterborough": "peterborough", "Saginaw": "saginaw",
  "Sarnia": "sarnia", "Sault": "soo", "Sudbury": "sudbury", "Windsor": "windsor",
- "Brantford": "brampton",
+ "Brantford": "hamilton",
 }
 
 def get(url, binary=False):
@@ -249,6 +249,62 @@ def update_cap(src, key, caps):
     obj[key] = caps
     return src[:i] + js(obj) + src[i + end:]
 
+# ------------------------------------------------------------ injury reports
+INJ_URL = {"ohl": "https://chl.ca/ohl/ohl-weekly-report/"}
+INJ_EVERY_H = 3     # re-read the weekly report at most every 3 hours
+
+def parse_injuries_html(html, lg="ohl"):
+    """Weekly-report page -> (as-of text, {team key: [[first,last,pos,injury,status],..]}).
+    Day-to-day players are left out: only week-to-week or longer counts as injured."""
+    import html as H
+    html = re.sub(r"<!--.*?-->", "", html, flags=re.S)
+    m = re.search(r"As of ([A-Za-z]+ \d{1,2}, \d{4})", html)
+    if not m: return "", {}
+    t = re.sub(r"</(li|p|h\d|div|ul)>|<br\s*/?>", "\n", html[m.start():], flags=re.I)
+    t = H.unescape(re.sub(r"<[^>]+>", "", t)).replace("\xa0", " ")
+    out, key, in_inj = {}, None, False
+    for ln in (x.strip() for x in t.splitlines()):
+        if not ln: continue
+        if ln.lower().startswith("recent news") or ln.startswith("HEADLINES"): break
+        if re.match(r"^[A-Za-z ]+:$", ln):
+            in_inj = ln.lower() == "injuries:"; continue
+        if " – " not in ln:
+            k = team_key(ln, lg)
+            if k: key, in_inj = k, False
+            continue
+        if not (key and in_inj): continue
+        f = [x.strip() for x in re.split(r"\s+[–-]\s+", ln.lstrip("*").strip())]
+        if len(f) < 5: continue
+        status = " – ".join(f[4:])
+        if "day-to-day" in status.lower(): continue
+        first, _, last = f[0].partition(" ")
+        out.setdefault(key, []).append([first, last, f[1], f[3], status])
+    return m.group(1), out
+
+def update_inj(src, lg, asof, data, url):
+    i = src.index("var INJ = ") + len("var INJ = ")
+    obj, end = json.JSONDecoder().raw_decode(src[i:])
+    new = {"asof": asof, "url": url, "t": data}
+    if obj.get(lg.upper()) == new: return src, False
+    obj[lg.upper()] = new
+    return src[:i] + js(obj) + src[i + end:], True
+
+def refresh_injuries(src, state, now):
+    changed = False
+    for lg, url in INJ_URL.items():
+        k = "inj:" + lg
+        if now.timestamp() - state.get(k, 0) < INJ_EVERY_H * 3600: continue
+        try:
+            asof, data = parse_injuries_html(get(url), lg)
+        except Exception as e:
+            print("injury report fetch failed:", lg, e); continue
+        if not data:
+            print("injury report not parsed:", lg); continue
+        state[k] = now.timestamp()
+        src, ch = update_inj(src, lg, asof, data, url)
+        if ch: print("injuries updated:", lg, asof); changed = True
+    return src, changed
+
 # ------------------------------------------------------------------- the run
 def game_start(g):
     try:
@@ -276,6 +332,8 @@ def main():
     state = json.load(open(STATE)) if os.path.exists(STATE) else {}
     src = open(INDEX, encoding="utf-8").read()
     sched_out, changed, cache = {}, False, {}
+    src, ch0 = refresh_injuries(src, state, now)
+    changed = changed or ch0
     for lg, cfg in LEAGUES.items():
         try:
             games = feed(cfg["client"], "schedule", season_id=cfg["season"], team_id=0, league_id=cfg["league_id"])["Schedule"]
