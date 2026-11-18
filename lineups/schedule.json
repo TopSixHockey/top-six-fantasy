@@ -1,0 +1,28 @@
+{
+ "ohl": [
+  {
+   "away": "Ottawa 67's",
+   "home": "Kingston Frontenacs",
+   "id": "29207",
+   "time": "10:30"
+  },
+  {
+   "away": "North Bay Battalion",
+   "home": "Owen Sound Attack",
+   "id": "29208",
+   "time": "19:00"
+  },
+  {
+   "away": "Kitchener Rangers",
+   "home": "Sudbury Wolves",
+   "id": "29210",
+   "time": "19:05"
+  },
+  {
+   "away": "Brantford Bulldogs",
+   "home": "Peterborough Petes",
+   "id": "29209",
+   "time": "19:05"
+  }
+ ]
+}
