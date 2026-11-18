@@ -70,13 +70,14 @@ small.note{display:block;color:var(--mute);margin-top:10px}
 .lgrow b{font-size:15px}
 .lgrow .why{display:block}
 .pointer-row{cursor:default}
-#pop{position:fixed;z-index:95;display:none;width:290px;max-width:calc(100vw - 12px);background:#232f5a;color:#fff;border-radius:12px;box-shadow:0 10px 28px rgba(0,0,0,.45);padding:10px 12px 12px;font-size:12px;line-height:1.35;pointer-events:none;border:1px solid rgba(255,255,255,.35)}
+#pop{position:fixed;z-index:95;display:none;width:340px;max-width:calc(100vw - 12px);background:#232f5a;color:#fff;border-radius:12px;box-shadow:0 10px 28px rgba(0,0,0,.45);padding:10px 12px 12px;font-size:12px;line-height:1.35;pointer-events:none;border:1px solid rgba(255,255,255,.35)}
 #pop .ph{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,.3)}
 #pop .pn{font-weight:800;font-size:14px}#pop .pm{color:rgba(255,255,255,.75);font-weight:600}
 #pop .pi{background:#fff;color:#0f1c28;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;border-radius:99px;padding:1px 8px}
 #pop .pt{margin:8px 0 4px;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:rgba(255,255,255,.7)}
 #pop .pst{display:flex;gap:2px}#pop .pst div{flex:1;text-align:center;background:rgba(255,255,255,.16);border-radius:6px;padding:3px 0}
 #pop .pst b{display:block;font-size:10px;color:rgba(255,255,255,.7)}#pop .pst span{font-weight:800}
+#pop .pst .fp span{color:#ff9f2e}
 #pop .pb{display:flex;gap:8px;margin:3px 0;align-items:baseline}#pop .pb span{min-width:84px;flex:none}#pop .pb i{font-style:normal;flex:1;color:rgba(255,255,255,.7);font-size:11px}#pop .pb b{min-width:44px;text-align:right}
 #pop .pb.tot{margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.3);font-size:13px}#pop .pb.tot b{color:#8ef0b8}
 #pop .pn2{color:rgba(255,255,255,.65);font-size:11px;margin-top:6px}
@@ -719,7 +720,7 @@ function popHtml(p){
       pline("Shots", s.shots == null ? "not tracked yet" : num(s.shots) + " \u00d7 " + SCORE.shots, num(s.shots) * SCORE.shots) +
       pline("Penalty min.", num(s.pim) + " \u00d7 " + SCORE.pim, num(s.pim) * SCORE.pim);
   }
-  return h + '<div class="pt">Season stats</div><div class="pst">' + st + '</div>';
+  return h + '<div class="pt">Season stats</div><div class="pst">' + st + '<div class="fp"><b>FPTS</b><span>' + num(p.fp).toFixed(1) + '</span></div></div>';
 }
 var popEl = $("pop"), popId = null;
 function popPlace(e){
