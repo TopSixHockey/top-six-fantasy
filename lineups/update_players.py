@@ -9,7 +9,7 @@
 Player details (birthday, size, hometown, draft line) and season stats come from the same HockeyTech league
 feed the lineup bot already uses.
 """
-import datetime, json, os, re, sys, unicodedata
+import datetime, json, os, re, sys, traceback, unicodedata
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import update_lineups as U
 
@@ -272,6 +272,7 @@ def main():
             got = load_league(lg, codes, want)
         except Exception as e:
             print(lg, "feed failed:", e)
+            traceback.print_exc()
             done_full = False
             continue
         if not got:
