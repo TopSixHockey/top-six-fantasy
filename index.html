@@ -58,7 +58,7 @@ footer{font-size:.74rem;color:var(--mute);text-align:center;padding:0 12px 20px}
 #pop .ph{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,.3)}
 #pop .pn{font-weight:800;font-size:.92rem}#pop .pm{color:rgba(255,255,255,.75);font-weight:600}
 #pop .pi{background:#fff;color:#0f1c28;font-size:.62rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;border-radius:99px;padding:1px 8px}
-#pop .pr .tp{color:#ff9a1f;font-weight:700}#pop .pr{display:flex;gap:8px;margin:2px 0}#pop .fl{height:15px;width:20px;vertical-align:-2px;margin-left:6px;border-radius:2px;box-shadow:0 0 0 1px rgba(255,255,255,.25)}#pop .pr i{font-style:normal;color:rgba(255,255,255,.7);min-width:78px;flex:none}
+#pop .pr .tp{color:#ff9a1f;font-weight:700}#pop .pr{display:flex;gap:8px;margin:2px 0}#pop .fl{height:11px;width:auto;vertical-align:-1px;margin-left:5px;border-radius:1.5px;box-shadow:0 0 0 1px rgba(255,255,255,.25)}#pop .pr i{font-style:normal;color:rgba(255,255,255,.7);min-width:78px;flex:none}
 #pop .pt{margin:8px 0 4px;font-size:.68rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:rgba(255,255,255,.7)}
 #pop .pst{display:flex;gap:2px}#pop .pst div{flex:1;text-align:center;background:rgba(255,255,255,.16);border-radius:6px;padding:3px 0}
 #pop .pst b{display:block;font-size:.62rem;color:rgba(255,255,255,.7)}#pop .pst span{font-weight:800}
@@ -1090,7 +1090,7 @@ function flagCode(h){
   if (s.length === 1 && FLAG_CA[last]) return "ca";
   return "";
 }
-function flagImg(h){ var c = flagCode(h); return c ? ' <img class="fl" src="https://flagcdn.com/w40/' + c + '.png" srcset="https://flagcdn.com/w80/' + c + '.png 2x" alt="" width="20" height="15">' : ""; }
+function flagImg(h){ var c = flagCode(h); return c ? ' <img class="fl" src="https://flagcdn.com/w40/' + c + '.png" srcset="https://flagcdn.com/w80/' + c + '.png 2x" alt="" height="11">' : ""; }
 var MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 function ageOf(s) { var a = s.split("-"), t = new Date(), y = t.getFullYear() - +a[0]; if (t.getMonth() + 1 < +a[1] || (t.getMonth() + 1 === +a[1] && t.getDate() < +a[2])) y--; return y; }
 function popHtml(k, n, nm) {
