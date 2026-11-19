@@ -926,7 +926,9 @@ $("luReset").addEventListener("click", function(){
 
 /* ---- Private head-to-head leagues (phase 1: setup, schedule, matchups, standings) ---- */
 var PL = { leagues: [], cur: null, sub: "matchups", week: 1, tf: "all", teams: [], mu: [], scores: {}, trans: [], names: {}, mode: "list", msg: "", good: false };
-var PCATS = [["g","G"],["a","A"],["pm","+/-"],["shots","SOG"],["pim","PIM"],["wins","W"],["so","SO"]];
+var PCATS = [["g","G"],["a","A"],["p","PTS"],["pm","+/-"],["shots","SOG"],["wins","W"],["svp","SV%"]];
+function plSv(sa, ga){ sa = num(sa); return sa > 0 ? 1 - num(ga) / sa : null; }
+function plCat(s, k){ if (k === "p") return num(s.g) + num(s.a); if (k === "svp"){ var q = plSv(s.sa, s.ga); return q === null ? -1 : q; } return num(s[k]); }
 function plToday(){ return new Date().toLocaleDateString("en-CA", { timeZone: "America/Toronto" }); }
 function plDay(s){ var p = String(s).split("-"); return Date.UTC(+p[0], +p[1] - 1, +p[2]) / 864e5; }
 function plWeekStart(lg, w){ var d = new Date((plDay(lg.start_date) + (w - 1) * 7) * 864e5); return d.toLocaleDateString("en-US", { timeZone: "UTC", month: "short", day: "numeric" }); }
@@ -950,7 +952,7 @@ function plResult(lg, w, a, b){
   if (lg.scoring_mode === "points"){ r.a = num(sa.pts); r.b = num(sb.pts); r.w = r.a > r.b ? "a" : r.a < r.b ? "b" : "t"; return r; }
   var ca = 0, cb = 0;
   PCATS.forEach(function(c){
-    var x = num(sa[c[0]]), y = num(sb[c[0]]), win = x > y ? "a" : x < y ? "b" : "t";
+    var x = plCat(sa, c[0]), y = plCat(sb, c[0]), win = x > y ? "a" : x < y ? "b" : "t";
     if (win === "a") ca++; if (win === "b") cb++;
     r.cats.push({ k: c[1], a: x, b: y, w: win });
   });
@@ -1028,7 +1030,7 @@ function plCreateHtml(){
     '<label>Your team name<input id="plcTeam" maxlength="40" placeholder="e.g. Top Shelf"></label>' +
     '<label>Junior league<select id="plcChl"><option>OHL</option><option>WHL</option><option>QMJHL</option></select></label>' +
     '<label>Teams<select id="plcMax">' + plOpts([8,10,12,14,16], 10) + '</select></label>' +
-    '<label>Scoring<select id="plcMode"><option value="points">Total fantasy points</option><option value="categories">Categories (G, A, +/-, SOG, PIM, W, SO)</option></select></label>' +
+    '<label>Scoring<select id="plcMode"><option value="points">Total fantasy points</option><option value="categories">Categories (G, A, PTS, +/-, SOG, W, SV%)</option></select></label>' +
     '<label>Week 1 starts (a Monday)<input id="plcStart" type="date" value="' + plNextMonday() + '"></label>' +
     '<label>Weeks in season<select id="plcWeeks">' + plOpts([4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20], 10) + '</select></label></div>' +
     '<div class="row"><button data-plact="create">Create league</button><button class="sec" data-plmode="list">Cancel</button></div>' +
@@ -1114,15 +1116,15 @@ function plMatchDetailHtml(lg, me, m){
   function side(id, right){ var t = plTeam(id); return '<div class="md-tm' + (right ? " r" : "") + '"><div class="md-n">' + plTeamName(id) + '</div><div class="md-mg">' + esc(PL.names[(t || {}).user_id] || "") + '</div><div class="md-rec">' + (recs[id] || "0-0-0") + '</div></div>'; }
   var wa = fin && res.w === "a" ? "w" : "", wb = fin && res.w === "b" ? "w" : "";
   h += '<div class="md-head">' + side(m.team_a, true) + plAvatar(plTeam(m.team_a)) + '<div class="md-sc"><span class="' + wa + '">' + (big ? plNum(res.a) : res.a) + '</span><span class="mu-vs">vs</span><span class="' + wb + '">' + (big ? plNum(res.b) : res.b) + '</span></div>' + plAvatar(plTeam(m.team_b)) + side(m.team_b, false) + '</div>';
-  var TC = [["g","G"],["a","A"],["p","P"],["pm","+/-"],["shots","SOG"],["pim","PIM"],["wins","W"],["so","SO"],["pts","FPTS"]];
+  var TC = [["g","G"],["a","A"],["p","PTS"],["pm","+/-"],["shots","SOG"],["wins","W"],["svp","SV%"],["pts","FPTS"]];
   var catWin = {}; if (!big && md.day === "tot") PCATS.forEach(function(c, i){ if (res.cats[i]) catWin[c[0]] = res.cats[i].w; });
   function tot(tid){
-    var o = { g: 0, a: 0, p: 0, pm: 0, shots: 0, pim: 0, wins: 0, so: 0, pts: 0 };
-    if (md.day === "tot"){ var s = plSc(w, tid); Object.keys(o).forEach(function(k){ if (k !== "p") o[k] = num(s[k]); }); }
-    else ((data || {})[tid] || []).forEach(function(x){ ["g","a","pm","shots","pim","wins","so","pts"].forEach(function(k){ o[k] += num(x[k]); }); });
-    o.p = o.g + o.a; return o;
+    var o = { g: 0, a: 0, p: 0, pm: 0, shots: 0, wins: 0, sa: 0, ga: 0, svp: null, pts: 0 };
+    if (md.day === "tot"){ var s = plSc(w, tid); Object.keys(o).forEach(function(k){ if (k !== "p" && k !== "svp") o[k] = num(s[k]); }); }
+    else ((data || {})[tid] || []).forEach(function(x){ ["g","a","pm","shots","wins","sa","ga","pts"].forEach(function(k){ o[k] += num(x[k]); }); });
+    o.p = o.g + o.a; o.svp = plSv(o.sa, o.ga); return o;
   }
-  function fmt(k, v){ if (k === "pm") return '<td class="' + (v > 0 ? "pos" : v < 0 ? "neg" : "") + '">' + (v > 0 ? "+" : "") + plNum(v) + '</td>'; if (k === "pts") return '<td class="fp">' + plNum(v) + '</td>'; return '<td>' + (v ? plNum(v) : "-") + '</td>'; }
+  function fmt(k, v){ if (k === "svp") return '<td>' + (v === null || v === undefined ? "-" : v.toFixed(3).replace(/^0/, "")) + '</td>'; if (k === "pm") return '<td class="' + (v > 0 ? "pos" : v < 0 ? "neg" : "") + '">' + (v > 0 ? "+" : "") + plNum(v) + '</td>'; if (k === "pts") return '<td class="fp">' + plNum(v) + '</td>'; return '<td>' + (v ? plNum(v) : "-") + '</td>'; }
   h += '<div class="md-scroll"><table class="md-t"><thead><tr><th class="l">Team</th>' + TC.map(function(c){ return '<th>' + c[1] + '</th>'; }).join("") + '</tr></thead><tbody>';
   [m.team_a, m.team_b].forEach(function(tid, ti){
     var o = tot(tid), side2 = ti === 0 ? "a" : "b";
@@ -1135,14 +1137,14 @@ function plMatchDetailHtml(lg, me, m){
   var LA = listFor(m.team_a), LB = listFor(m.team_b);
   function ini(n){ return n.split(" ").filter(Boolean).slice(0, 2).map(function(s){ return s.charAt(0); }).join("").toUpperCase(); }
   function pcell(it, goalie){
-    if (!it) return '<td class="md-pl"><span class="md-ph"></span><span class="md-e">(Empty)</span></td>' + new Array((goalie ? 3 : 7) + 1).join("<td>-</td>");
+    if (!it) return '<td class="md-pl"><span class="md-ph"></span><span class="md-e">(Empty)</span></td>' + new Array((goalie ? 3 : 6) + 1).join("<td>-</td>");
     var x = it.x, p = it.p, g = num(x.g), a = num(x.a);
     var nm = '<td class="md-pl" data-pid="' + esc(p.id) + '"><span class="md-ph">' + esc(ini(p.name)) + '</span><span><span class="md-pn">' + esc(p.name) + '</span><br><span class="md-ps">' + esc(p.team) + ' &middot; ' + esc(p.pos) + '</span></span></td>';
-    var vals = goalie ? [["wins", num(x.wins)], ["so", num(x.so)], ["pts", num(x.pts)]] : [["g", g], ["a", a], ["p", g + a], ["pm", num(x.pm)], ["shots", num(x.shots)], ["pim", num(x.pim)], ["pts", num(x.pts)]];
+    var vals = goalie ? [["wins", num(x.wins)], ["svp", plSv(x.sa, x.ga)], ["pts", num(x.pts)]] : [["g", g], ["a", a], ["p", g + a], ["pm", num(x.pm)], ["shots", num(x.shots)], ["pts", num(x.pts)]];
     return nm + vals.map(function(c){ return fmt(c[0], c[1]); }).join("");
   }
   function table(buckets, goalie){
-    var cols = goalie ? [["wins","W"],["so","SO"],["pts","FPTS"]] : [["g","G"],["a","A"],["p","P"],["pm","+/-"],["shots","SOG"],["pim","PIM"],["pts","FPTS"]];
+    var cols = goalie ? [["wins","W"],["svp","SV%"],["pts","FPTS"]] : [["g","G"],["a","A"],["p","PTS"],["pm","+/-"],["shots","SOG"],["pts","FPTS"]];
     var head = '<th class="l">' + (goalie ? "Goalie" : "Player") + '</th>' + cols.map(function(c){ return '<th>' + c[1] + '</th>'; }).join("");
     var out = '<div class="md-scroll"><table class="md-t"><thead><tr>' + head + '<th>Pos</th>' + head + '</tr></thead><tbody>', rows = 0;
     buckets.forEach(function(b){
