@@ -116,6 +116,19 @@ def load_codes():
     return codes
 
 
+def flatten_roster(o, out):
+    """The roster can come back as a list of players or as lists nested inside lists/dicts."""
+    if isinstance(o, list):
+        for x in o:
+            flatten_roster(x, out)
+    elif isinstance(o, dict):
+        if "tp_jersey_number" in o or "player_id" in o:
+            out.append(o)
+        else:
+            for v in o.values():
+                flatten_roster(v, out)
+
+
 def load_league(lg, codes, want_keys):
     """-> (rosters by page key, stats by player id) or None if the feed looks wrong."""
     cfg = U.LEAGUES[lg]
@@ -124,7 +137,8 @@ def load_league(lg, codes, want_keys):
         key = U.team_key(t["name"], lg)
         if not key or (want_keys is not None and key not in want_keys):
             continue
-        ros = U.feed(cfg["client"], "roster", season_id=cfg["season"], team_id=t["id"]).get("Roster") or []
+        ros = []
+        flatten_roster(U.feed(cfg["client"], "roster", season_id=cfg["season"], team_id=t["id"]).get("Roster"), ros)
         for p in ros:
             p["_team"] = clean_name(t["name"])
         rosters.setdefault(key, []).extend(ros)
