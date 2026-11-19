@@ -6,7 +6,15 @@ on:
     # The script only does something when a game's puck drop is near; otherwise it just
     # refreshes tomorrow's start times in lineups/schedule.json.
     - cron: "*/10 11-23,0-4 * * *"
+    # Two extra runs for the 3 AM Eastern player-stats refresh (EDT and EST); the lineup updater does nothing then.
+    - cron: "5 7,8 * * *"
   workflow_dispatch:
+    inputs:
+      players:
+        description: "Player pop-ups: auto = fill any gaps and refresh stats when due; full = refresh everything now; dry = full refresh but write nothing"
+        default: "auto"
+        type: choice
+        options: [auto, full, dry]
 
 permissions:
   contents: write
@@ -27,6 +35,15 @@ jobs:
         run: |
           which pdftotext || (sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils)
           python lineups/update_lineups.py
+      - name: Update player pop-ups
+        env:
+          PLAYERS_MODE: ${{ github.event.inputs.players || 'auto' }}
+        run: |
+          case "$PLAYERS_MODE" in
+            full) python lineups/update_players.py --full ;;
+            dry)  python lineups/update_players.py --full --dry ;;
+            *)    python lineups/update_players.py ;;
+          esac
       - name: Commit changes
         run: |
           git config user.name "Top Six Hockey bot"
