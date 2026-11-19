@@ -191,6 +191,7 @@ td.pos{color:var(--ok)}td.neg{color:var(--bad)}td.pts{color:#ff9f43}td.fp{font-w
 .md-ph{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:#2a3544;color:#9fb0c3;font-size:11px;font-weight:700;margin-right:8px;vertical-align:middle}
 .md-pl>span:last-child{display:inline-block;vertical-align:middle}
 .md-jy{display:inline-block;width:36px;margin-right:9px;vertical-align:middle}.md-jy svg{width:100%;height:auto;display:block;filter:drop-shadow(0 1px 1px rgba(0,0,0,.4))}
+.pj{display:inline-block;width:36px;margin-right:10px;vertical-align:middle}.pj svg{width:100%;height:auto;display:block;filter:drop-shadow(0 1px 1px rgba(0,0,0,.4))}.pj-t{display:inline-block;vertical-align:middle}
 .md-pn{color:var(--acc);font-weight:700}
 .md-ps{color:var(--mute);font-size:11px}
 .md-e{color:var(--mute)}
@@ -1580,7 +1581,11 @@ async function plLoadRoster(){
 }
 function plOwned(){ var m = {}; PL.roster.forEach(function(r){ if (r.to_week == null) m[r.player_id] = r.team_id; }); return m; }
 function plMyHold(me){ return PL.roster.filter(function(r){ return me && r.team_id === me.id && r.to_week == null; }); }
-function plPlayerCell(p, lg){ return '<span class="nmh" data-pid="' + esc(p.id) + '">' + esc(p.name) + '</span><span class="dr-sub"> ' + esc(p.pos) + ' &middot; ' + esc(p.team) + ' &middot; ' + (AGELBL[p.ay] || "") + '</span>' + (lg.use_quotas ? (p.imp ? '<span class="dr-tag">IMP</span>' : "") + (p.dr ? '<span class="dr-tag">NHL</span>' : "") : ""); }
+function plJy(p){
+  if (!JERS){ if (!PL.jl){ PL.jl = true; loadJerseys().then(function(){ plRender(); }, function(){ PL.jl = false; }); } return ""; }
+  return '<span class="pj">' + JERS.jersey(p.num, JERS.map[tnorm(p.team)] || GENERIC, p.name.split(" ").slice(1).join(" ") || p.name) + '</span>';
+}
+function plPlayerCell(p, lg){ return plJy(p) + '<span class="pj-t"><span class="nmh" data-pid="' + esc(p.id) + '">' + esc(p.name) + '</span><span class="dr-sub"> ' + esc(p.pos) + ' &middot; ' + esc(p.team) + ' &middot; ' + (AGELBL[p.ay] || "") + '</span>' + (lg.use_quotas ? (p.imp ? '<span class="dr-tag">IMP</span>' : "") + (p.dr ? '<span class="dr-tag">NHL</span>' : "") : "") + '</span>'; }
 function plMyTeamHtml(lg, me){
   if (lg.status !== "active") return '<div class="pl-note">Rosters open once the draft is finished.</div>';
   var hold = plMyHold(me), eff = plEff(lg), started = plStarted(lg), h = '<div class="pl-note">' + esc(plEffTxt(lg)) + plMoveInfo(lg, me) + '</div>';
