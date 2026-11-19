@@ -228,6 +228,8 @@ def goalie_stats(r):
         "so": pick(r, "shutouts", "so"),
         "gaa": pick(r, "goals_against_average", "gaa"),
         "svp": svp,
+        "sa": pick(r, "shots", "shots_against"),
+        "ga": pick(r, "goals_against"),
     }
 
 
@@ -318,7 +320,7 @@ def clean(d):
     for k, v in d.items():
         if v is None:
             continue
-        out[k] = int(v) if k in ("gp", "g", "a", "pm", "pim", "shots", "wins", "so") else v
+        out[k] = int(v) if k in ("gp", "g", "a", "pm", "pim", "shots", "wins", "so", "sa", "ga") else v
     return out
 
 
