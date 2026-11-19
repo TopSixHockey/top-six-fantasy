@@ -1136,7 +1136,7 @@ function plMatchDetailHtml(lg, me, m){
   });
   h += '</tbody></table></div>' + (big ? "" : '<small class="note" style="text-align:center">Category winners are shown in green on the Totals tab. A team needs at least 1 goalie start in the week, or it forfeits W and SV% (shown as F once the week is done).</small>');
   if (!data){ return h + '<div class="pl-empty">' + (md.err ? esc(md.err) : "Loading players…") + '</div>'; }
-  function bucket(p){ return p.g === "G" ? "G" : p.pos === "C" ? "C" : p.pos === "LW" ? "LW" : p.pos === "RW" ? "RW" : "D"; }
+  function bucket(p){ return p.g === "G" ? "G" : p.g === "F" ? "F" : "D"; }
   function listFor(tid){ var o = {}; (data[tid] || []).forEach(function(x){ var p = BYID[x.player_id]; if (!p) return; (o[bucket(p)] = o[bucket(p)] || []).push({ x: x, p: p }); }); Object.keys(o).forEach(function(k){ o[k].sort(function(a, b){ return num(b.x.pts) - num(a.x.pts); }); }); return o; }
   var LA = listFor(m.team_a), LB = listFor(m.team_b);
   function ini(n){ return n.split(" ").filter(Boolean).slice(0, 2).map(function(s){ return s.charAt(0); }).join("").toUpperCase(); }
@@ -1158,7 +1158,7 @@ function plMatchDetailHtml(lg, me, m){
     });
     return rows ? out + '</tbody></table></div>' : "";
   }
-  var sk = table(["C", "LW", "RW", "D"], false), gl = table(["G"], true);
+  var sk = table(["F", "D"], false), gl = table(["G"], true);
   if (!sk && !gl) return h + '<div class="pl-empty">No players on these rosters yet.</div>';
   return h + sk + gl;
 }
