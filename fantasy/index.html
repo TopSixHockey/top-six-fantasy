@@ -1308,6 +1308,10 @@ function plWhy(lg, tid, p){
       var sh = Math.max(0, 1 - h16 - (ay === 2010 ? 1 : 0)) + Math.max(0, 4 - h17 - (ay === 2009 ? 1 : 0)) + Math.max(0, 1 - hoa - (ay === 2006 ? 1 : 0));
       if (sh > 17 - c.F - c.D) return "Your remaining spots are needed for the age minimums";
     }
+    var skA = c.F + c.D + (p.g !== "G" ? 1 : 0), ay2 = p.g !== "G" ? p.ay : 0, ag = c.age || {};
+    var sh2 = Math.max(0, 1 - (ag[2010] || 0) - (ay2 === 2010 ? 1 : 0)) + Math.max(0, 4 - (ag[2009] || 0) - (ay2 === 2009 ? 1 : 0)) + Math.max(0, 1 - (ag[2006] || 0) - (ay2 === 2006 ? 1 : 0));
+    var idf = Math.max(0, 1 - c.imp - (p.imp ? 1 : 0));
+    if (sh2 + idf > 19 - c.F - c.D - c.G) return "Your remaining spots are needed for the age and import minimums";
   }
   return "";
 }
@@ -1322,7 +1326,7 @@ function plLobbyHtml(lg, me){
   var isC = lg.commissioner === user.id, h = '';
   h += '<div class="pl-note"><b>' + (lg.draft_at ? 'Draft: ' + esc(plWhen(lg.draft_at)) + ' &middot; <span id="drCount">' + esc(plCountdown(lg.draft_at)) + '</span>' : 'The commissioner hasn\'t picked a draft time yet.') + '</b><br>' +
     '20 rounds, snake order (order is drawn at random when the draft starts). ' + (lg.pick_seconds ? lg.pick_seconds + ' seconds per pick' : 'No time limit per pick') + (lg.pick_seconds ? ', then the best available player is picked automatically.' : '.') +
-    '<br>' + (lg.use_quotas ? 'Quotas on: age rules (at least 1 sixteen, at least 4 seventeen, 1 to 2 overage, no limits on 18 and 19), max 3 imports, max 5 NHL-drafted.' : 'Roster: 12 forwards, 6 defence, 2 goalies. No age or import quotas.') + '</div>';
+    '<br>' + (lg.use_quotas ? 'Quotas on: age rules (at least 1 sixteen, at least 4 seventeen, 1 to 2 overage, no limits on 18 and 19), 1 to 3 imports, max 5 NHL-drafted.' : 'Roster: 12 forwards, 6 defence, 2 goalies. No age or import quotas.') + '</div>';
   if (isC){
     h += '<h2>Draft settings</h2><div class="pl-form">' +
       '<label>Draft date and time<input id="pldAt" type="datetime-local" value="' + esc(plLocalInput(lg.draft_at)) + '"></label>' +
@@ -1426,7 +1430,7 @@ function plDraftSide(lg, me){
         (lines[g[0]].length ? lines[g[0]].map(function(p){ return '<div><span class="nmh" data-pid="' + esc(p.id) + '">' + esc(p.name) + '</span> <span class="dr-sub">' + esc(p.pos) + ' &middot; ' + esc(p.team) + '</span></div>'; }).join("") : '<div class="why">None yet</div>') + '</div>';
     });
     if (lg.use_quotas){
-      h += '<div class="why">Ages: ' + [[2010,"16","min 1"],[2009,"17","min 4"],[2008,"18",""],[2007,"19",""],[2006,"20","min 1, max 2"]].map(function(a){ return a[1] + ': ' + (c.age[a[0]] || 0) + (a[2] ? ' (' + a[2] + ')' : ""); }).join(" &middot; ") + '<br>Imports ' + c.imp + '/3 &middot; NHL-drafted ' + c.dr + '/5</div>';
+      h += '<div class="why">Ages: ' + [[2010,"16","min 1"],[2009,"17","min 4"],[2008,"18",""],[2007,"19",""],[2006,"20","min 1, max 2"]].map(function(a){ return a[1] + ': ' + (c.age[a[0]] || 0) + (a[2] ? ' (' + a[2] + ')' : ""); }).join(" &middot; ") + '<br>Imports ' + c.imp + ' (min 1, max 3) &middot; NHL-drafted ' + c.dr + '/5</div>';
     }
   } else {
     h = '<div class="dr-res">';
