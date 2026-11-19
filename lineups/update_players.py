@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+u#!/usr/bin/env python3
 """Keeps the player pop-ups on the lineup page (the PL object in index.html) complete and current.
 
   python lineups/update_players.py          automatic: adds a pop-up for any player in a lineup who lacks one,
