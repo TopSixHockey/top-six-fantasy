@@ -34,6 +34,14 @@
   "flipped": true
  },
  "players_full": "2026-11-19T17:16:59.566835-05:00",
+ "qmjhl:32757:away": {
+  "done": true,
+  "flipped": false
+ },
+ "qmjhl:32757:home": {
+  "done": true,
+  "flipped": false
+ },
  "qmjhl:33211:away": {
   "done": true,
   "flipped": true
