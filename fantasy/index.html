@@ -758,6 +758,7 @@ document.addEventListener("click", function(e){
     $("plView").classList.toggle("hide", d.tab !== "pl"); if (d.tab === "pl") plOpen();
     lineupOpen = d.tab === "lineup"; if (lineupOpen) renderLineup();
     if (d.tab === "lb"){ if (!lbPicked && active) lbLeague = active; loadLeaderboard(); }
+    navSave();
   }
 });
 ["q","lg","ps","ag","el"].forEach(function(id){ $(id).addEventListener("input", function(){ shown = SHOW; renderPool(); }); });
@@ -980,6 +981,25 @@ function plStandings(lg){
   return list;
 }
 
+/* remember which page you are on, so a refresh keeps you there */
+function navSave(){
+  try {
+    var t = document.querySelector(".tab.on"), tab = t && t.dataset ? t.dataset.tab : "build", h = tab === "build" ? "" : tab;
+    if (tab === "pl" && PL.cur){ h += "/" + PL.cur + "/" + (PL.sub || "matchups"); if (PL.md && PL.sub === "matchups") h += "/" + PL.md.id; }
+    history.replaceState(null, "", location.pathname + location.search + (h ? "#" + h : ""));
+  } catch (e) {}
+}
+function navRestore(){
+  var hh = (location.hash || "").replace(/^#/, "").split("/");
+  if (hh[0] === "pl"){
+    PL.cur = hh[1] || null;
+    if (/^(matchups|myteam|players|trades|standings|trans|draft|league)$/.test(hh[2] || "")) PL.sub = hh[2];
+    PL.want = { md: hh[3] || "" };
+  }
+  if (hh[0] === "pl" || hh[0] === "lb" || hh[0] === "lineup"){
+    var tb = document.querySelector('.tab[data-tab="' + hh[0] + '"]'); if (tb) tb.click();
+  }
+}
 async function plLoadLeagues(){
   var r = await SB.from("pleagues").select("*").order("created_at", { ascending: true });
   PL.leagues = r.data || [];
@@ -1006,13 +1026,16 @@ async function plLoadLeague(){
 }
 async function plOpen(){
   if (!user){ PL.mode = "list"; plRender(); return; }
-  await plLoadLeagues(); await plLoadLeague(); plRender();
+  await plLoadLeagues(); await plLoadLeague();
+  if (PL.want){ var wm = PL.want.md ? PL.mu.filter(function(x){ return x.id === PL.want.md; })[0] : null; PL.want = null; if (wm && wm.team_b){ PL.week = wm.week; PL.md = { id: wm.id, day: "tot" }; PL.mdc = {}; plMdLoad(); } }
+  plRender();
   var m = /[?&]join=([A-Za-z0-9]+)/.exec(location.search);
   if (m && !PL.joinSeen){ PL.joinSeen = true; PL.mode = "join"; PL.code = m[1].toUpperCase(); plRender(); }
 }
-function plOnAuth(){ PL.leagues = []; PL.cur = null; PL.mode = "list"; PL.msg = ""; if (!$("plView").classList.contains("hide")) plOpen(); }
+function plOnAuth(){ PL.leagues = []; PL.mode = "list"; PL.msg = ""; if (!$("plView").classList.contains("hide")) plOpen(); }
 
 function plRender(){
+  navSave();
   var box = $("plBox");
   if (!user){ box.innerHTML = '<h2>Private leagues</h2><div class="pl-empty">Sign in (on the Build my team tab) to create or join a private head-to-head league with friends.</div>'; return; }
   var h = '<div class="pl-top"><h2 style="margin:0">Private leagues</h2><span class="sp"></span>';
@@ -1858,6 +1881,8 @@ $("plView").addEventListener("click", async function(e){
     await plLoadLeagues(); await plLoadLeague(); plRender(); return;
   }
 });
+
+navRestore();
 
 /* ---- Start ---- */
 (async function(){
