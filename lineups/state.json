@@ -84,11 +84,11 @@
  },
  "whl:1023310:away": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "whl:1023310:home": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "whl:1023311:away": {
   "done": true,
