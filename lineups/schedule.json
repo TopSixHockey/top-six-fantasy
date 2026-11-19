@@ -3,47 +3,209 @@
   {
    "away": "Flint Firebirds",
    "et": "19:00",
-   "home": "Barrie Colts",
-   "id": "29211",
+   "home": "Brampton Steelheads",
+   "id": "29214",
+   "time": "19:00"
+  },
+  {
+   "away": "Kitchener Rangers",
+   "et": "19:00",
+   "home": "North Bay Battalion",
+   "id": "29221",
+   "time": "19:00"
+  },
+  {
+   "away": "Owen Sound Attack",
+   "et": "19:00",
+   "home": "Niagara IceDogs",
+   "id": "29220",
+   "time": "19:00"
+  },
+  {
+   "away": "Ottawa 67's",
+   "et": "19:00",
+   "home": "Gatineau Olympiques",
+   "id": "29216",
    "time": "19:00"
   },
   {
    "away": "Saginaw Spirit",
    "et": "19:00",
-   "home": "Niagara IceDogs",
-   "id": "29212",
+   "home": "Erie Otters",
+   "id": "29215",
    "time": "19:00"
   },
   {
    "away": "Soo Greyhounds",
+   "et": "19:00",
+   "home": "London Knights",
+   "id": "29219",
+   "time": "19:00"
+  },
+  {
+   "away": "Brantford Bulldogs",
    "et": "19:05",
-   "home": "Windsor Spitfires",
-   "id": "29213",
+   "home": "Sudbury Wolves",
+   "id": "29223",
    "time": "19:05"
+  },
+  {
+   "away": "Oshawa Generals",
+   "et": "19:05",
+   "home": "Kingston Frontenacs",
+   "id": "29218",
+   "time": "19:05"
+  },
+  {
+   "away": "Windsor Spitfires",
+   "et": "19:05",
+   "home": "Sarnia Sting",
+   "id": "29222",
+   "time": "19:05"
+  },
+  {
+   "away": "Barrie Colts",
+   "et": "19:07",
+   "home": "Guelph Storm",
+   "id": "29217",
+   "time": "19:07"
   }
  ],
  "qmjhl": [
   {
+   "away": "Saint John, Sea Dogs",
+   "et": "18:00",
+   "home": "Moncton, Wildcats",
+   "id": "32919",
+   "time": "19:00"
+  },
+  {
    "away": "Newfoundland, Regiment",
    "et": "18:00",
    "home": "Charlottetown, Islanders",
-   "id": "32757",
+   "id": "32758",
+   "time": "19:00"
+  },
+  {
+   "away": "Cape Breton, Eagles",
+   "et": "19:00",
+   "home": "Qu\u00e9bec, Remparts",
+   "id": "32983",
    "time": "19:00"
   },
   {
    "away": "Rouyn-Noranda, Huskies",
    "et": "19:00",
    "home": "Baie-Comeau, Drakkar",
-   "id": "32662",
+   "id": "32663",
+   "time": "19:00"
+  },
+  {
+   "away": "Victoriaville, Tigres",
+   "et": "19:00",
+   "home": "Rimouski, Oc\u00e9anic",
+   "id": "33014",
+   "time": "19:00"
+  },
+  {
+   "away": "- Ottawa, 67's (OHL) -",
+   "et": "19:00",
+   "home": "Gatineau, Olympiques",
+   "id": "32854",
+   "time": "19:00"
+  },
+  {
+   "away": "Sherbrooke, Ph\u0153nix",
+   "et": "19:00",
+   "home": "Shawinigan, Cataractes",
+   "id": "33108",
    "time": "19:00"
   },
   {
    "away": "Val-d'Or, Foreurs",
    "et": "19:00",
-   "home": "Sherbrooke, Ph\u0153nix",
-   "id": "33144",
+   "home": "Drummondville, Voltigeurs",
+   "id": "32819",
+   "time": "19:00"
+  },
+  {
+   "away": "Halifax, Mooseheads",
+   "et": "19:00",
+   "home": "Blainville-Boisbriand, Armada",
+   "id": "32696",
    "time": "19:00"
   }
  ],
- "whl": []
+ "whl": [
+  {
+   "away": "Moose Jaw Warriors",
+   "et": "19:00",
+   "home": "Brandon Wheat Kings",
+   "id": "1023314",
+   "time": "19:00"
+  },
+  {
+   "away": "Portland Winterhawks",
+   "et": "20:00",
+   "home": "Prince Albert Raiders",
+   "id": "1023319",
+   "time": "19:00"
+  },
+  {
+   "away": "Wenatchee Wild",
+   "et": "20:00",
+   "home": "Saskatoon Blades",
+   "id": "1023321",
+   "time": "19:00"
+  },
+  {
+   "away": "Edmonton Oil Kings",
+   "et": "20:00",
+   "home": "Calgary Hitmen",
+   "id": "1023315",
+   "time": "19:00"
+  },
+  {
+   "away": "Lethbridge Hurricanes",
+   "et": "20:00",
+   "home": "Red Deer Rebels",
+   "id": "1023320",
+   "time": "19:00"
+  },
+  {
+   "away": "Prince George Cougars",
+   "et": "21:05",
+   "home": "Kelowna Rockets",
+   "id": "1023317",
+   "time": "19:05"
+  },
+  {
+   "away": "Regina Pats",
+   "et": "21:05",
+   "home": "Penticton Vees",
+   "id": "1023318",
+   "time": "19:05"
+  },
+  {
+   "away": "Tri-City Americans",
+   "et": "22:05",
+   "home": "Seattle Thunderbirds",
+   "id": "1023322",
+   "time": "19:05"
+  },
+  {
+   "away": "Victoria Royals",
+   "et": "22:05",
+   "home": "Spokane Chiefs",
+   "id": "1023323",
+   "time": "19:05"
+  },
+  {
+   "away": "Kamloops Blazers",
+   "et": "22:05",
+   "home": "Everett Silvertips",
+   "id": "1023316",
+   "time": "19:05"
+  }
+ ]
 }
