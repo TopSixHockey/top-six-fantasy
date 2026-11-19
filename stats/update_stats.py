@@ -222,14 +222,18 @@ def goalie_stats(r):
     svp = pick(r, "save_percentage", "savepct", "sv_pct")
     if svp is not None and svp > 1:  # e.g. 91.2 -> .912
         svp = svp / 100.0
+    ga = pick(r, "goals_against")
+    sa = pick(r, "shots", "shots_against")
+    if sa is None and ga is not None and svp is not None and svp < 1:  # WHL feed has no shots against: work it out from GA and SV%
+        sa = float(round(ga / (1.0 - svp)))
     return {
         "gp": pick(r, "games_played", "gp"),
         "wins": pick(r, "wins", "w"),
         "so": pick(r, "shutouts", "so"),
         "gaa": pick(r, "goals_against_average", "gaa"),
         "svp": svp,
-        "sa": pick(r, "shots", "shots_against"),
-        "ga": pick(r, "goals_against"),
+        "sa": sa,
+        "ga": ga,
     }
 
 
