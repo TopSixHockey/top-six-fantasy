@@ -160,6 +160,40 @@ td.pos{color:var(--ok)}td.neg{color:var(--bad)}td.pts{color:#ff9f43}td.fp{font-w
 .mu-m table{margin:8px auto 0;font-size:12px}
 .mu-m td,.mu-m th{padding:3px 8px;text-align:center}
 .mu-m td.w{color:var(--ok);font-weight:700}
+.mu-m.click{cursor:pointer}
+.mu-m.click:hover{background:rgba(255,255,255,.05)}
+.mu-av.sm{width:28px;height:28px;font-size:10px;margin-right:8px;vertical-align:middle;display:inline-flex}
+.md-bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:6px 0 12px}
+.md-back{padding:6px 12px}
+.md-tabs{display:flex;gap:2px;overflow-x:auto;border-bottom:1px solid var(--line);flex:1;min-width:0}
+.md-tabs button,.md-tabs button:disabled{background:none;border:0;border-bottom:3px solid transparent;border-radius:0;color:var(--mute);font-weight:600;padding:8px 10px;white-space:nowrap;cursor:pointer}
+.md-tabs button.on{color:var(--tx);border-bottom-color:var(--acc)}
+.md-head{display:grid;grid-template-columns:minmax(0,1fr) 60px minmax(110px,auto) 60px minmax(0,1fr);gap:12px;align-items:center;margin:18px 0}
+.md-tm .md-n{font-size:20px;font-weight:800;color:var(--acc);overflow-wrap:anywhere}
+.md-tm .md-mg{color:var(--tx)}
+.md-tm .md-rec{color:var(--mute);font-weight:600}
+.md-tm.r{text-align:right}
+.md-head .mu-av{width:60px;height:60px;font-size:20px}
+.md-sc{display:flex;gap:14px;align-items:center;justify-content:center;font-size:30px;font-weight:800}
+.md-sc .w{color:var(--ok)}
+.md-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin:12px 0;background:var(--panel)}
+.md-t{width:100%;border-collapse:collapse;font-size:13px;min-width:780px}
+.md-t th{background:var(--panel2);padding:10px 6px;text-align:center;font-weight:700;border-bottom:1px solid var(--line)}
+.md-t th.l{text-align:left;padding-left:12px}
+.md-t td{padding:8px 6px;text-align:center;border-bottom:1px solid var(--line)}
+.md-t tr:last-child td{border-bottom:0}
+.md-t td.md-pl{text-align:left;padding-left:12px;white-space:nowrap}
+.md-t td.md-pos{background:var(--panel2);color:var(--mute);font-weight:600}
+.md-t td.pos{color:var(--ok)}
+.md-t td.neg{color:var(--bad)}
+.md-t td.fp{font-weight:800}
+.md-ph{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:#2a3544;color:#9fb0c3;font-size:11px;font-weight:700;margin-right:8px;vertical-align:middle}
+.md-pl>span:last-child{display:inline-block;vertical-align:middle}
+.md-pn{color:var(--acc);font-weight:700}
+.md-ps{color:var(--mute);font-size:11px}
+.md-e{color:var(--mute)}
+@media(max-width:560px){.md-head{grid-template-columns:minmax(0,1fr) 44px auto 44px minmax(0,1fr);gap:6px}.md-head .mu-av{width:44px;height:44px;font-size:15px}.md-tm .md-n{font-size:14px}.md-sc{font-size:22px;gap:8px}}
+
 @media(max-width:560px){.mu-row{grid-template-columns:minmax(0,1fr) 34px auto 18px auto 34px minmax(0,1fr);gap:5px}.mu-av{width:34px;height:34px;font-size:12px}.mu-t .mu-n{font-size:12.5px}.mu-sc{font-size:19px}.mu-top h2{font-size:22px}}
 
 .pl-st td:nth-child(n+3),.pl-st th:nth-child(n+3){text-align:center}
@@ -1025,6 +1059,7 @@ function plLeagueHtml(){
 function plTeamName(id){ var t = plTeam(id); return t ? esc(t.name) : "Team removed"; }
 function plMatchupsHtml(lg, me){
   if (lg.status === "setup") return '<div class="pl-note">The schedule isn\'t set yet. ' + (lg.commissioner === user.id ? 'Once everyone has joined, open the League tab and set the schedule.' : 'The commissioner will set it once everyone has joined.') + '</div>';
+  if (PL.md){ var dm = PL.mu.filter(function(x){ return x.id === PL.md.id; })[0]; if (dm && dm.team_b) return plMatchDetailHtml(lg, me, dm); PL.md = null; }
   var w = PL.week, ms = PL.mu.filter(function(m){ return m.week === w; });
   var fin = plDone(lg, w), began = plStarted(lg) && !(plDay(plToday()) < plDay(lg.start_date) + (w - 1) * 7);
   var status = fin ? "Final" : began ? "In progress" : "Upcoming";
@@ -1037,15 +1072,10 @@ function plMatchupsHtml(lg, me){
   function side(id, right){ return '<div class="mu-t' + (right ? " r" : "") + '" title="' + esc(PL.names[(plTeam(id) || {}).user_id] || "") + '"><div class="mu-n">' + plTeamName(id) + '</div><div class="mu-rec">' + (recs[id] || "0-0-0") + '</div></div>'; }
   ms.forEach(function(m){
     var mine = me && (m.team_a === me.id || m.team_b === me.id), big = lg.scoring_mode === "points";
-    h += '<div class="mu-m' + (mine ? " me" : "") + '"><div class="mu-row">' + side(m.team_a, true) + plAvatar(plTeam(m.team_a));
+    h += '<div class="mu-m click' + (mine ? " me" : "") + '" data-plmu="' + esc(m.id) + '" role="button" tabindex="0" title="View matchup details"><div class="mu-row">' + side(m.team_a, true) + plAvatar(plTeam(m.team_a));
     if (!m.team_b){ h += '<div class="mu-vs" style="grid-column:3/8;text-align:left">BYE</div></div></div>'; return; }
     var r = plResult(lg, w, m.team_a, m.team_b), wa = fin && r.w === "a" ? " w" : "", wb = fin && r.w === "b" ? " w" : "";
     h += '<div class="mu-sc' + wa + '">' + (big ? plNum(r.a) : r.a) + '</div><div class="mu-vs">vs</div><div class="mu-sc' + wb + '">' + (big ? plNum(r.b) : r.b) + '</div>' + plAvatar(plTeam(m.team_b)) + side(m.team_b, false) + '</div>';
-    if (!big){
-      h += '<table><tbody>';
-      r.cats.forEach(function(c){ h += '<tr><td class="' + (c.w === "a" ? "w" : "") + '">' + plNum(c.a) + '</td><th>' + c.k + '</th><td class="' + (c.w === "b" ? "w" : "") + '">' + plNum(c.b) + '</td></tr>'; });
-      h += '</tbody></table>';
-    }
     h += '</div>';
   });
   return h + '</div>';
@@ -1056,6 +1086,90 @@ function plAvatar(t){
   for (i = 0; i < s.length; i++) hue = (hue * 31 + s.charCodeAt(i)) % 360;
   return '<span class="mu-av" style="background:hsl(' + hue + ',50%,36%)">' + esc(ini) + '</span>';
 }
+function plIso(d){ return new Date(d * 864e5).toISOString().slice(0, 10); }
+async function plMdLoad(){
+  var md = PL.md; if (!md) return;
+  var lg = plLg(), m = PL.mu.filter(function(x){ return x.id === md.id; })[0]; if (!m) return;
+  var ws = plDay(lg.start_date) + (m.week - 1) * 7, from = ws, to = ws + 7;
+  if (md.day !== "tot"){ from = plDay(md.day); to = from + 1; }
+  var f = plIso(from), t = plIso(to), key = m.week + "|" + f + "|" + t;
+  PL.mdc = PL.mdc || {}; md.key = key; md.err = "";
+  if (PL.mdc[key]) return;
+  var r = await SB.rpc("pleague_player_scores", { p_league: lg.id, p_week: m.week, p_from: f, p_to: t });
+  if (r.error){ md.err = r.error.message; }
+  else { var map = {}; (r.data || []).forEach(function(x){ (map[x.team_id] = map[x.team_id] || []).push(x); }); PL.mdc[key] = map; }
+  if (PL.md === md) plRender();
+}
+function plMatchDetailHtml(lg, me, m){
+  var md = PL.md, w = m.week, fin = plDone(lg, w), big = lg.scoring_mode === "points";
+  var recs = {}; plStandings(lg).forEach(function(r){ recs[r.t.id] = r.w + "-" + r.l + "-" + r.tie; });
+  var res = plResult(lg, w, m.team_a, m.team_b), ws = plDay(lg.start_date) + (w - 1) * 7;
+  var data = PL.mdc && PL.mdc[md.key];
+  function near(nw){ return PL.mu.filter(function(x){ return x.week === nw && x.team_b && (x.team_a === m.team_a || x.team_b === m.team_a); })[0]; }
+  function tab(k, label){ return '<button class="' + (md.day === k ? "on" : "") + '" data-plmuday="' + k + '">' + label + '</button>'; }
+  var h = '<div class="md-bar"><button class="sec md-back" data-plmuback="1">&lsaquo; All matchups</button></div>';
+  h += '<div class="md-bar"><div class="mu-wk"><button data-plmuwk="-1"' + (near(w - 1) ? "" : " disabled") + ' aria-label="Previous week">&lsaquo;</button><span>Week ' + w + '</span><button data-plmuwk="1"' + (near(w + 1) ? "" : " disabled") + ' aria-label="Next week">&rsaquo;</button></div><div class="md-tabs">' + tab("tot", "Totals");
+  for (var i = 0; i < 7; i++) h += tab(plIso(ws + i), new Date((ws + i) * 864e5).toLocaleDateString("en-US", { timeZone: "UTC", weekday: "short", month: "numeric", day: "numeric" }).replace(",", ""));
+  h += '</div></div>';
+  function side(id, right){ var t = plTeam(id); return '<div class="md-tm' + (right ? " r" : "") + '"><div class="md-n">' + plTeamName(id) + '</div><div class="md-mg">' + esc(PL.names[(t || {}).user_id] || "") + '</div><div class="md-rec">' + (recs[id] || "0-0-0") + '</div></div>'; }
+  var wa = fin && res.w === "a" ? "w" : "", wb = fin && res.w === "b" ? "w" : "";
+  h += '<div class="md-head">' + side(m.team_a, true) + plAvatar(plTeam(m.team_a)) + '<div class="md-sc"><span class="' + wa + '">' + (big ? plNum(res.a) : res.a) + '</span><span class="mu-vs">vs</span><span class="' + wb + '">' + (big ? plNum(res.b) : res.b) + '</span></div>' + plAvatar(plTeam(m.team_b)) + side(m.team_b, false) + '</div>';
+  var TC = [["g","G"],["a","A"],["p","P"],["pm","+/-"],["shots","SOG"],["pim","PIM"],["wins","W"],["so","SO"],["pts","FPTS"]];
+  var catWin = {}; if (!big && md.day === "tot") PCATS.forEach(function(c, i){ if (res.cats[i]) catWin[c[0]] = res.cats[i].w; });
+  function tot(tid){
+    var o = { g: 0, a: 0, p: 0, pm: 0, shots: 0, pim: 0, wins: 0, so: 0, pts: 0 };
+    if (md.day === "tot"){ var s = plSc(w, tid); Object.keys(o).forEach(function(k){ if (k !== "p") o[k] = num(s[k]); }); }
+    else ((data || {})[tid] || []).forEach(function(x){ ["g","a","pm","shots","pim","wins","so","pts"].forEach(function(k){ o[k] += num(x[k]); }); });
+    o.p = o.g + o.a; return o;
+  }
+  function fmt(k, v){ if (k === "pm") return '<td class="' + (v > 0 ? "pos" : v < 0 ? "neg" : "") + '">' + (v > 0 ? "+" : "") + plNum(v) + '</td>'; if (k === "pts") return '<td class="fp">' + plNum(v) + '</td>'; return '<td>' + (v ? plNum(v) : "-") + '</td>'; }
+  h += '<div class="md-scroll"><table class="md-t"><thead><tr><th class="l">Team</th>' + TC.map(function(c){ return '<th>' + c[1] + '</th>'; }).join("") + '</tr></thead><tbody>';
+  [m.team_a, m.team_b].forEach(function(tid, ti){
+    var o = tot(tid), side2 = ti === 0 ? "a" : "b";
+    h += '<tr><td class="md-pl">' + plAvatar(plTeam(tid)).replace("mu-av", "mu-av sm") + '<span><span class="md-pn">' + plTeamName(tid) + '</span></span></td>' + TC.map(function(c){ var cell = fmt(c[0], o[c[0]]); return catWin[c[0]] === side2 ? cell.replace("<td", '<td style="color:var(--ok);font-weight:800"') : cell; }).join("") + '</tr>';
+  });
+  h += '</tbody></table></div>' + (big ? "" : '<small class="note" style="text-align:center">Category winners are shown in green on the Totals tab.</small>');
+  if (!data){ return h + '<div class="pl-empty">' + (md.err ? esc(md.err) : "Loading players…") + '</div>'; }
+  function bucket(p){ return p.g === "G" ? "G" : p.pos === "C" ? "C" : p.pos === "LW" ? "LW" : p.pos === "RW" ? "RW" : "D"; }
+  function listFor(tid){ var o = {}; (data[tid] || []).forEach(function(x){ var p = BYID[x.player_id]; if (!p) return; (o[bucket(p)] = o[bucket(p)] || []).push({ x: x, p: p }); }); Object.keys(o).forEach(function(k){ o[k].sort(function(a, b){ return num(b.x.pts) - num(a.x.pts); }); }); return o; }
+  var LA = listFor(m.team_a), LB = listFor(m.team_b);
+  function ini(n){ return n.split(" ").filter(Boolean).slice(0, 2).map(function(s){ return s.charAt(0); }).join("").toUpperCase(); }
+  function pcell(it, goalie){
+    if (!it) return '<td class="md-pl"><span class="md-ph"></span><span class="md-e">(Empty)</span></td>' + new Array((goalie ? 3 : 7) + 1).join("<td>-</td>");
+    var x = it.x, p = it.p, g = num(x.g), a = num(x.a);
+    var nm = '<td class="md-pl" data-pid="' + esc(p.id) + '"><span class="md-ph">' + esc(ini(p.name)) + '</span><span><span class="md-pn">' + esc(p.name) + '</span><br><span class="md-ps">' + esc(p.team) + ' &middot; ' + esc(p.pos) + '</span></span></td>';
+    var vals = goalie ? [["wins", num(x.wins)], ["so", num(x.so)], ["pts", num(x.pts)]] : [["g", g], ["a", a], ["p", g + a], ["pm", num(x.pm)], ["shots", num(x.shots)], ["pim", num(x.pim)], ["pts", num(x.pts)]];
+    return nm + vals.map(function(c){ return fmt(c[0], c[1]); }).join("");
+  }
+  function table(buckets, goalie){
+    var cols = goalie ? [["wins","W"],["so","SO"],["pts","FPTS"]] : [["g","G"],["a","A"],["p","P"],["pm","+/-"],["shots","SOG"],["pim","PIM"],["pts","FPTS"]];
+    var head = '<th class="l">' + (goalie ? "Goalie" : "Player") + '</th>' + cols.map(function(c){ return '<th>' + c[1] + '</th>'; }).join("");
+    var out = '<div class="md-scroll"><table class="md-t"><thead><tr>' + head + '<th>Pos</th>' + head + '</tr></thead><tbody>', rows = 0;
+    buckets.forEach(function(b){
+      var n = Math.max((LA[b] || []).length, (LB[b] || []).length);
+      for (var i = 0; i < n; i++){ rows++; out += '<tr>' + pcell((LA[b] || [])[i], goalie) + '<td class="md-pos">' + b + '</td>' + pcell((LB[b] || [])[i], goalie) + '</tr>'; }
+    });
+    return rows ? out + '</tbody></table></div>' : "";
+  }
+  var sk = table(["C", "LW", "RW", "D"], false), gl = table(["G"], true);
+  if (!sk && !gl) return h + '<div class="pl-empty">No players on these rosters yet.</div>';
+  return h + sk + gl;
+}
+$("plView").addEventListener("click", function(e){
+  var el = e.target.closest ? e.target.closest("[data-plmu],[data-plmuday],[data-plmuwk],[data-plmuback]") : null; if (!el || el.disabled) return;
+  var d = el.dataset, lg = plLg(); if (!lg) return;
+  if (d.plmu){
+    var m = PL.mu.filter(function(x){ return x.id === d.plmu; })[0]; if (!m || !m.team_b) return;
+    PL.md = { id: m.id, day: "tot" }; PL.mdc = {}; plMdLoad(); plRender(); window.scrollTo(0, 0);
+  } else if (d.plmuback){ PL.md = null; plRender(); }
+  else if (d.plmuday && PL.md){ PL.md.day = d.plmuday; plMdLoad(); plRender(); }
+  else if (d.plmuwk && PL.md){
+    var cur = PL.mu.filter(function(x){ return x.id === PL.md.id; })[0]; if (!cur) return;
+    var nw = cur.week + (+d.plmuwk), nm = PL.mu.filter(function(x){ return x.week === nw && x.team_b && (x.team_a === cur.team_a || x.team_b === cur.team_a); })[0];
+    if (nm){ PL.week = nw; PL.md = { id: nm.id, day: "tot" }; plMdLoad(); plRender(); }
+  }
+});
+$("plView").addEventListener("keydown", function(e){ if ((e.key === "Enter" || e.key === " ") && e.target.dataset && e.target.dataset.plmu){ e.preventDefault(); e.target.click(); } });
 function plStandingsHtml(lg){
   var rows = plStandings(lg), ptsLbl = lg.scoring_mode === "points" ? "Pts" : "Pts";
   var h = '<div class="tbl"><table class="pl-st"><thead><tr><th>Rank</th><th>Team</th><th>W-L-T</th><th>Pct</th><th>' + ptsLbl + '</th><th>Last week</th><th>Waiver</th><th>Moves</th></tr></thead><tbody>';
