@@ -174,7 +174,8 @@ td.pos{color:var(--ok)}td.neg{color:var(--bad)}td.pts{color:#ff9f43}td.fp{font-w
 .md-tm .md-rec{color:var(--mute);font-weight:600}
 .md-tm.r{text-align:right}
 .md-head .mu-av{width:60px;height:60px;font-size:20px}
-.mu-av{overflow:hidden}.mu-av img{width:100%;height:100%;object-fit:cover;display:block}
+.mu-av{overflow:hidden}.st-t{display:flex;align-items:center;gap:10px}.st-t .mu-av{width:34px;height:34px;flex:none;font-size:12px}
+.mu-av img{width:100%;height:100%;object-fit:cover;display:block}
 .md-sc{display:flex;gap:14px;align-items:center;justify-content:center;font-size:30px;font-weight:800}
 .md-sc .w{color:var(--ok)}
 .md-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin:12px 0;background:var(--panel)}
@@ -1206,7 +1207,7 @@ function plStandingsHtml(lg){
   var h = '<div class="tbl"><table class="pl-st"><thead><tr><th>Rank</th><th>Team</th><th>W-L-T</th><th>Pct</th><th>' + ptsLbl + '</th><th>Last week</th><th>Waiver</th><th>Moves</th></tr></thead><tbody>';
   rows.forEach(function(r, i){
     var pct = r.pct.toFixed(3).replace(/^0/, "");
-    h += '<tr><td>' + (i + 1) + '</td><td class="t">' + esc(r.t.name) + '<div class="why">' + esc(PL.names[r.t.user_id] || "") + '</div></td><td>' + r.w + '-' + r.l + '-' + r.tie + '</td><td>' + pct + '</td><td>' + plNum(r.pts) + '</td><td>' + esc(r.last || "-") + '</td><td>' + (r.t.waiver_pos || "-") + '</td><td>' + r.moves + '</td></tr>';
+    h += '<tr><td>' + (i + 1) + '</td><td class="t"><div class="st-t">' + plAvatar(r.t) + '<div>' + esc(r.t.name) + '<div class="why">' + esc(PL.names[r.t.user_id] || "") + '</div></div></div></td><td>' + r.w + '-' + r.l + '-' + r.tie + '</td><td>' + pct + '</td><td>' + plNum(r.pts) + '</td><td>' + esc(r.last || "-") + '</td><td>' + (r.t.waiver_pos || "-") + '</td><td>' + r.moves + '</td></tr>';
   });
   h += '</tbody></table></div><small class="note">' + (lg.scoring_mode === "points" ? 'Pts = total fantasy points scored in completed weeks.' : 'Pts = 2 per matchup win and 1 per tie.') + ' Only completed weeks count. Ranked by win percentage, then Pts.</small>';
   return rows.length ? h : '<div class="pl-empty">No teams yet.</div>';
