@@ -190,6 +190,7 @@ td.pos{color:var(--ok)}td.neg{color:var(--bad)}td.pts{color:#ff9f43}td.fp{font-w
 .md-t td.fp{font-weight:800}
 .md-ph{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:#2a3544;color:#9fb0c3;font-size:11px;font-weight:700;margin-right:8px;vertical-align:middle}
 .md-pl>span:last-child{display:inline-block;vertical-align:middle}
+.md-jy{display:inline-block;width:30px;margin-right:9px;vertical-align:middle}.md-jy svg{width:100%;height:auto;display:block;filter:drop-shadow(0 1px 1px rgba(0,0,0,.4))}
 .md-pn{color:var(--acc);font-weight:700}
 .md-ps{color:var(--mute);font-size:11px}
 .md-e{color:var(--mute)}
@@ -1105,6 +1106,7 @@ async function plMdLoad(){
   if (PL.md === md) plRender();
 }
 function plMatchDetailHtml(lg, me, m){
+  if (!JERS && !PL.jl){ PL.jl = true; loadJerseys().then(function(){ if (PL.md) plRender(); }, function(){ PL.jl = false; }); }
   var md = PL.md, w = m.week, fin = plDone(lg, w), big = lg.scoring_mode === "points";
   var recs = {}; plStandings(lg).forEach(function(r){ recs[r.t.id] = r.w + "-" + r.l + "-" + r.tie; });
   var res = plResult(lg, w, m.team_a, m.team_b), ws = plDay(lg.start_date) + (w - 1) * 7;
@@ -1141,7 +1143,8 @@ function plMatchDetailHtml(lg, me, m){
   function pcell(it, goalie){
     if (!it) return '<td class="md-pl"><span class="md-ph"></span><span class="md-e">(Empty)</span></td>' + new Array((goalie ? 3 : 6) + 1).join("<td>-</td>");
     var x = it.x, p = it.p, g = num(x.g), a = num(x.a);
-    var nm = '<td class="md-pl" data-pid="' + esc(p.id) + '"><span class="md-ph">' + esc(ini(p.name)) + '</span><span><span class="md-pn">' + esc(p.name) + '</span><br><span class="md-ps">' + esc(p.team) + ' &middot; ' + esc(p.pos) + '</span></span></td>';
+    var jy = JERS ? '<span class="md-jy">' + JERS.jersey(p.num, JERS.map[tnorm(p.team)] || GENERIC, "") + '</span>' : '<span class="md-ph">' + esc(ini(p.name)) + '</span>';
+    var nm = '<td class="md-pl" data-pid="' + esc(p.id) + '">' + jy + '<span><span class="md-pn">' + esc(p.name) + '</span><br><span class="md-ps">' + esc(p.team) + ' &middot; ' + esc(p.pos) + '</span></span></td>';
     var vals = goalie ? [["wins", num(x.wins)], ["svp", plSv(x.sa, x.ga)], ["pts", num(x.pts)]] : [["g", g], ["a", a], ["p", g + a], ["pm", num(x.pm)], ["shots", num(x.shots)], ["pts", num(x.pts)]];
     return nm + vals.map(function(c){ return fmt(c[0], c[1]); }).join("");
   }
