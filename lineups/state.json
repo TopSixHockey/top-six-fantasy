@@ -1,58 +1,6 @@
 {
  "inj:ohl": 1795142588.550705,
  "inj:whl": 1795142588.550705,
- "ohl:29207:away": {
-  "done": true,
-  "flipped": true
- },
- "ohl:29207:home": {
-  "done": true,
-  "flipped": true
- },
- "ohl:29208:away": {
-  "done": true,
-  "flipped": true
- },
- "ohl:29208:home": {
-  "done": true,
-  "flipped": true
- },
- "ohl:29209:away": {
-  "done": true,
-  "flipped": true
- },
- "ohl:29209:home": {
-  "done": true,
-  "flipped": true
- },
- "ohl:29210:away": {
-  "done": true,
-  "flipped": true
- },
- "ohl:29210:home": {
-  "done": true,
-  "flipped": true
- },
- "ohl:29211:away": {
-  "done": true,
-  "flipped": false
- },
- "ohl:29211:home": {
-  "done": true,
-  "flipped": false
- },
- "ohl:29212:away": {
-  "done": true,
-  "flipped": true
- },
- "ohl:29212:home": {
-  "done": true,
-  "flipped": true
- },
- "ohl:29213:home": {
-  "done": true,
-  "flipped": true
- },
  "players_full": "2026-11-19T17:16:59.566835-05:00",
  "qmjhl:32662:away": {
   "done": true,
@@ -83,78 +31,6 @@
   "flipped": true
  },
  "qmjhl:33211:home": {
-  "done": true,
-  "flipped": true
- },
- "whl:1023305:away": {
-  "done": true,
-  "flipped": true
- },
- "whl:1023305:home": {
-  "done": true,
-  "flipped": true
- },
- "whl:1023306:away": {
-  "done": true,
-  "flipped": true
- },
- "whl:1023306:home": {
-  "done": true,
-  "flipped": true
- },
- "whl:1023307:away": {
-  "done": true,
-  "flipped": true
- },
- "whl:1023307:home": {
-  "done": true,
-  "flipped": true
- },
- "whl:1023308:away": {
-  "done": true,
-  "flipped": true
- },
- "whl:1023308:home": {
-  "done": true,
-  "flipped": true
- },
- "whl:1023309:away": {
-  "done": true,
-  "flipped": true
- },
- "whl:1023309:home": {
-  "done": true,
-  "flipped": true
- },
- "whl:1023310:away": {
-  "done": true,
-  "flipped": true
- },
- "whl:1023310:home": {
-  "done": true,
-  "flipped": true
- },
- "whl:1023311:away": {
-  "done": true,
-  "flipped": true
- },
- "whl:1023311:home": {
-  "done": true,
-  "flipped": true
- },
- "whl:1023312:away": {
-  "done": true,
-  "flipped": true
- },
- "whl:1023312:home": {
-  "done": true,
-  "flipped": true
- },
- "whl:1023313:away": {
-  "done": true,
-  "flipped": true
- },
- "whl:1023313:home": {
   "done": true,
   "flipped": true
  }
