@@ -179,7 +179,7 @@ td.pos{color:var(--ok)}td.neg{color:var(--bad)}td.pts{color:#ff9f43}td.fp{font-w
 [data-plteam]{cursor:pointer}
 .mu-t[data-plteam]:hover .mu-n,.md-tm[data-plteam]:hover .md-n,.st-t[data-plteam]:hover .tn,.tl:hover{text-decoration:underline}
 .cv-wrap{position:relative;margin:0 0 4px}
-.cv{position:relative;aspect-ratio:1200/454;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+.cv{position:relative;aspect-ratio:1200/227;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
 .cv img{width:100%;height:100%;object-fit:cover;display:block}
 .cv-avw{position:absolute;left:18px;bottom:-40px}
 .cv-avw .mu-av{width:92px;height:92px;font-size:30px;border:4px solid var(--bg)}
@@ -1338,7 +1338,7 @@ async function plUploadCover(inp){
   try {
     var url = URL.createObjectURL(f), img = new Image();
     await new Promise(function(ok, bad){ img.onload = ok; img.onerror = function(){ bad(new Error("That image could not be read. Try a JPG or PNG.")); }; img.src = url; });
-    var W = 1200, H = 454, c = document.createElement("canvas"); c.width = W; c.height = H;
+    var W = 1200, H = 227, c = document.createElement("canvas"); c.width = W; c.height = H;
     var g = c.getContext("2d"); g.fillStyle = "#0b1d3a"; g.fillRect(0, 0, W, H);
     var sc = Math.max(W / img.width, H / img.height), sw = W / sc, sh = H / sc;
     g.drawImage(img, (img.width - sw) / 2, (img.height - sh) / 2, sw, sh, 0, 0, W, H);
