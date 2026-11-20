@@ -176,6 +176,16 @@ td.pos{color:var(--ok)}td.neg{color:var(--bad)}td.pts{color:#ff9f43}td.fp{font-w
 .md-head .mu-av{width:60px;height:60px;font-size:20px}
 .mu-av{overflow:hidden}.st-t{display:flex;align-items:center;gap:10px}.st-t .mu-av{width:34px;height:34px;flex:none;font-size:12px}
 .mu-av img{width:100%;height:100%;object-fit:cover;display:block}
+[data-plteam]{cursor:pointer}
+.mu-t[data-plteam]:hover .mu-n,.md-tm[data-plteam]:hover .md-n,.st-t[data-plteam]:hover .tn,.tl:hover{text-decoration:underline}
+.cv-wrap{position:relative;margin:0 0 4px}
+.cv{position:relative;aspect-ratio:1200/454;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+.cv img{width:100%;height:100%;object-fit:cover;display:block}
+.cv-avw{position:absolute;left:18px;bottom:-40px}
+.cv-avw .mu-av{width:92px;height:92px;font-size:30px;border:4px solid var(--bg)}
+.cv-info{padding:6px 0 14px 124px;min-height:50px}
+.cv-n{font-size:22px;font-weight:800;line-height:1.15;overflow-wrap:anywhere}
+@media(max-width:600px){.cv-avw{left:12px;bottom:-30px}.cv-avw .mu-av{width:72px;height:72px;font-size:24px}.cv-info{padding-left:96px}.cv-n{font-size:18px}}
 .md-sc{display:flex;gap:14px;align-items:center;justify-content:center;font-size:30px;font-weight:800}
 .md-sc .w{color:var(--ok)}
 .md-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin:12px 0;background:var(--panel)}
@@ -986,7 +996,7 @@ function plStandings(lg){
 function navSave(){
   try {
     var t = document.querySelector(".tab.on"), tab = t && t.dataset ? t.dataset.tab : "build", h = tab === "build" ? "" : tab;
-    if (tab === "pl" && PL.cur){ h += "/" + PL.cur + "/" + (PL.sub || "matchups"); if (PL.md && PL.sub === "matchups") h += "/" + PL.md.id; }
+    if (tab === "pl" && PL.cur){ h += "/" + PL.cur + "/" + (PL.sub || "matchups"); if (PL.teamView) h += "/t-" + PL.teamView; else if (PL.md && PL.sub === "matchups") h += "/" + PL.md.id; }
     history.replaceState(null, "", location.pathname + location.search + (h ? "#" + h : ""));
   } catch (e) {}
 }
@@ -995,7 +1005,7 @@ function navRestore(){
   if (hh[0] === "pl"){
     PL.cur = hh[1] || null;
     if (/^(matchups|myteam|players|trades|standings|trans|draft|league)$/.test(hh[2] || "")) PL.sub = hh[2];
-    PL.want = { md: hh[3] || "" };
+    PL.want = /^t-/.test(hh[3] || "") ? { team: hh[3].slice(2) } : { md: hh[3] || "" };
   }
   if (hh[0] === "pl" || hh[0] === "lb" || hh[0] === "lineup"){
     var tb = document.querySelector('.tab[data-tab="' + hh[0] + '"]'); if (tb) tb.click();
@@ -1028,6 +1038,7 @@ async function plLoadLeague(){
 async function plOpen(){
   if (!user){ PL.mode = "list"; plRender(); return; }
   await plLoadLeagues(); await plLoadLeague();
+  if (PL.want && PL.want.team){ if (plTeam(PL.want.team)) PL.teamView = PL.want.team; PL.want = null; }
   if (PL.want){ var wm = PL.want.md ? PL.mu.filter(function(x){ return x.id === PL.want.md; })[0] : null; PL.want = null; if (wm && wm.team_b){ PL.week = wm.week; PL.md = { id: wm.id, day: "tot" }; PL.mdc = {}; plMdLoad(); } }
   plRender();
   var m = /[?&]join=([A-Za-z0-9]+)/.exec(location.search);
@@ -1076,9 +1087,10 @@ function plLeagueHtml(){
   h += '<div class="pl-sub">';
   [["matchups","Matchups"],["myteam","My Team"],["players","Players"],["trades","Trades" + (plTradeTodo(lg, me) ? " (" + plTradeTodo(lg, me) + ")" : "")],["standings","Standings"],["trans","Transactions"],["draft","Draft" + (lg.status === "drafting" ? " (LIVE)" : "")],["league","League"]].forEach(function(s){ h += '<button class="pill' + (PL.sub === s[0] ? " on" : "") + '" data-plsub="' + s[0] + '">' + s[1] + '</button>'; });
   h += '</div>';
+  if (PL.teamView && plTeam(PL.teamView)) return h + plTeamPageHtml(lg, plTeam(PL.teamView));
   if (PL.sub === "standings") return h + plStandingsHtml(lg);
   if (PL.sub === "trans") return h + plTransHtml(lg);
-  if (PL.sub === "myteam") return h + plMyTeamHtml(lg, me);
+  if (PL.sub === "myteam") return h + (me ? plCover(me) + plTeamInfo(lg, me) + '<div class="row" style="margin:0 0 12px"><button class="sec" data-plsub="league">Edit team logo &amp; cover photo</button></div>' : "") + plMyTeamHtml(lg, me);
   if (PL.sub === "players") return h + plPlayersHtml(lg, me);
   if (PL.sub === "trades") return h + plTradesHtml(lg, me);
   if (PL.sub === "draft") return h + plDraftHtml(lg, me);
@@ -1098,7 +1110,7 @@ function plMatchupsHtml(lg, me){
   if (!began) h += '<div class="pl-note">This week hasn\'t started. Scores begin counting on ' + plWeekStart(lg, w) + '.</div>';
   h += '<div class="mu-card"><div class="mu-hd"><span>&#127942; Week ' + w + ' Matchups <small>' + plWeekStart(lg, w) + ' &ndash; ' + plWeekEnd(lg, w) + '</small></span><span>' + status + '</span></div>';
   ms.sort(function(x, y){ var mx = me && (x.team_a === me.id || x.team_b === me.id) ? 0 : 1, my = me && (y.team_a === me.id || y.team_b === me.id) ? 0 : 1; return mx - my; });
-  function side(id, right){ return '<div class="mu-t' + (right ? " r" : "") + '" title="' + esc(PL.names[(plTeam(id) || {}).user_id] || "") + '"><div class="mu-n">' + plTeamName(id) + '</div><div class="mu-rec">' + (recs[id] || "0-0-0") + '</div></div>'; }
+  function side(id, right){ return '<div class="mu-t' + (right ? " r" : "") + '" data-plteam="' + esc(id) + '" title="' + esc(PL.names[(plTeam(id) || {}).user_id] || "") + '"><div class="mu-n">' + plTeamName(id) + '</div><div class="mu-rec">' + (recs[id] || "0-0-0") + '</div></div>'; }
   ms.forEach(function(m){
     var mine = me && (m.team_a === me.id || m.team_b === me.id), big = lg.scoring_mode === "points";
     h += '<div class="mu-m click' + (mine ? " me" : "") + '" data-plmu="' + esc(m.id) + '" role="button" tabindex="0" title="View matchup details"><div class="mu-row">' + side(m.team_a, true) + plAvatar(plTeam(m.team_a));
@@ -1109,12 +1121,12 @@ function plMatchupsHtml(lg, me){
   });
   return h + '</div>';
 }
-function plAvatar(t){
-  var nm = t ? t.name : "?", s = t ? t.id : nm, hue = 0, i;
+function plAvatar(t, nolink){
+  var nm = t ? t.name : "?", s = t ? t.id : nm, hue = 0, i, lk = t && !nolink ? ' data-plteam="' + esc(t.id) + '"' : "";
   var ini = nm.replace(/[^A-Za-z0-9 ]/g, "").split(/\s+/).filter(Boolean).slice(0, 2).map(function(x){ return x.charAt(0); }).join("").toUpperCase() || "?";
   for (i = 0; i < s.length; i++) hue = (hue * 31 + s.charCodeAt(i)) % 360;
-  if (t && t.logo_url) return '<span class="mu-av" style="background:#1b2430"><img src="' + esc(t.logo_url) + '" alt=""></span>';
-  return '<span class="mu-av" style="background:hsl(' + hue + ',50%,36%)">' + esc(ini) + '</span>';
+  if (t && t.logo_url) return '<span class="mu-av"' + lk + ' style="background:#1b2430"><img src="' + esc(t.logo_url) + '" alt=""></span>';
+  return '<span class="mu-av"' + lk + ' style="background:hsl(' + hue + ',50%,36%)">' + esc(ini) + '</span>';
 }
 function plIso(d){ return new Date(d * 864e5).toISOString().slice(0, 10); }
 async function plMdLoad(){
@@ -1142,7 +1154,7 @@ function plMatchDetailHtml(lg, me, m){
   h += '<div class="md-bar"><div class="mu-wk"><button data-plmuwk="-1"' + (near(w - 1) ? "" : " disabled") + ' aria-label="Previous week">&lsaquo;</button><span>Week ' + w + '</span><button data-plmuwk="1"' + (near(w + 1) ? "" : " disabled") + ' aria-label="Next week">&rsaquo;</button></div><div class="md-tabs">' + tab("tot", "Totals");
   for (var i = 0; i < 7; i++) h += tab(plIso(ws + i), new Date((ws + i) * 864e5).toLocaleDateString("en-US", { timeZone: "UTC", weekday: "short", month: "numeric", day: "numeric" }).replace(",", ""));
   h += '</div></div>';
-  function side(id, right){ var t = plTeam(id); return '<div class="md-tm' + (right ? " r" : "") + '"><div class="md-n">' + plTeamName(id) + '</div><div class="md-mg">' + esc(PL.names[(t || {}).user_id] || "") + '</div><div class="md-rec">' + (recs[id] || "0-0-0") + '</div></div>'; }
+  function side(id, right){ var t = plTeam(id); return '<div class="md-tm' + (right ? " r" : "") + '" data-plteam="' + esc(id) + '"><div class="md-n">' + plTeamName(id) + '</div><div class="md-mg">' + esc(PL.names[(t || {}).user_id] || "") + '</div><div class="md-rec">' + (recs[id] || "0-0-0") + '</div></div>'; }
   var wa = fin && res.w === "a" ? "w" : "", wb = fin && res.w === "b" ? "w" : "";
   h += '<div class="md-head">' + side(m.team_a, true) + plAvatar(plTeam(m.team_a)) + '<div class="md-sc"><span class="' + wa + '">' + (big ? plNum(res.a) : res.a) + '</span><span class="mu-vs">vs</span><span class="' + wb + '">' + (big ? plNum(res.b) : res.b) + '</span></div>' + plAvatar(plTeam(m.team_b)) + side(m.team_b, false) + '</div>';
   var TC = [["g","G"],["a","A"],["p","PTS"],["pm","+/-"],["shots","SOG"],["wins","W"],["svp","SV%"],["gs","GS"],["pts","FPTS"]];
@@ -1188,8 +1200,14 @@ function plMatchDetailHtml(lg, me, m){
   return h + sk + gl;
 }
 $("plView").addEventListener("click", function(e){
-  var el = e.target.closest ? e.target.closest("[data-plmu],[data-plmuday],[data-plmuwk],[data-plmuback]") : null; if (!el || el.disabled) return;
+  var el = e.target.closest ? e.target.closest("[data-plteam],[data-plteamback],[data-plmu],[data-plmuday],[data-plmuwk],[data-plmuback]") : null; if (!el || el.disabled) return;
   var d = el.dataset, lg = plLg(); if (!lg) return;
+  if (d.plteam){
+    var tt = plTeam(d.plteam), mine0 = plMine(); if (!tt) return;
+    if (mine0 && tt.id === mine0.id){ PL.teamView = null; PL.md = null; PL.sub = "myteam"; } else PL.teamView = tt.id;
+    plRender(); window.scrollTo(0, 0); return;
+  }
+  if (d.plteamback){ PL.teamView = null; plRender(); return; }
   if (d.plmu){
     var m = PL.mu.filter(function(x){ return x.id === d.plmu; })[0]; if (!m || !m.team_b) return;
     PL.md = { id: m.id, day: "tot" }; PL.mdc = {}; plMdLoad(); plRender(); window.scrollTo(0, 0);
@@ -1207,7 +1225,7 @@ function plStandingsHtml(lg){
   var h = '<div class="tbl"><table class="pl-st"><thead><tr><th>Rank</th><th>Team</th><th>W-L-T</th><th>Pct</th><th>' + ptsLbl + '</th><th>Last week</th><th>Waiver</th><th>Moves</th></tr></thead><tbody>';
   rows.forEach(function(r, i){
     var pct = r.pct.toFixed(3).replace(/^0/, "");
-    h += '<tr><td>' + (i + 1) + '</td><td class="t"><div class="st-t">' + plAvatar(r.t) + '<div>' + esc(r.t.name) + '<div class="why">' + esc(PL.names[r.t.user_id] || "") + '</div></div></div></td><td>' + r.w + '-' + r.l + '-' + r.tie + '</td><td>' + pct + '</td><td>' + plNum(r.pts) + '</td><td>' + esc(r.last || "-") + '</td><td>' + (r.t.waiver_pos || "-") + '</td><td>' + r.moves + '</td></tr>';
+    h += '<tr><td>' + (i + 1) + '</td><td class="t"><div class="st-t" data-plteam="' + esc(r.t.id) + '">' + plAvatar(r.t) + '<div><span class="tn">' + esc(r.t.name) + '</span><div class="why">' + esc(PL.names[r.t.user_id] || "") + '</div></div></div></td><td>' + r.w + '-' + r.l + '-' + r.tie + '</td><td>' + pct + '</td><td>' + plNum(r.pts) + '</td><td>' + esc(r.last || "-") + '</td><td>' + (r.t.waiver_pos || "-") + '</td><td>' + r.moves + '</td></tr>';
   });
   h += '</tbody></table></div><small class="note">' + (lg.scoring_mode === "points" ? 'Pts = total fantasy points scored in completed weeks.' : 'Pts = 2 per matchup win and 1 per tie.') + ' Only completed weeks count. Ranked by win percentage, then Pts.</small>';
   return rows.length ? h : '<div class="pl-empty">No teams yet.</div>';
@@ -1220,7 +1238,7 @@ function plTransHtml(lg){
   if (!rows.length) return h + '<div class="pl-empty">There are no transactions to display.</div>';
   var kinds = { add: "Added", drop: "Dropped", draft: "Drafted", trade: "Trade", waiver: "Waiver" };
   h += '<table><thead><tr><th>Date</th><th>Team</th><th>Move</th><th>Player</th></tr></thead><tbody>';
-  rows.forEach(function(x){ var p = BYID[x.player_id]; h += '<tr><td>' + esc(String(x.created_at).slice(0, 10)) + '</td><td>' + plTeamName(x.team_id) + '</td><td>' + (kinds[x.kind] || x.kind) + '</td><td>' + esc(p ? p.name : "") + (x.note ? ' <span class="why">' + esc(x.note) + '</span>' : "") + '</td></tr>'; });
+  rows.forEach(function(x){ var p = BYID[x.player_id]; h += '<tr><td>' + esc(String(x.created_at).slice(0, 10)) + '</td><td><span class="tl" data-plteam="' + esc(x.team_id) + '">' + plTeamName(x.team_id) + '</span></td><td>' + (kinds[x.kind] || x.kind) + '</td><td>' + esc(p ? p.name : "") + (x.note ? ' <span class="why">' + esc(x.note) + '</span>' : "") + '</td></tr>'; });
   return h + '</tbody></table>';
 }
 function plManageHtml(lg, me){
@@ -1234,7 +1252,8 @@ function plManageHtml(lg, me){
   });
   h += '</tbody></table>';
   if (me) h += '<h2 style="margin-top:18px">My team name</h2><div class="row"><input id="plRename" maxlength="40" value="' + esc(me.name) + '" style="flex:1;max-width:320px"><button class="sec" data-plact="rename">Save name</button></div>';
-  if (me) h += '<h2 style="margin-top:18px">My team logo</h2><div class="row">' + plAvatar(me) + '<input type="file" id="plLogo" accept="image/png,image/jpeg,image/webp,image/gif" style="flex:1;max-width:320px">' + (me.logo_url ? '<button class="sec" data-plact="logoremove">Remove logo</button>' : "") + '</div><small class="note">Any photo works. It is cropped to a square and shrunk automatically.</small>';
+  if (me) h += '<h2 style="margin-top:18px">My team logo</h2><div class="row">' + plAvatar(me, 1) + '<input type="file" id="plLogo" accept="image/png,image/jpeg,image/webp,image/gif" style="flex:1;max-width:320px">' + (me.logo_url ? '<button class="sec" data-plact="logoremove">Remove logo</button>' : "") + '</div><small class="note">Any photo works. It is cropped to a square and shrunk automatically.</small>';
+  if (me) h += '<h2 style="margin-top:18px">My team cover photo</h2><div style="max-width:560px">' + plCoverBanner(me) + '</div><div class="row" style="margin-top:8px"><input type="file" id="plCover" accept="image/png,image/jpeg,image/webp,image/gif" style="flex:1;max-width:320px">' + (me.cover_url ? '<button class="sec" data-plact="coverremove">Remove cover</button>' : "") + '</div><small class="note">Wide photos work best. It is cropped to a wide banner and shrunk automatically. Everyone in your league sees it on your team page.</small>';
   if (isC){
     h += '<h2 style="margin-top:18px">League settings</h2>';
     if (setup){
@@ -1284,6 +1303,56 @@ async function plUploadLogo(inp){
     await plLoadLeague(); plMsg("Team logo saved.", true); plRender();
   } catch (e){ plMsg((e && e.message) || String(e)); }
 }
+function plCoverBanner(t){
+  var hue = 0, s = t.id, i;
+  for (i = 0; i < s.length; i++) hue = (hue * 31 + s.charCodeAt(i)) % 360;
+  return '<div class="cv" style="background:linear-gradient(135deg,hsl(' + hue + ',45%,20%),hsl(' + ((hue + 45) % 360) + ',55%,32%))">' + (t.cover_url ? '<img src="' + esc(t.cover_url) + '" alt="">' : "") + '</div>';
+}
+function plCover(t){ return '<div class="cv-wrap">' + plCoverBanner(t) + '<div class="cv-avw">' + plAvatar(t, 1) + '</div></div>'; }
+function plTeamInfo(lg, t){
+  var rank = 0, rec = "";
+  plStandings(lg).forEach(function(r, i){ if (r.t.id === t.id){ rank = i + 1; rec = r.w + "-" + r.l + "-" + r.tie; } });
+  return '<div class="cv-info"><div class="cv-n">' + esc(t.name) + '</div><div class="why">' + esc(PL.names[t.user_id] || "") + (rank ? ' &middot; Rank ' + rank + ' &middot; ' + rec : "") + '</div></div>';
+}
+function plTeamRosterHtml(lg, t){
+  if (lg.status !== "active") return '<div class="pl-note">Rosters open once the draft is finished.</div>';
+  var hold = plMyHold(t), h = "";
+  [["F","Forwards",12],["D","Defence",6],["G","Goalies",2]].forEach(function(g){
+    var rows = hold.map(function(r){ return { r: r, p: BYID[r.player_id] }; }).filter(function(x){ return x.p && x.p.g === g[0]; }).sort(function(a, b){ return b.p.fp - a.p.fp; });
+    var cols = g[0] === "G" ? COLS_G : [["gp","GP"],["g","G"],["a","A"],["pts","P"],["pm","+/-"],["fp","FPts"]];
+    h += '<h2 style="margin:14px 0 6px">' + g[1] + ' <span class="why">' + rows.length + '/' + g[2] + '</span></h2><div class="dr-scroll" style="max-height:none"><table><thead><tr><th>Player</th>' + cols.map(function(c){ return '<th>' + c[1] + '</th>'; }).join("") + '</tr></thead><tbody>';
+    rows.forEach(function(x){ h += '<tr><td class="pn">' + plPlayerCell(x.p, lg) + '</td>' + cols.map(function(c){ return '<td>' + fmtStat(c[0], statVal(x.p, c[0])) + '</td>'; }).join("") + '</tr>'; });
+    if (!rows.length) h += '<tr><td colspan="' + (cols.length + 1) + '" class="why">No ' + g[1].toLowerCase() + '.</td></tr>';
+    h += '</tbody></table></div>';
+  });
+  return h;
+}
+function plTeamPageHtml(lg, t){
+  return '<div class="md-bar"><button class="sec md-back" data-plteamback="1">&lsaquo; Back</button></div>' + plCover(t) + plTeamInfo(lg, t) + plTeamRosterHtml(lg, t);
+}
+async function plUploadCover(inp){
+  var f = inp.files && inp.files[0], me = plMine(); if (!f || !me) return;
+  plMsg("");
+  if (!/^image\//.test(f.type)){ plMsg("Choose an image file."); return; }
+  if (f.size > 15e6){ plMsg("That photo is too large. Pick one under 15 MB."); return; }
+  try {
+    var url = URL.createObjectURL(f), img = new Image();
+    await new Promise(function(ok, bad){ img.onload = ok; img.onerror = function(){ bad(new Error("That image could not be read. Try a JPG or PNG.")); }; img.src = url; });
+    var W = 1200, H = 454, c = document.createElement("canvas"); c.width = W; c.height = H;
+    var g = c.getContext("2d"); g.fillStyle = "#0b1d3a"; g.fillRect(0, 0, W, H);
+    var sc = Math.max(W / img.width, H / img.height), sw = W / sc, sh = H / sc;
+    g.drawImage(img, (img.width - sw) / 2, (img.height - sh) / 2, sw, sh, 0, 0, W, H);
+    URL.revokeObjectURL(url);
+    var blob = await new Promise(function(ok){ c.toBlob(ok, "image/jpeg", 0.85); });
+    if (!blob) throw new Error("Could not process that image.");
+    var path = user.id + "/cover-" + me.id + "-" + Date.now() + ".jpg";
+    var up = await SB.storage.from("team-logos").upload(path, blob, { contentType: "image/jpeg", upsert: false });
+    if (up.error) throw up.error;
+    var pub = SB.storage.from("team-logos").getPublicUrl(path).data.publicUrl;
+    var r = await SB.rpc("set_pteam_cover", { p_team: me.id, p_url: pub }); if (r.error) throw r.error;
+    await plLoadLeague(); plMsg("Cover photo saved.", true); plRender();
+  } catch (e){ plMsg((e && e.message) || String(e)); }
+}
 async function plAct(a, el){
   var lg = plLg(), v = function(id){ return ($(id) ? $(id).value : "").trim(); };
   if (a === "create"){
@@ -1297,6 +1366,8 @@ async function plAct(a, el){
     var me = plMine(); if (me){ await plDo(function(){ return SB.rpc("rename_pteam", { p_team: me.id, p_name: v("plRename") }); }, "Team name saved."); await plLoadLeague(); }
   } else if (a === "logoremove"){
     var me2 = plMine(); if (me2){ await plDo(function(){ return SB.rpc("set_pteam_logo", { p_team: me2.id, p_url: null }); }, "Logo removed."); await plLoadLeague(); }
+  } else if (a === "coverremove"){
+    var me4 = plMine(); if (me4){ await plDo(function(){ return SB.rpc("set_pteam_cover", { p_team: me4.id, p_url: null }); }, "Cover photo removed."); await plLoadLeague(); }
   } else if (a === "save"){
     var s2 = v("plsStart"); if (!s2 || new Date(s2 + "T00:00:00Z").getUTCDay() !== 1){ plMsg("Week 1 must start on a Monday."); return plRender(); }
     await plDo(function(){ return SB.rpc("update_pleague", { p_league: lg.id, p_name: v("plsName"), p_max: +v("plsMax"), p_mode: v("plsMode"), p_start: s2, p_weeks: +v("plsWeeks") }); }, "Settings saved.");
@@ -1323,9 +1394,9 @@ async function plAct(a, el){
 $("plView").addEventListener("click", async function(e){
   var t = e.target.closest ? e.target.closest("button") : null; if (!t || t.disabled) return;
   var d = t.dataset;
-  if (d.plsel){ PL.cur = d.plsel; PL.mode = "list"; plMsg(""); await plLoadLeague(); plRender(); }
+  if (d.plsel){ PL.cur = d.plsel; PL.teamView = null; PL.mode = "list"; plMsg(""); await plLoadLeague(); plRender(); }
   else if (d.plmode){ PL.mode = d.plmode; plMsg(""); plRender(); }
-  else if (d.plsub){ PL.sub = d.plsub; plMsg(""); plRender(); }
+  else if (d.plsub){ PL.sub = d.plsub; PL.teamView = null; plMsg(""); plRender(); }
   else if (d.pltf){ PL.tf = d.pltf; plRender(); }
   else if (d.plwk){ PL.week = Math.max(1, Math.min(plLg().weeks, PL.week + (+d.plwk))); plRender(); }
   else if (d.plremove){ await plDo(function(){ return SB.rpc("remove_pteam", { p_team: d.plremove }); }, "Team removed."); await plLoadLeague(); plRender(); }
@@ -1846,6 +1917,7 @@ async function plTradeRespond(id, accept, drop){
 $("plView").addEventListener("change", function(e){
   var t = e.target, d = t.dataset || {};
   if (t.id === "plLogo"){ plUploadLogo(t); return; }
+  if (t.id === "plCover"){ plUploadCover(t); return; }
   if (t.id === "trTo"){ PL.tr = { to: t.value, give: [], get: [], drop: [] }; plMsg(""); plRender(); return; }
   if (d.pltr || d.pltracc){
     var a = d.pltr ? PL.tr[d.pltr] : PL.acc.drop, i = a.indexOf(t.value);
