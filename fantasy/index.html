@@ -1364,7 +1364,7 @@ async function plUploadLogo(inp){
 function plCoverBanner(t){
   var hue = 0, s = t.id, i;
   for (i = 0; i < s.length; i++) hue = (hue * 31 + s.charCodeAt(i)) % 360;
-  return '<div class="cv" style="background:linear-gradient(135deg,hsl(' + hue + ',45%,20%),hsl(' + ((hue + 45) % 360) + ',55%,32%))">' + '<img src="' + esc(t.cover_url || "default-cover.jpg") + '" alt="" onerror="this.remove()">' + '</div>';
+  return '<div class="cv" style="background:linear-gradient(135deg,hsl(' + hue + ',45%,20%),hsl(' + ((hue + 45) % 360) + ',55%,32%))">' + '<img src="' + esc(t.cover_url || "/default-cover.jpg") + '" alt="" onerror="this.remove()">' + '</div>';
 }
 function plCover(t){ return '<div class="cv-wrap">' + plCoverBanner(t) + '<div class="cv-avw">' + plAvatar(t, 1) + '</div></div>'; }
 function plTeamInfo(lg, t){
