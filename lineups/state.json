@@ -43,11 +43,11 @@
  },
  "ohl:29212:away": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "ohl:29212:home": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "ohl:29213:home": {
   "done": true,
@@ -56,27 +56,27 @@
  "players_full": "2026-11-19T17:16:59.566835-05:00",
  "qmjhl:32662:away": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "qmjhl:32662:home": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "qmjhl:32757:away": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "qmjhl:32757:home": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "qmjhl:33144:away": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "qmjhl:33144:home": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "qmjhl:33211:away": {
   "done": true,
