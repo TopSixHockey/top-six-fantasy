@@ -74,6 +74,18 @@ def feed(client, view, **kw):
     if t.startswith("("): t = t[1:-1]
     return json.loads(t)["SiteKit"]
 
+def flatten_roster(o, out):
+    """The roster can come back as a flat list of players or with lists nested inside lists/dicts."""
+    if isinstance(o, list):
+        for x in o:
+            flatten_roster(x, out)
+    elif isinstance(o, dict):
+        if "tp_jersey_number" in o:
+            out.append(o)
+        else:
+            for v in o.values():
+                flatten_roster(v, out)
+
 def team_key(name, lg="ohl"):
     for k, v in {"whl": WHL_KEYS, "qmjhl": QMJHL_KEYS}.get(lg, OHL_KEYS).items():
         if k in name: return v
@@ -420,7 +432,9 @@ def main():
                 try:
                     if cfg.get("combined"): raise StopIteration
                     tid = g["home_team"] if side == "home" else g["visiting_team"]
-                    ros = feed(cfg["client"], "roster", season_id=cfg["season"], team_id=tid)["Roster"]
+                    ros = []
+                    flatten_roster(feed(cfg["client"], "roster", season_id=cfg["season"], team_id=tid)["Roster"], ros)
+                    if not ros: raise ValueError("empty roster")
                     scr = sorted([[int(r["tp_jersey_number"]), r["first_name"], r["last_name"]] for r in ros
                                   if r.get("active") == "1" and r.get("tp_jersey_number", "").isdigit()
                                   and int(r["tp_jersey_number"]) not in nums])
