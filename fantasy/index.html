@@ -178,6 +178,14 @@ td.pos{color:var(--ok)}td.neg{color:var(--bad)}td.pts{color:#ff9f43}td.fp{font-w
 .mu-av img{width:100%;height:100%;object-fit:cover;display:block}
 [data-plteam]{cursor:pointer}
 .mu-t[data-plteam]:hover .mu-n,.md-tm[data-plteam]:hover .md-n,.st-t[data-plteam]:hover .tn,.tl:hover{text-decoration:underline}
+.crop-bk{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:12px}
+.crop-box{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;max-width:100%;display:flex;flex-direction:column;gap:10px;align-items:center}
+.crop-box h2{margin:0}
+.crop-stage{position:relative;overflow:hidden;border-radius:8px;touch-action:none;cursor:grab;background:var(--bg);user-select:none}
+.crop-stage canvas{display:block}
+.crop-stage.round::after{content:"";position:absolute;inset:0;border-radius:50%;box-shadow:0 0 0 999px rgba(11,29,58,.62);outline:2px solid rgba(255,255,255,.7);outline-offset:-2px;pointer-events:none}
+.crop-zoom{display:flex;gap:8px;align-items:center;width:100%;max-width:360px}
+.crop-zoom input{flex:1}
 .cv-wrap{position:relative;margin:0 0 4px}
 .cv{position:relative;aspect-ratio:1200/227;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
 .cv img{width:100%;height:100%;object-fit:cover;display:block}
@@ -1252,8 +1260,8 @@ function plManageHtml(lg, me){
   });
   h += '</tbody></table>';
   if (me) h += '<h2 style="margin-top:18px">My team name</h2><div class="row"><input id="plRename" maxlength="40" value="' + esc(me.name) + '" style="flex:1;max-width:320px"><button class="sec" data-plact="rename">Save name</button></div>';
-  if (me) h += '<h2 style="margin-top:18px">My team logo</h2><div class="row">' + plAvatar(me, 1) + '<input type="file" id="plLogo" accept="image/png,image/jpeg,image/webp,image/gif" style="flex:1;max-width:320px">' + (me.logo_url ? '<button class="sec" data-plact="logoremove">Remove logo</button>' : "") + '</div><small class="note">Any photo works. It is cropped to a square and shrunk automatically.</small>';
-  if (me) h += '<h2 style="margin-top:18px">My team cover photo</h2><div style="max-width:560px">' + plCoverBanner(me) + '</div><div class="row" style="margin-top:8px"><input type="file" id="plCover" accept="image/png,image/jpeg,image/webp,image/gif" style="flex:1;max-width:320px">' + (me.cover_url ? '<button class="sec" data-plact="coverremove">Remove cover</button>' : "") + '</div><small class="note">Wide photos work best. It is cropped to a wide banner and shrunk automatically. Everyone in your league sees it on your team page.</small>';
+  if (me) h += '<h2 style="margin-top:18px">My team logo</h2><div class="row">' + plAvatar(me, 1) + '<input type="file" id="plLogo" accept="image/png,image/jpeg,image/webp,image/gif" style="flex:1;max-width:320px">' + (me.logo_url ? '<button class="sec" data-plact="logoremove">Remove logo</button>' : "") + '</div><small class="note">Any photo works. After you pick one, drag and zoom to choose exactly what shows.</small>';
+  if (me) h += '<h2 style="margin-top:18px">My team cover photo</h2><div style="max-width:560px">' + plCoverBanner(me) + '</div><div class="row" style="margin-top:8px"><input type="file" id="plCover" accept="image/png,image/jpeg,image/webp,image/gif" style="flex:1;max-width:320px">' + (me.cover_url ? '<button class="sec" data-plact="coverremove">Remove cover</button>' : "") + '</div><small class="note">After you pick a photo, drag and zoom to choose exactly what shows in the wide banner. Everyone in your league sees it on your team page.</small>';
   if (isC){
     h += '<h2 style="margin-top:18px">League settings</h2>';
     if (setup){
@@ -1280,21 +1288,71 @@ async function plDo(fn, okMsg){
   try { var r = await fn(); if (r && r.error) throw r.error; if (okMsg) plMsg(okMsg, true); return r; }
   catch (e){ plMsg((e && e.message) || String(e)); return null; }
 }
+function plCrop(f, o){
+  return new Promise(function(done){
+    var url = URL.createObjectURL(f), img = new Image();
+    img.onerror = function(){ URL.revokeObjectURL(url); plMsg("That image could not be read. Try a JPG or PNG."); done(null); };
+    img.onload = function(){
+      var W = Math.min(o.w > o.h ? 720 : 320, window.innerWidth - 72), H = Math.round(W * o.h / o.w);
+      var iw = img.width, ih = img.height, base = Math.max(W / iw, H / ih), z = 1, ox = (W - iw * base) / 2, oy = (H - ih * base) / 2;
+      var bk = document.createElement("div"); bk.className = "crop-bk";
+      bk.innerHTML = '<div class="crop-box"><h2>' + o.title + '</h2><div class="crop-stage' + (o.round ? " round" : "") + '" style="width:' + W + 'px;height:' + H + 'px"><canvas width="' + W + '" height="' + H + '"></canvas></div><div class="crop-zoom"><span>&minus;</span><input type="range" min="1" max="4" step="0.01" value="1" aria-label="Zoom"><span>+</span></div><small class="note">Drag the photo to move it. Use the slider or mouse wheel to zoom.</small><div class="row"><button data-c="ok">Save</button><button class="sec" data-c="reset">Reset</button><button class="sec" data-c="no">Cancel</button></div></div>';
+      document.body.appendChild(bk);
+      var st = bk.querySelector(".crop-stage"), cv = bk.querySelector("canvas"), g = cv.getContext("2d"), rg = bk.querySelector("input");
+      function draw(){
+        var s = base * z; ox = Math.min(0, Math.max(W - iw * s, ox)); oy = Math.min(0, Math.max(H - ih * s, oy));
+        g.clearRect(0, 0, W, H); g.drawImage(img, ox, oy, iw * s, ih * s);
+      }
+      function zoom(nz, px, py){
+        nz = Math.min(4, Math.max(1, nz)); var s0 = base * z, s1 = base * nz;
+        ox = px - (px - ox) * s1 / s0; oy = py - (py - oy) * s1 / s0; z = nz; rg.value = z; draw();
+      }
+      function end(res){ document.removeEventListener("keydown", key); URL.revokeObjectURL(url); bk.remove(); done(res); }
+      function key(e){ if (e.key === "Escape") end(null); }
+      document.addEventListener("keydown", key);
+      var ptr = {}, pd = 0;
+      function cnt(){ return Object.keys(ptr).length; }
+      function dist(){ var a = Object.keys(ptr).map(function(k){ return ptr[k]; }); return Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y); }
+      st.addEventListener("pointerdown", function(e){ st.setPointerCapture(e.pointerId); ptr[e.pointerId] = { x: e.clientX, y: e.clientY }; if (cnt() === 2) pd = dist(); st.style.cursor = "grabbing"; });
+      st.addEventListener("pointermove", function(e){
+        var p = ptr[e.pointerId]; if (!p) return;
+        if (cnt() === 2){
+          p.x = e.clientX; p.y = e.clientY; var d = dist(); if (pd) zoom(z * d / pd, W / 2, H / 2); pd = d; return;
+        }
+        ox += e.clientX - p.x; oy += e.clientY - p.y; p.x = e.clientX; p.y = e.clientY; draw();
+      });
+      function up(e){ delete ptr[e.pointerId]; pd = 0; st.style.cursor = ""; }
+      st.addEventListener("pointerup", up); st.addEventListener("pointercancel", up);
+      st.addEventListener("wheel", function(e){
+        e.preventDefault(); var r = st.getBoundingClientRect();
+        zoom(z * (e.deltaY < 0 ? 1.08 : 1 / 1.08), e.clientX - r.left, e.clientY - r.top);
+      }, { passive: false });
+      rg.addEventListener("input", function(){ zoom(+rg.value, W / 2, H / 2); });
+      bk.addEventListener("click", function(e){
+        var c = e.target.getAttribute && e.target.getAttribute("data-c");
+        if (e.target === bk || c === "no") return end(null);
+        if (c === "reset"){ z = 1; rg.value = 1; ox = (W - iw * base) / 2; oy = (H - ih * base) / 2; draw(); }
+        if (c === "ok"){
+          var k = o.w / W, s = base * z * k, out = document.createElement("canvas"); out.width = o.w; out.height = o.h;
+          var og = out.getContext("2d"); og.fillStyle = "#ffffff"; og.fillRect(0, 0, o.w, o.h);
+          og.drawImage(img, ox * k, oy * k, iw * s, ih * s);
+          out.toBlob(function(b){ end(b); }, o.type, o.q);
+        }
+      });
+      draw();
+    };
+    img.src = url;
+  });
+}
 async function plUploadLogo(inp){
   var f = inp.files && inp.files[0], me = plMine(); if (!f || !me) return;
   plMsg("");
   if (!/^image\//.test(f.type)){ plMsg("Choose an image file."); return; }
   if (f.size > 15e6){ plMsg("That photo is too large. Pick one under 15 MB."); return; }
   try {
-    var url = URL.createObjectURL(f), img = new Image();
-    await new Promise(function(ok, bad){ img.onload = ok; img.onerror = function(){ bad(new Error("That image could not be read. Try a JPG or PNG.")); }; img.src = url; });
-    var S = 256, type = f.type === "image/png" ? "image/png" : "image/jpeg", c = document.createElement("canvas"), m = Math.min(img.width, img.height);
-    c.width = c.height = S; var g = c.getContext("2d");
-    if (type === "image/jpeg"){ g.fillStyle = "#ffffff"; g.fillRect(0, 0, S, S); }
-    g.drawImage(img, (img.width - m) / 2, (img.height - m) / 2, m, m, 0, 0, S, S);
-    URL.revokeObjectURL(url);
-    var blob = await new Promise(function(ok){ c.toBlob(ok, type, 0.88); });
-    if (!blob) throw new Error("Could not process that image.");
+    var type = f.type === "image/png" ? "image/png" : "image/jpeg";
+    var blob = await plCrop(f, { w: 256, h: 256, round: 1, title: "Position your team logo", type: type, q: 0.88 });
+    inp.value = ""; if (!blob) return;
     var path = user.id + "/" + me.id + "-" + Date.now() + (type === "image/png" ? ".png" : ".jpg");
     var up = await SB.storage.from("team-logos").upload(path, blob, { contentType: type, upsert: false });
     if (up.error) throw up.error;
@@ -1336,15 +1394,8 @@ async function plUploadCover(inp){
   if (!/^image\//.test(f.type)){ plMsg("Choose an image file."); return; }
   if (f.size > 15e6){ plMsg("That photo is too large. Pick one under 15 MB."); return; }
   try {
-    var url = URL.createObjectURL(f), img = new Image();
-    await new Promise(function(ok, bad){ img.onload = ok; img.onerror = function(){ bad(new Error("That image could not be read. Try a JPG or PNG.")); }; img.src = url; });
-    var W = 1200, H = 227, c = document.createElement("canvas"); c.width = W; c.height = H;
-    var g = c.getContext("2d"); g.fillStyle = "#0b1d3a"; g.fillRect(0, 0, W, H);
-    var sc = Math.max(W / img.width, H / img.height), sw = W / sc, sh = H / sc;
-    g.drawImage(img, (img.width - sw) / 2, (img.height - sh) / 2, sw, sh, 0, 0, W, H);
-    URL.revokeObjectURL(url);
-    var blob = await new Promise(function(ok){ c.toBlob(ok, "image/jpeg", 0.85); });
-    if (!blob) throw new Error("Could not process that image.");
+    var blob = await plCrop(f, { w: 1200, h: 227, title: "Position your cover photo", type: "image/jpeg", q: 0.85 });
+    inp.value = ""; if (!blob) return;
     var path = user.id + "/cover-" + me.id + "-" + Date.now() + ".jpg";
     var up = await SB.storage.from("team-logos").upload(path, blob, { contentType: "image/jpeg", upsert: false });
     if (up.error) throw up.error;
