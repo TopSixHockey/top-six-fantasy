@@ -256,7 +256,7 @@ INJ_EVERY_H = 3     # re-read the weekly reports at most every 3 hours
 
 def parse_injuries_html(html, lg="ohl"):
     """OHL weekly-report page -> (as-of text, {team key: [[first,last,pos,injury,status],..]}).
-    Day-to-day players are left out: only week-to-week or longer counts as injured."""
+    Day-to-day players are included (their status says so)."""
     import html as H
     html = re.sub(r"<!--.*?-->", "", html, flags=re.S)
     m = re.search(r"As of ([A-Za-z]+ \d{1,2}, \d{4})", html)
@@ -277,7 +277,6 @@ def parse_injuries_html(html, lg="ohl"):
         f = [x.strip() for x in re.split(r"\s+[–-]\s+", ln.lstrip("*").strip())]
         if len(f) < 5: continue
         status = " – ".join(f[4:])
-        if "day-to-day" in status.lower(): continue
         first, _, last = f[0].partition(" ")
         out.setdefault(key, []).append([first, last, f[1], f[3], status])
     return m.group(1), out
@@ -308,7 +307,6 @@ def parse_injuries_whl(text):
         r = WHL_ROW.search(body)
         if not r: continue
         status = r.group(5).strip().lower()
-        if "day-to-day" in status: continue
         first, _, last = r.group(2).partition(" ")
         num = int(r.group(1)) if r.group(1).isdigit() else None
         out.setdefault(key, []).append([first, last, r.group(3), r.group(4).strip().capitalize(), "-".join("to" if w == "to" else w.capitalize() for w in status.split("-")), num])
