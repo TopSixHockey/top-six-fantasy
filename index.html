@@ -1158,7 +1158,7 @@ function injArea(k) {
         return '<div class="ijl"><span class="inj">\u271A</span>' + injEsc(e[0] + " " + e[1]) + ' · ' + injEsc(e[2]) + ' · ' + injEsc(e[3]) + ' · ' + injEsc(e[4]) + '</div>';
       }).join("");
     }).join("");
-    return h + '<div class="ijb">' + b + '</div><p class="note">Players the ' + lg + ' lists as week-to-week or longer' + (D.asof ? ", as of " + injEsc(D.asof) : "") + '. Day-to-day players aren’t shown. <a href="' + injEsc(D.url) + '" target="_blank" rel="noopener">Source</a></p>';
+    return h + '<div class="ijb">' + b + '</div><p class="note">Players the ' + lg + ' lists as injured, including day-to-day' + (D.asof ? ", as of " + injEsc(D.asof) : "") + '. <a href="' + injEsc(D.url) + '" target="_blank" rel="noopener">Source</a></p>';
   } catch (x) { return ""; }
 }
 function scratches(list, c) {
