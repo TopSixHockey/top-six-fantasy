@@ -1627,10 +1627,10 @@ function plTeamStatsHtml(lg){
 var g = PL.tsub === "g", rows = plTeamTotals(lg);
 var h = '<div class="pl-sub"><button class="pill' + (g ? "" : " on") + '" data-pltsub="sk">Forwards/Defensemen</button><button class="pill' + (g ? " on" : "") + '" data-pltsub="g">Goaltenders</button></div>';
 if (!rows.length) return h + '<div class="pl-empty">No teams yet.</div>';
-var cols = g ? ["W", "SO", "SV", "GA", "SV%"] : ["G", "A", "P", "+/-", "PPP", "SOG"];
+var cols = g ? ["W", "SV%", "SO"] : ["G", "A", "P", "+/-", "PPP", "SOG"];
 h += '<div class="tbl"><table class="pl-st"><thead><tr><th>Team</th>' + cols.map(function(c){ return '<th>' + c + '</th>'; }).join("") + '</tr></thead><tbody>';
 rows.forEach(function(r){
-var v = g ? [r.wins, r.so, r.sa - r.ga, r.ga, r.sa > 0 ? (1 - r.ga / r.sa).toFixed(3).replace(/^0/, "") : "-"] : [r.g, r.a, r.g + r.a, r.pm, r.ppp, r.shots];
+var v = g ? [r.wins, r.sa > 0 ? (1 - r.ga / r.sa).toFixed(3).replace(/^0/, "") : "-", r.so] : [r.g, r.a, r.g + r.a, r.pm, r.ppp, r.shots];
 h += '<tr><td class="t"><span class="tl" data-plteam="' + esc(r.t.id) + '">' + esc(r.t.name) + '</span></td>' + v.map(function(x){ return '<td>' + (typeof x === "number" ? plNum(x) : x) + '</td>'; }).join("") + '</tr>';
 });
 return h + '</tbody></table></div><small class="note">Season totals for every team across all weeks, including the week in progress.</small>';
