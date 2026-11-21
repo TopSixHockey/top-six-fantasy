@@ -193,6 +193,9 @@ td.pos{color:var(--ok)}td.neg{color:var(--bad)}td.pts{color:#ff9f43}td.fp{font-w
 .crop-stage.round::after{content:"";position:absolute;inset:0;border-radius:50%;box-shadow:0 0 0 999px rgba(11,29,58,.62);outline:2px solid rgba(255,255,255,.7);outline-offset:-2px;pointer-events:none}
 .crop-zoom{display:flex;gap:8px;align-items:center;width:100%;max-width:360px}
 .crop-zoom input{flex:1}
+.lgcv{aspect-ratio:1200/300;margin:6px 0 14px}
+.lgcv-btns{position:absolute;right:10px;bottom:10px;display:flex;gap:6px;z-index:2}
+.lgcv-btns .sec{padding:6px 11px;font-size:12px;background:rgba(11,29,58,.82)}
 .cv-wrap{position:relative;margin:0 0 4px}
 .cv{position:relative;aspect-ratio:1200/227;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
 .cv img{width:100%;height:100%;object-fit:cover;display:block}
@@ -1121,6 +1124,7 @@ function plMatchupsHtml(lg, me){
   var status = fin ? "Final" : began ? "In progress" : "Upcoming";
   var recs = {}; plStandings(lg).forEach(function(r){ recs[r.t.id] = r.w + "-" + r.l + "-" + r.tie; });
   var h = '<div class="mu-top"><h2>Matchups</h2><div class="mu-wk"><button data-plwk="-1"' + (w <= 1 ? " disabled" : "") + ' aria-label="Previous week">&lsaquo;</button><span class="wk-dd" tabindex="0">Week ' + w + plWkMenu(plWkRange(lg.weeks), w, "plwkset") + '</span><button data-plwk="1"' + (w >= lg.weeks ? " disabled" : "") + ' aria-label="Next week">&rsaquo;</button></div></div>';
+  h += plLgCoverHtml(lg);
   if (!ms.length) return h + '<div class="pl-empty">No matchups this week.</div>';
   if (!began) h += '<div class="pl-note">This week hasn\'t started. Scores begin counting on ' + plWeekStart(lg, w) + '.</div>';
   h += '<div class="mu-card"><div class="mu-hd"><span>&#127942; Week ' + w + ' Matchups <small>' + plWeekStart(lg, w) + ' &ndash; ' + plWeekEnd(lg, w) + '</small></span><span>' + status + '</span></div>';
@@ -1383,6 +1387,29 @@ function plStatTd(k, v){
   var cls = k === "pts" ? "pts" : k === "fp" ? "fp" : (k === "pm" && v != null) ? (v > 0 ? "pos" : v < 0 ? "neg" : "") : "";
   return "<td" + (cls ? ' class="' + cls + '"' : "") + ">" + fmtStat(k, v) + "</td>";
 }
+function plLgCoverHtml(lg){
+  var isC = lg.commissioner === user.id, hue = 0, s = lg.id, i;
+  for (i = 0; i < s.length; i++) hue = (hue * 31 + s.charCodeAt(i)) % 360;
+  var h = '<div class="cv lgcv" style="background:linear-gradient(135deg,hsl(' + hue + ',45%,20%),hsl(' + ((hue + 45) % 360) + ',55%,32%))"><img src="' + esc(lg.cover_url || "/league-default-cover.jpg") + '" alt="" onerror="this.remove()">';
+  if (isC) h += '<div class="lgcv-btns"><button class="sec" data-plact="lgcoverpick">Change cover photo</button>' + (lg.cover_url ? '<button class="sec" data-plact="lgcoverremove">Remove</button>' : "") + '</div><input type="file" id="plLgCover" accept="image/png,image/jpeg,image/webp,image/gif" hidden>';
+  return h + '</div>';
+}
+async function plUploadLgCover(inp){
+  var f = inp.files && inp.files[0], lg = plLg(); if (!f || !lg || lg.commissioner !== user.id) return;
+  plMsg("");
+  if (!/^image\//.test(f.type)){ plMsg("Choose an image file."); return; }
+  if (f.size > 15e6){ plMsg("That photo is too large. Pick one under 15 MB."); return; }
+  try {
+    var blob = await plCrop(f, { w: 1200, h: 300, title: "Position the league cover photo", type: "image/jpeg", q: 0.85 });
+    inp.value = ""; if (!blob) return;
+    var path = user.id + "/league-cover-" + lg.id + "-" + Date.now() + ".jpg";
+    var up = await SB.storage.from("team-logos").upload(path, blob, { contentType: "image/jpeg", upsert: false });
+    if (up.error) throw up.error;
+    var pub = SB.storage.from("team-logos").getPublicUrl(path).data.publicUrl;
+    var r = await SB.rpc("set_pleague_cover", { p_league: lg.id, p_url: pub }); if (r.error) throw r.error;
+    await plLoadLeagues(); await plLoadLeague(); plMsg("League cover photo saved.", true); plRender();
+  } catch (e){ plMsg((e && e.message) || String(e)); }
+}
 function plCoverBanner(t){
   var hue = 0, s = t.id, i;
   for (i = 0; i < s.length; i++) hue = (hue * 31 + s.charCodeAt(i)) % 360;
@@ -1439,6 +1466,8 @@ async function plAct(a, el){
     var me = plMine(); if (me){ await plDo(function(){ return SB.rpc("rename_pteam", { p_team: me.id, p_name: v("plRename") }); }, "Team name saved."); await plLoadLeague(); }
   } else if (a === "logoremove"){
     var me2 = plMine(); if (me2){ await plDo(function(){ return SB.rpc("set_pteam_logo", { p_team: me2.id, p_url: null }); }, "Logo removed."); await plLoadLeague(); }
+  } else if (a === "lgcoverremove"){
+    var lg5 = plLg(); if (lg5 && lg5.commissioner === user.id){ await plDo(function(){ return SB.rpc("set_pleague_cover", { p_league: lg5.id, p_url: null }); }, "League cover photo removed."); await plLoadLeagues(); await plLoadLeague(); }
   } else if (a === "coverremove"){
     var me4 = plMine(); if (me4){ await plDo(function(){ return SB.rpc("set_pteam_cover", { p_team: me4.id, p_url: null }); }, "Cover photo removed."); await plLoadLeague(); }
   } else if (a === "save"){
@@ -1474,6 +1503,7 @@ $("plView").addEventListener("click", async function(e){
   else if (d.plwkset){ PL.week = Math.max(1, Math.min(lg.weeks, +d.plwkset)); plRender(); }
   else if (d.plwk){ PL.week = Math.max(1, Math.min(plLg().weeks, PL.week + (+d.plwk))); plRender(); }
   else if (d.plremove){ await plDo(function(){ return SB.rpc("remove_pteam", { p_team: d.plremove }); }, "Team removed."); await plLoadLeague(); plRender(); }
+  else if (d.plact === "lgcoverpick"){ var li = $("plLgCover"); if (li) li.click(); }
   else if (d.plact === "cancel"){ plRender(); }
   else if (d.plact){ await plAct(d.plact, t); }
 });
@@ -1992,6 +2022,7 @@ $("plView").addEventListener("change", function(e){
   var t = e.target, d = t.dataset || {};
   if (t.id === "plLogo"){ plUploadLogo(t); return; }
   if (t.id === "plCover"){ plUploadCover(t); return; }
+  if (t.id === "plLgCover"){ plUploadLgCover(t); return; }
   if (t.id === "trTo"){ PL.tr = { to: t.value, give: [], get: [], drop: [] }; plMsg(""); plRender(); return; }
   if (d.pltr || d.pltracc){
     var a = d.pltr ? PL.tr[d.pltr] : PL.acc.drop, i = a.indexOf(t.value);
