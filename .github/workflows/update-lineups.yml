@@ -45,6 +45,12 @@ jobs:
             dry)  python lineups/update_players.py --full --dry ;;
             *)    python lineups/update_players.py ;;
           esac
+      - name: Sync injured players
+        continue-on-error: true   # never stop the lineup updates from being saved
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: python stats/sync_injuries.py
       - name: Commit changes
         run: |
           git config user.name "Top Six Hockey bot"
