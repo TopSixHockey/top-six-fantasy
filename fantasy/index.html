@@ -1321,8 +1321,6 @@ function plManageHtml(lg, me){
   });
   h += '</tbody></table>';
   if (me) h += '<h2 style="margin-top:18px">My team name</h2><div class="row"><input id="plRename" maxlength="40" value="' + esc(me.name) + '" style="flex:1;max-width:320px"><button class="sec" data-plact="rename">Save name</button></div>';
-  if (me) h += '<h2 style="margin-top:18px">My team logo</h2><div class="row">' + plAvatar(me, 1) + '<input type="file" id="plLogo" accept="image/png,image/jpeg,image/webp,image/gif" style="flex:1;max-width:320px">' + (me.logo_url ? '<button class="sec" data-plact="logoremove">Remove logo</button>' : "") + '</div><small class="note">Any photo works. After you pick one, drag and zoom to choose exactly what shows.</small>';
-  if (me) h += '<h2 style="margin-top:18px">My team cover photo</h2><div style="max-width:560px">' + plCoverBanner(me) + '</div><div class="row" style="margin-top:8px"><input type="file" id="plCover" accept="image/png,image/jpeg,image/webp,image/gif" style="flex:1;max-width:320px">' + (me.cover_url ? '<button class="sec" data-plact="coverremove">Remove cover</button>' : "") + '</div><small class="note">After you pick a photo, drag and zoom to choose exactly what shows in the wide banner. Everyone in your league sees it on your team page.</small>';
   if (isC){
     h += '<h2 style="margin-top:18px">League settings</h2>';
     if (setup){
