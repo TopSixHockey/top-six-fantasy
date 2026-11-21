@@ -77,7 +77,8 @@ footer{font-size:.74rem;color:var(--mute);text-align:center;padding:0 12px 20px}
 .bd-act{display:flex;gap:8px;align-items:center;margin-top:6px;flex-wrap:wrap}
 .bd-send{font:inherit;font-weight:700;border:0;border-radius:8px;padding:7px 16px;background:#3d7be0;color:#fff;cursor:pointer}
 .bd-b{font:inherit;font-size:.82rem;border:1px solid var(--board);border-radius:99px;padding:3px 11px;background:transparent;color:var(--mute);cursor:pointer}
-.bd-b.on{color:#c8102e;border-color:#c8102e}
+.bd-b.on{color:#f5c518;border-color:#f5c518}
+.bd-th{filter:grayscale(1) opacity(.75)}.bd-b.on .bd-th{filter:none}
 .bd-b:disabled{opacity:.55;cursor:default}
 .bd-l{font:inherit;font-size:.78rem;border:0;background:none;color:var(--mute);text-decoration:underline;cursor:pointer;padding:0 10px 0 0}
 .bd-me{display:flex;gap:10px;align-items:center;margin-bottom:10px}
@@ -1352,6 +1353,7 @@ function bdShow(k) {
 }
 function bdPaint() {
   var b = document.getElementById("board"); if (!b) return;
+  b.style.background = (typeof C !== "undefined" && C[BD.key] && C[BD.key][1]) || "";
   var drafts = {};
   b.querySelectorAll("textarea, input[type=text], input[type=email], input[type=password]").forEach(function (t) { if (t.id) drafts[t.id] = t.value; });
   var byId = {}; BD.rows.forEach(function (p) { byId[p.id] = p; });
@@ -1364,7 +1366,7 @@ function bdPaint() {
     var h = '<div class="bd-post' + (isReply ? " bd-rep" : "") + '">' + bdAv(p.avatar_url, p.display_name, p.user_id) + '<div class="bd-main"><div class="bd-hd"><b>' + bdEsc(p.display_name) + '</b><span class="bd-time">' + bdEsc(bdWhen(p.created_at)) + '</span></div>';
     if (isReply && par) h += '<div class="bd-to">Replying to ' + bdEsc(par.display_name) + '</div>';
     h += '<div class="bd-body">' + bdEsc(p.body) + '</div><div class="bd-act">';
-    h += '<button type="button" class="bd-b' + (p.liked ? " on" : "") + '" data-bd="like" data-id="' + p.id + '"' + (BD.user ? "" : ' disabled title="Log in to like"') + '>' + (p.liked ? "♥" : "♡") + " " + (p.likes > 0 ? p.likes : "Like") + '</button>';
+    h += '<button type="button" class="bd-b' + (p.liked ? " on" : "") + '" data-bd="like" data-id="' + p.id + '"' + (BD.user ? "" : ' disabled title="Log in to like"') + '>' + '<span class="bd-th">👍</span> ' + (p.likes > 0 ? p.likes : "Like") + '</button>';
     if (BD.user) h += '<button type="button" class="bd-b" data-bd="reply" data-id="' + p.id + '">Reply</button>';
     if (p.mine) h += '<button type="button" class="bd-b" data-bd="del" data-id="' + p.id + '">Delete</button>';
     h += '</div>';
