@@ -1074,7 +1074,7 @@ function navRestore(){
   var hh = (location.hash || "").replace(/^#/, "").split("/");
   if (hh[0] === "pl"){
     PL.cur = hh[1] || null;
-    if (/^(matchups|myteam|players|trades|standings|trans|draft|chat|league)$/.test(hh[2] || "")) PL.sub = hh[2];
+    if (/^(matchups|myteam|players|trades|standings|tstats|trans|draft|chat|league)$/.test(hh[2] || "")) PL.sub = hh[2];
     PL.want = /^t-/.test(hh[3] || "") ? { team: hh[3].slice(2) } : { md: hh[3] || "" };
   }
   if (hh[0] === "pl" || hh[0] === "lb" || hh[0] === "lineup"){
@@ -1161,7 +1161,7 @@ function plLeagueHtml(){
   var showWk = PL.sub === "matchups" && !PL.teamView && !PL.md && lg.status !== "setup";
   var h = '<div class="mu-top"><div class="mu-title">' + plLgLogoHtml(lg) + '<div><h2>' + esc(lg.name) + '</h2><span class="why">' + esc(lg.chl_league) + ' &middot; ' + modeTxt + ' &middot; ' + lg.weeks + ' weeks from ' + plWeekStart(lg, 1) + ' &middot; ' + esc(stTxt) + '</span></div></div>' + (PL.pills || "") + '</div>';
   h += '<div class="pl-sub">';
-  [["matchups","Matchups"],["myteam","My Team"],["players","Players"],["trades","Trades" + (plTradeTodo(lg, me) ? " (" + plTradeTodo(lg, me) + ")" : "")],["standings","Standings"],["trans","Transactions"],["draft","Draft" + (lg.status === "drafting" ? " (LIVE)" : "")],["chat",plChatLabel(lg)],["league","League"]].filter(function(s){ return s[0] !== "trades" || PL.trades.length || PL.sub === "trades"; }).forEach(function(s){ h += '<button class="pill' + (PL.sub === s[0] ? " on" : "") + '" data-plsub="' + s[0] + '">' + s[1] + '</button>'; });
+  [["matchups","Matchups"],["myteam","My Team"],["players","Players"],["trades","Trades" + (plTradeTodo(lg, me) ? " (" + plTradeTodo(lg, me) + ")" : "")],["standings","Standings"],["tstats","Team Stats"],["trans","Transactions"],["draft","Draft" + (lg.status === "drafting" ? " (LIVE)" : "")],["chat",plChatLabel(lg)],["league","League"]].filter(function(s){ return s[0] !== "trades" || PL.trades.length || PL.sub === "trades"; }).forEach(function(s){ h += '<button class="pill' + (PL.sub === s[0] ? " on" : "") + '" data-plsub="' + s[0] + '">' + s[1] + '</button>'; });
   if (showWk) h += '<span class="sp"></span>' + plMuWkNav(lg, PL.week);
   h += '</div>';
   if (PL.teamView && plTeam(PL.teamView)) return h + plTeamPageHtml(lg, plTeam(PL.teamView));
@@ -1171,7 +1171,8 @@ function plLeagueHtml(){
   if (PL.sub === "players") return h + plPlayersHtml(lg, me);
   if (PL.sub === "trades") return h + plTradesHtml(lg, me);
   if (PL.sub === "draft") return h + plDraftHtml(lg, me);
-  if (PL.sub === "chat") return h + plChatHtml(lg, me);
+  if (PL.sub === "tstats") return h + plTeamStatsHtml(lg);
+if (PL.sub === "chat") return h + plChatHtml(lg, me);
 if (PL.sub === "league") return h + plManageHtml(lg, me);
   return h + plMatchupsHtml(lg, me);
 }
@@ -1604,11 +1605,36 @@ $("plView").addEventListener("click", async function(e){
   else if (d.plact === "lglogopick"){ var ll = $("plLgLogo"); if (ll) ll.click(); }
   else if (d.plact === "logopick"){ var tl = $("plLogo"); if (tl) tl.click(); }
   else if (d.plact === "coverpick"){ var tc = $("plCover"); if (tc) tc.click(); }
-  else if (d.plact === "chatsend"){ await plChatSend(); }
+  else if (d.pltsub){ PL.tsub = d.pltsub; plRender(); }
+else if (d.plact === "chatsend"){ await plChatSend(); }
 else if (d.plact === "chatdel"){ await plChatDel(+d.chid); }
 else if (d.plact === "cancel"){ plRender(); }
   else if (d.plact){ await plAct(d.plact, t); }
 });
+
+/* ---- Private leagues: team stats ---- */
+function plTeamTotals(lg){
+var out = [];
+PL.teams.forEach(function(t){
+var s = { t: t, g: 0, a: 0, pm: 0, ppp: 0, shots: 0, wins: 0, so: 0, sa: 0, ga: 0 };
+for (var w = 1; w <= lg.weeks; w++){ var x = plSc(w, t.id); s.g += num(x.g); s.a += num(x.a); s.pm += num(x.pm); s.ppp += num(x.ppp); s.shots += num(x.shots); s.wins += num(x.wins); s.so += num(x.so); s.sa += num(x.sa); s.ga += num(x.ga); }
+out.push(s);
+});
+out.sort(function(x, y){ return x.t.name.toLowerCase() < y.t.name.toLowerCase() ? -1 : 1; });
+return out;
+}
+function plTeamStatsHtml(lg){
+var g = PL.tsub === "g", rows = plTeamTotals(lg);
+var h = '<div class="pl-sub"><button class="pill' + (g ? "" : " on") + '" data-pltsub="sk">Forwards/Defensemen</button><button class="pill' + (g ? " on" : "") + '" data-pltsub="g">Goaltenders</button></div>';
+if (!rows.length) return h + '<div class="pl-empty">No teams yet.</div>';
+var cols = g ? ["W", "SO", "SV", "GA", "SV%"] : ["G", "A", "P", "+/-", "PPP", "SOG"];
+h += '<div class="tbl"><table class="pl-st"><thead><tr><th>Team</th>' + cols.map(function(c){ return '<th>' + c + '</th>'; }).join("") + '</tr></thead><tbody>';
+rows.forEach(function(r){
+var v = g ? [r.wins, r.so, r.sa - r.ga, r.ga, r.sa > 0 ? (1 - r.ga / r.sa).toFixed(3).replace(/^0/, "") : "-"] : [r.g, r.a, r.g + r.a, r.pm, r.ppp, r.shots];
+h += '<tr><td class="t"><span class="tl" data-plteam="' + esc(r.t.id) + '">' + esc(r.t.name) + '</span></td>' + v.map(function(x){ return '<td>' + (typeof x === "number" ? plNum(x) : x) + '</td>'; }).join("") + '</tr>';
+});
+return h + '</tbody></table></div><small class="note">Season totals for every team across all weeks, including the week in progress.</small>';
+}
 
 /* ---- Private leagues: league chat ---- */
 function plChatSeen(lg){ try { return +localStorage.getItem("tsf_chat_seen_" + lg.id) || 0; } catch (e) { return 0; } }
