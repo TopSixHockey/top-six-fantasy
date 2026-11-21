@@ -144,6 +144,7 @@ td.pos{color:var(--ok)}td.neg{color:var(--bad)}td.pts{color:#ff9f43}td.fp{font-w
 .mu-title .why{display:block;margin-top:3px}
 .mu-top .pl-top{margin:0;flex:1;justify-content:flex-end}
 .pl-sub{align-items:center}
+.mu-ico svg{width:19px;height:auto;display:inline-block;vertical-align:-4px;margin-right:8px}
 .lglogo{position:relative;width:64px;height:64px;border-radius:14px;overflow:hidden;flex:none;background:var(--panel2)}
 .lglogo img{width:100%;height:100%;object-fit:cover;display:block}
 .lglogo-btns{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:rgba(11,29,58,.72);opacity:0;pointer-events:none;transition:opacity .15s}
@@ -1146,6 +1147,10 @@ function plLeagueHtml(){
   return h + plMatchupsHtml(lg, me);
 }
 function plTeamName(id){ var t = plTeam(id); return t ? esc(t.name) : "Team removed"; }
+function plSiteIco(){
+  var s = document.querySelector("header svg.logo");
+  return s ? '<span class="mu-ico">' + s.outerHTML + '</span>' : "";
+}
 function plMuWkNav(lg, w){
   return '<div class="mu-wk"><button data-plwk="-1"' + (w <= 1 ? " disabled" : "") + ' aria-label="Previous week">&lsaquo;</button><span class="wk-dd" tabindex="0">Week ' + w + plWkMenu(plWkRange(lg.weeks), w, "plwkset") + '</span><button data-plwk="1"' + (w >= lg.weeks ? " disabled" : "") + ' aria-label="Next week">&rsaquo;</button></div>';
 }
@@ -1160,7 +1165,7 @@ function plMatchupsHtml(lg, me){
   h += plLgCoverHtml(lg);
   if (!ms.length) return h + '<div class="pl-empty">No matchups this week.</div>';
   if (!began) h += '<div class="pl-note">This week hasn\'t started. Scores begin counting on ' + plWeekStart(lg, w) + '.</div>';
-  h += '<div class="mu-card"><div class="mu-hd"><span>Week ' + w + ' Matchups <small>' + plWeekStart(lg, w) + ' &ndash; ' + plWeekEnd(lg, w) + '</small></span><span>' + status + '</span></div>';
+  h += '<div class="mu-card"><div class="mu-hd"><span>' + plSiteIco() + 'Week ' + w + ' Matchups <small>' + plWeekStart(lg, w) + ' &ndash; ' + plWeekEnd(lg, w) + '</small></span><span>' + status + '</span></div>';
   ms.sort(function(x, y){ var mx = me && (x.team_a === me.id || x.team_b === me.id) ? 0 : 1, my = me && (y.team_a === me.id || y.team_b === me.id) ? 0 : 1; return mx - my; });
   function side(id, right){ return '<div class="mu-t' + (right ? " r" : "") + '" data-plteam="' + esc(id) + '" title="' + esc(PL.names[(plTeam(id) || {}).user_id] || "") + '"><div class="mu-n">' + plTeamName(id) + '</div><div class="mu-rec">' + (recs[id] || "0-0-0") + '</div></div>'; }
   ms.forEach(function(m){
