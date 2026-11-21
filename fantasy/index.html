@@ -139,7 +139,14 @@ td.pos{color:var(--ok)}td.neg{color:var(--bad)}td.pts{color:#ff9f43}td.fp{font-w
 .pl-me{outline:2px solid var(--acc)}
 .mu-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:4px 0 12px;flex-wrap:wrap}
 .mu-top h2{margin:0;font-size:26px}
-.mu-wk{display:flex;align-items:center;border:1px solid var(--line);border-radius:99px;overflow:hidden;background:var(--panel2)}
+.wk-dd{position:relative;cursor:pointer;user-select:none;outline:0}
+.wk-dd::after{content:"\25BE";margin-left:6px;font-size:11px;color:var(--mute)}
+.wk-menu{display:none;position:absolute;top:100%;left:50%;transform:translateX(-50%);z-index:60;min-width:130px;max-height:280px;overflow:auto;padding:6px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 24px rgba(0,0,0,.45);line-height:1.2;text-align:left}
+.wk-dd:hover .wk-menu,.wk-dd:focus .wk-menu,.wk-dd:focus-within .wk-menu{display:block}
+.mu-wk .wk-menu button{display:block;width:100%;text-align:left;padding:8px 12px;font-size:14px;font-weight:600;border-radius:8px;background:none;color:var(--tx);cursor:pointer}
+.mu-wk .wk-menu button:hover{background:rgba(74,163,255,.18)}
+.mu-wk .wk-menu button.on{background:var(--acc);color:#0b1d3a}
+.mu-wk{display:flex;align-items:center;border:1px solid var(--line);border-radius:99px;overflow:visible;background:var(--panel2)}
 .mu-wk button,.mu-wk button:disabled{background:none;border:0;color:var(--tx);padding:7px 16px;font-size:18px;cursor:pointer;border-radius:0}
 .mu-wk button:disabled{opacity:.35;cursor:not-allowed}
 .mu-wk span{padding:0 18px;font-weight:700;border-left:1px solid var(--line);border-right:1px solid var(--line);line-height:34px}
@@ -1113,7 +1120,7 @@ function plMatchupsHtml(lg, me){
   var fin = plDone(lg, w), began = plStarted(lg) && !(plDay(plToday()) < plDay(lg.start_date) + (w - 1) * 7);
   var status = fin ? "Final" : began ? "In progress" : "Upcoming";
   var recs = {}; plStandings(lg).forEach(function(r){ recs[r.t.id] = r.w + "-" + r.l + "-" + r.tie; });
-  var h = '<div class="mu-top"><h2>Matchups</h2><div class="mu-wk"><button data-plwk="-1"' + (w <= 1 ? " disabled" : "") + ' aria-label="Previous week">&lsaquo;</button><span>Week ' + w + '</span><button data-plwk="1"' + (w >= lg.weeks ? " disabled" : "") + ' aria-label="Next week">&rsaquo;</button></div></div>';
+  var h = '<div class="mu-top"><h2>Matchups</h2><div class="mu-wk"><button data-plwk="-1"' + (w <= 1 ? " disabled" : "") + ' aria-label="Previous week">&lsaquo;</button><span class="wk-dd" tabindex="0">Week ' + w + plWkMenu(plWkRange(lg.weeks), w, "plwkset") + '</span><button data-plwk="1"' + (w >= lg.weeks ? " disabled" : "") + ' aria-label="Next week">&rsaquo;</button></div></div>';
   if (!ms.length) return h + '<div class="pl-empty">No matchups this week.</div>';
   if (!began) h += '<div class="pl-note">This week hasn\'t started. Scores begin counting on ' + plWeekStart(lg, w) + '.</div>';
   h += '<div class="mu-card"><div class="mu-hd"><span>&#127942; Week ' + w + ' Matchups <small>' + plWeekStart(lg, w) + ' &ndash; ' + plWeekEnd(lg, w) + '</small></span><span>' + status + '</span></div>';
@@ -1159,7 +1166,7 @@ function plMatchDetailHtml(lg, me, m){
   function near(nw){ return PL.mu.filter(function(x){ return x.week === nw && x.team_b && (x.team_a === m.team_a || x.team_b === m.team_a); })[0]; }
   function tab(k, label){ return '<button class="' + (md.day === k ? "on" : "") + '" data-plmuday="' + k + '">' + label + '</button>'; }
   var h = '<div class="md-bar"><button class="sec md-back" data-plmuback="1">&lsaquo; All matchups</button></div>';
-  h += '<div class="md-bar"><div class="mu-wk"><button data-plmuwk="-1"' + (near(w - 1) ? "" : " disabled") + ' aria-label="Previous week">&lsaquo;</button><span>Week ' + w + '</span><button data-plmuwk="1"' + (near(w + 1) ? "" : " disabled") + ' aria-label="Next week">&rsaquo;</button></div><div class="md-tabs">' + tab("tot", "Totals");
+  h += '<div class="md-bar"><div class="mu-wk"><button data-plmuwk="-1"' + (near(w - 1) ? "" : " disabled") + ' aria-label="Previous week">&lsaquo;</button><span class="wk-dd" tabindex="0">Week ' + w + plWkMenu(plMuWeeks(m), w, "plmuwkset") + '</span><button data-plmuwk="1"' + (near(w + 1) ? "" : " disabled") + ' aria-label="Next week">&rsaquo;</button></div><div class="md-tabs">' + tab("tot", "Totals");
   for (var i = 0; i < 7; i++) h += tab(plIso(ws + i), new Date((ws + i) * 864e5).toLocaleDateString("en-US", { timeZone: "UTC", weekday: "short", month: "numeric", day: "numeric" }).replace(",", ""));
   h += '</div></div>';
   function side(id, right){ var t = plTeam(id); return '<div class="md-tm' + (right ? " r" : "") + '" data-plteam="' + esc(id) + '"><div class="md-n">' + plTeamName(id) + '</div><div class="md-mg">' + esc(PL.names[(t || {}).user_id] || "") + '</div><div class="md-rec">' + (recs[id] || "0-0-0") + '</div></div>'; }
@@ -1208,7 +1215,7 @@ function plMatchDetailHtml(lg, me, m){
   return h + sk + gl;
 }
 $("plView").addEventListener("click", function(e){
-  var el = e.target.closest ? e.target.closest("[data-plteam],[data-plteamback],[data-plmu],[data-plmuday],[data-plmuwk],[data-plmuback]") : null; if (!el || el.disabled) return;
+  var el = e.target.closest ? e.target.closest("[data-plteam],[data-plteamback],[data-plmu],[data-plmuday],[data-plmuwk],[data-plmuback],[data-plwkset],[data-plmuwkset]") : null; if (!el || el.disabled) return;
   var d = el.dataset, lg = plLg(); if (!lg) return;
   if (d.plteam){
     var tt = plTeam(d.plteam), mine0 = plMine(); if (!tt) return;
@@ -1221,6 +1228,10 @@ $("plView").addEventListener("click", function(e){
     PL.md = { id: m.id, day: "tot" }; PL.mdc = {}; plMdLoad(); plRender(); window.scrollTo(0, 0);
   } else if (d.plmuback){ PL.md = null; plRender(); }
   else if (d.plmuday && PL.md){ PL.md.day = d.plmuday; plMdLoad(); plRender(); }
+  else if (d.plmuwkset && PL.md){
+    var nm2 = PL.mu.filter(function(x){ return x.id === d.plmuwkset; })[0];
+    if (nm2){ PL.week = nm2.week; PL.md = { id: nm2.id, day: "tot" }; plMdLoad(); plRender(); }
+  }
   else if (d.plmuwk && PL.md){
     var cur = PL.mu.filter(function(x){ return x.id === PL.md.id; })[0]; if (!cur) return;
     var nw = cur.week + (+d.plmuwk), nm = PL.mu.filter(function(x){ return x.week === nw && x.team_b && (x.team_a === cur.team_a || x.team_b === cur.team_a); })[0];
@@ -1361,6 +1372,13 @@ async function plUploadLogo(inp){
     await plLoadLeague(); plMsg("Team logo saved.", true); plRender();
   } catch (e){ plMsg((e && e.message) || String(e)); }
 }
+function plWkMenu(items, cur, attr){
+  return '<div class="wk-menu">' + items.map(function(x){ return '<button class="' + (x.week === cur ? "on" : "") + '" data-' + attr + '="' + esc(String(x.val)) + '">Week ' + x.week + '</button>'; }).join("") + '</div>';
+}
+function plWkRange(n){ var a = [], i; for (i = 1; i <= n; i++) a.push({ week: i, val: i }); return a; }
+function plMuWeeks(m){
+  return PL.mu.filter(function(x){ return x.team_b && (x.team_a === m.team_a || x.team_b === m.team_a); }).sort(function(a, b){ return a.week - b.week; }).map(function(x){ return { week: x.week, val: x.id }; });
+}
 function plStatTd(k, v){
   var cls = k === "pts" ? "pts" : k === "fp" ? "fp" : (k === "pm" && v != null) ? (v > 0 ? "pos" : v < 0 ? "neg" : "") : "";
   return "<td" + (cls ? ' class="' + cls + '"' : "") + ">" + fmtStat(k, v) + "</td>";
@@ -1453,6 +1471,7 @@ $("plView").addEventListener("click", async function(e){
   else if (d.plmode){ PL.mode = d.plmode; plMsg(""); plRender(); }
   else if (d.plsub){ PL.sub = d.plsub; PL.teamView = null; plMsg(""); plRender(); }
   else if (d.pltf){ PL.tf = d.pltf; plRender(); }
+  else if (d.plwkset){ PL.week = Math.max(1, Math.min(lg.weeks, +d.plwkset)); plRender(); }
   else if (d.plwk){ PL.week = Math.max(1, Math.min(plLg().weeks, PL.week + (+d.plwk))); plRender(); }
   else if (d.plremove){ await plDo(function(){ return SB.rpc("remove_pteam", { p_team: d.plremove }); }, "Team removed."); await plLoadLeague(); plRender(); }
   else if (d.plact === "cancel"){ plRender(); }
