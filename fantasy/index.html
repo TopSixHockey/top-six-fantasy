@@ -1091,7 +1091,7 @@ function plRender(){
   navSave();
   var box = $("plBox");
   if (!user){ box.innerHTML = '<h2>Private leagues</h2><div class="pl-empty">Sign in (on the Build my team tab) to create or join a private head-to-head league with friends.</div>'; return; }
-  var h = '<div class="pl-top"><h2 style="margin:0">Private leagues</h2><span class="sp"></span>';
+  var h = '<div class="pl-top"><span class="sp"></span>';
   PL.leagues.forEach(function(l){ h += '<button class="pill' + (l.id === PL.cur && PL.mode === "list" ? " on" : "") + '" data-plsel="' + esc(l.id) + '">' + esc(l.name) + '</button>'; });
   h += '<button class="pill add" data-plmode="create">+ Create league</button><button class="pill add" data-plmode="join">Join with code</button></div>' + plMsgHtml();
   if (PL.mode === "create") h += plCreateHtml();
