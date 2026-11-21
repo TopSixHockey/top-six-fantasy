@@ -1885,7 +1885,6 @@ function plIrHold(t){ return PL.roster.filter(function(r){ return t && r.team_id
 function plIrHtml(lg, t, edit){
   var rows = plIrHold(t).map(function(r){ return BYID[r.player_id]; }).filter(Boolean);
   var h = '<h2 style="margin:14px 0 6px"><span class="ir-x">&#10010;</span> Injured Reserve <span class="why">' + rows.length + '/3</span></h2>';
-  if (edit) h += '<div class="why" style="margin-bottom:6px">Stats do not count while a player is here. Only a player listed as injured on the latest lineup card can be moved here, and it frees a roster spot. Once healthy he can stay as long as you like; to move him back you need an open spot, so drop a player first.</div>';
   h += '<div class="dr-scroll" style="max-height:none"><table><thead><tr><th>Player</th><th>GP</th><th>FPts</th>' + (edit ? '<th></th>' : '') + '</tr></thead><tbody>';
   rows.forEach(function(p){
     var hurt = PL.inj && PL.inj[p.id];
