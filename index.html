@@ -107,7 +107,7 @@ footer{font-size:.74rem;color:var(--mute);text-align:center;padding:0 12px 20px}
 .pf-top{display:flex;gap:14px;align-items:center}
 .pf-sec{margin-top:18px;padding-top:12px;border-top:1px solid var(--board)}
 .pf-fields{display:grid;gap:8px;margin-bottom:10px}
-.bd-def{filter:grayscale(1);background:#dfe4e8;padding:17%;object-fit:contain;box-shadow:0 0 0 1px rgba(255,255,255,.35)}
+.bd-def{filter:grayscale(1);box-shadow:0 0 0 1px rgba(255,255,255,.35)}
 </style>
 </head>
 <body>
@@ -1310,7 +1310,8 @@ function bdLogo() {
     var s = document.querySelector("header svg.logo"); if (!s) return "";
     var c = s.cloneNode(true), g = c.children[1];
     c.setAttribute("xmlns", "http://www.w3.org/2000/svg"); c.removeAttribute("class");
-    c.setAttribute("viewBox", "-1 3 242 242"); c.setAttribute("width", "242"); c.setAttribute("height", "242");
+    c.setAttribute("viewBox", "-50 -46 340 340"); c.setAttribute("width", "340"); c.setAttribute("height", "340");
+    var bgc = document.createElementNS("http://www.w3.org/2000/svg", "circle"); bgc.setAttribute("cx", "120"); bgc.setAttribute("cy", "124"); bgc.setAttribute("r", "170"); bgc.setAttribute("fill", "#dfe4e8"); c.insertBefore(bgc, g);
     Array.prototype.slice.call(g.children).forEach(function (k) { if (k.tagName === "path" && /^(#0f2a4a|#d62d2d)$/i.test(k.getAttribute("fill") || "")) k.parentNode.removeChild(k); });
     BD_LOGO = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(c)], { type: "image/svg+xml" }));
   } catch (e) { BD_LOGO = ""; }
