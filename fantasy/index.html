@@ -1390,7 +1390,7 @@ function plStatTd(k, v){
 function plLgCoverHtml(lg){
   var isC = lg.commissioner === user.id, hue = 0, s = lg.id, i;
   for (i = 0; i < s.length; i++) hue = (hue * 31 + s.charCodeAt(i)) % 360;
-  var h = '<div class="cv lgcv" style="background:linear-gradient(135deg,hsl(' + hue + ',45%,20%),hsl(' + ((hue + 45) % 360) + ',55%,32%))"><img src="' + esc(lg.cover_url || "/league-default-cover.jpg") + '" alt="" onerror="this.remove()">';
+  var h = '<div class="cv lgcv" style="background:linear-gradient(135deg,hsl(' + hue + ',45%,20%),hsl(' + ((hue + 45) % 360) + ',55%,32%))"><img src="' + esc(lg.cover_url || "https://kiznoqzcnvpdnxdzjbur.supabase.co/storage/v1/object/public/team-logos/f61342e1-1bda-4179-b2ef-c0b7b631affd/league-cover-33abc6a4-5847-4b1b-bd0d-705e2cb56930-1795263747888.jpg") + '" alt="" onerror="this.remove()">';
   if (isC) h += '<div class="lgcv-btns"><button class="sec" data-plact="lgcoverpick">Change cover photo</button>' + (lg.cover_url ? '<button class="sec" data-plact="lgcoverremove">Remove</button>' : "") + '</div><input type="file" id="plLgCover" accept="image/png,image/jpeg,image/webp,image/gif" hidden>';
   return h + '</div>';
 }
