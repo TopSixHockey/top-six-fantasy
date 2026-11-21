@@ -1039,7 +1039,7 @@ function plStandings(lg){
   });
   PL.trans.forEach(function(x){ if (x.team_id && rows[x.team_id] && x.kind === "add") rows[x.team_id].moves++; });
   var list = Object.keys(rows).map(function(k){ var r = rows[k], g = r.w + r.l + r.tie; r.pct = g ? (r.w + r.tie / 2) / g : 0; r.pts = lg.scoring_mode === "points" ? r.pf : r.w * 2 + r.tie; return r; });
-  list.sort(function(x, y){ return (y.pct - x.pct) || (y.pf - x.pf) || x.t.name.localeCompare(y.t.name); });
+  list.sort(function(x, y){ return (y.pts - x.pts) || (y.pf - x.pf) || x.t.name.localeCompare(y.t.name); });
   return list;
 }
 
@@ -1291,12 +1291,12 @@ $("plView").addEventListener("click", function(e){
 $("plView").addEventListener("keydown", function(e){ if ((e.key === "Enter" || e.key === " ") && e.target.dataset && e.target.dataset.plmu){ e.preventDefault(); e.target.click(); } });
 function plStandingsHtml(lg){
   var rows = plStandings(lg), ptsLbl = lg.scoring_mode === "points" ? "Pts" : "Pts";
-  var h = '<div class="tbl"><table class="pl-st"><thead><tr><th>Rank</th><th>Team</th><th>W-L-T</th><th>Pct</th><th>' + ptsLbl + '</th><th>Last week</th><th>Waiver</th><th>Moves</th></tr></thead><tbody>';
+  var h = '<div class="tbl"><table class="pl-st"><thead><tr><th>Rank</th><th>Team</th><th>W-L-T</th><th>Pct</th><th>' + ptsLbl + '</th><th>Last week</th><th>Waiver</th></tr></thead><tbody>';
   rows.forEach(function(r, i){
     var pct = r.pct.toFixed(3).replace(/^0/, "");
-    h += '<tr><td>' + (i + 1) + '</td><td class="t"><div class="st-t" data-plteam="' + esc(r.t.id) + '">' + plAvatar(r.t) + '<div><span class="tn">' + esc(r.t.name) + '</span><div class="why">' + esc(PL.names[r.t.user_id] || "") + '</div></div></div></td><td>' + r.w + '-' + r.l + '-' + r.tie + '</td><td>' + pct + '</td><td>' + plNum(r.pts) + '</td><td>' + esc(r.last || "-") + '</td><td>' + (r.t.waiver_pos || "-") + '</td><td>' + r.moves + '</td></tr>';
+    h += '<tr><td>' + (i + 1) + '</td><td class="t"><div class="st-t" data-plteam="' + esc(r.t.id) + '">' + plAvatar(r.t) + '<div><span class="tn">' + esc(r.t.name) + '</span><div class="why">' + esc(PL.names[r.t.user_id] || "") + '</div></div></div></td><td>' + r.w + '-' + r.l + '-' + r.tie + '</td><td>' + pct + '</td><td>' + plNum(r.pts) + '</td><td>' + esc(r.last || "-") + '</td><td>' + (r.t.waiver_pos || "-") + '</td></tr>';
   });
-  h += '</tbody></table></div><small class="note">' + (lg.scoring_mode === "points" ? 'Pts = total fantasy points scored in completed weeks.' : 'Pts = 2 per matchup win and 1 per tie.') + ' Only completed weeks count. Ranked by win percentage, then Pts.</small>';
+  h += '</tbody></table></div><small class="note">' + (lg.scoring_mode === "points" ? 'Pts = total fantasy points scored in completed weeks.' : 'Pts = 2 per matchup win and 1 per tie.') + ' Only completed weeks count. Ranked by Pts.</small>';
   return rows.length ? h : '<div class="pl-empty">No teams yet.</div>';
 }
 function plTransHtml(lg){
