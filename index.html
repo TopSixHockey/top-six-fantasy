@@ -22,7 +22,7 @@ main{padding:12px 12px 24px}
 .sels{display:flex;gap:8px;max-width:100%}.bar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;margin-bottom:10px}
 select{font:inherit;padding:8px 10px;border-radius:8px;border:1px solid var(--board);background:var(--pill);color:var(--ink);max-width:100%}
 .game{font-size:.88rem;color:var(--mute)}.game b{color:var(--ink)}
-.bar{flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:6px}.gwrap{text-align:left}.score{margin-top:4px;font-size:.92rem;font-weight:700;color:var(--ink)}.score:empty{display:none}.score .st{display:inline-block;font-size:.66rem;letter-spacing:.07em;text-transform:uppercase;background:var(--pill);color:var(--mute);border:1px solid var(--board);border-radius:99px;padding:2px 9px;margin-right:8px;vertical-align:1px}.score .st.live{background:#c8102e;border-color:#c8102e;color:#fff}.score .clk{font-weight:500;color:var(--mute);margin-left:8px}.score .w{font-weight:800}
+.bar{flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:6px}.gwrap{text-align:left}.score{margin-top:4px;font-size:.92rem;font-weight:700;color:var(--ink)}.score:empty{display:none}.score .st{display:inline-block;font-size:.66rem;letter-spacing:.07em;text-transform:uppercase;background:var(--pill);color:var(--mute);border:1px solid var(--board);border-radius:99px;padding:2px 9px;margin-left:10px;vertical-align:1px}.score .st.live{background:#c8102e;border-color:#c8102e;color:#fff}.score .clk{font-weight:500;color:var(--mute);margin-left:8px}.score .w{font-weight:800}
 @media(max-width:700px){.gwrap{text-align:left}}
 .note{font-size:.78rem;color:var(--mute);margin:0 0 10px}
 .rink{position:relative;border-radius:18px;overflow:hidden;border:3px solid #0b1219;background:linear-gradient(180deg,#8fa9b9 0,#d6e6ef 230px,#f2f8fb 430px,#e3eef4 100%);--ink:#0f1c28;--mute:#445663;--pill:#ffffffd9;color:var(--ink)}
@@ -1232,7 +1232,7 @@ var p = { 1: "1st", 2: "2nd", 3: "3rd", 4: "OT", 5: "SO" }[g.Period] || (g.Perio
 pill = '<span class="st live">Live</span>';
 clock = '<span class="clk">' + (g.Intermission === "1" ? "End of " + p : p + (c ? " · " + c : "")) + "</span>";
 }
-el.innerHTML = pill + scoreHtml + clock;
+el.innerHTML = scoreHtml + clock + pill;
 return fin;
 }
 function esc2(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
