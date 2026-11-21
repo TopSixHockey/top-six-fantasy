@@ -214,6 +214,13 @@ td.pos{color:var(--ok)}td.neg{color:var(--bad)}td.pts{color:#ff9f43}td.fp{font-w
 .cv{position:relative;aspect-ratio:1200/227;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
 .cv img{width:100%;height:100%;object-fit:cover;display:block}
 .cv-avw{position:absolute;left:18px;bottom:-40px}
+.cv-btns{position:absolute;right:10px;bottom:14px;display:flex;gap:6px;z-index:2;opacity:0;pointer-events:none;transition:opacity .15s}
+.cv:hover + .cv-btns,.cv-btns:hover,.cv-btns:focus-within{opacity:1;pointer-events:auto}
+.cv-btns .sec{padding:6px 11px;font-size:12px;background:rgba(11,29,58,.82)}
+.av-btns{position:absolute;inset:4px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:rgba(11,29,58,.72);opacity:0;pointer-events:none;transition:opacity .15s}
+.cv-avw:hover .av-btns,.av-btns:focus-within{opacity:1;pointer-events:auto}
+.av-btns .sec{padding:3px 9px;font-size:11px;background:rgba(11,29,58,.92)}
+@media(hover:none){.cv-btns,.av-btns{opacity:1;pointer-events:auto}.av-btns{background:transparent;justify-content:flex-end;padding-bottom:6px}}
 .cv-avw .mu-av{width:92px;height:92px;font-size:30px;border:4px solid var(--bg)}
 .cv-info{padding:6px 0 14px 124px;min-height:50px}
 .cv-n{font-size:22px;font-weight:800;line-height:1.15;overflow-wrap:anywhere}
@@ -1139,7 +1146,7 @@ function plLeagueHtml(){
   if (PL.teamView && plTeam(PL.teamView)) return h + plTeamPageHtml(lg, plTeam(PL.teamView));
   if (PL.sub === "standings") return h + plStandingsHtml(lg);
   if (PL.sub === "trans") return h + plTransHtml(lg);
-  if (PL.sub === "myteam") return h + (me ? plCover(me) + plTeamInfo(lg, me) + '<div class="row" style="margin:0 0 12px"><button class="sec" data-plsub="league">Edit team logo &amp; cover photo</button></div>' : "") + plMyTeamHtml(lg, me);
+  if (PL.sub === "myteam") return h + (me ? plCover(me, 1) + plTeamInfo(lg, me) : "") + plMyTeamHtml(lg, me);
   if (PL.sub === "players") return h + plPlayersHtml(lg, me);
   if (PL.sub === "trades") return h + plTradesHtml(lg, me);
   if (PL.sub === "draft") return h + plDraftHtml(lg, me);
@@ -1475,7 +1482,14 @@ function plCoverBanner(t){
   for (i = 0; i < s.length; i++) hue = (hue * 31 + s.charCodeAt(i)) % 360;
   return '<div class="cv" style="background:linear-gradient(135deg,hsl(' + hue + ',45%,20%),hsl(' + ((hue + 45) % 360) + ',55%,32%))">' + '<img src="' + esc(t.cover_url || "/default-cover.jpg") + '" alt="" onerror="this.remove()">' + '</div>';
 }
-function plCover(t){ return '<div class="cv-wrap">' + plCoverBanner(t) + '<div class="cv-avw">' + plAvatar(t, 1) + '</div></div>'; }
+function plCover(t, edit){
+  var acc = 'accept="image/png,image/jpeg,image/webp,image/gif" hidden';
+  var h = '<div class="cv-wrap">' + plCoverBanner(t);
+  if (edit) h += '<div class="cv-btns"><button class="sec" data-plact="coverpick">Change cover photo</button>' + (t.cover_url ? '<button class="sec" data-plact="coverremove">Remove</button>' : "") + '</div><input type="file" id="plCover" ' + acc + '>';
+  h += '<div class="cv-avw">' + plAvatar(t, 1);
+  if (edit) h += '<div class="av-btns"><button class="sec" data-plact="logopick">Change</button>' + (t.logo_url ? '<button class="sec" data-plact="logoremove">Remove</button>' : "") + '</div><input type="file" id="plLogo" ' + acc + '>';
+  return h + '</div></div>';
+}
 function plTeamInfo(lg, t){
   var rank = 0, rec = "";
   plStandings(lg).forEach(function(r, i){ if (r.t.id === t.id){ rank = i + 1; rec = r.w + "-" + r.l + "-" + r.tie; } });
@@ -1567,6 +1581,8 @@ $("plView").addEventListener("click", async function(e){
   else if (d.plremove){ await plDo(function(){ return SB.rpc("remove_pteam", { p_team: d.plremove }); }, "Team removed."); await plLoadLeague(); plRender(); }
   else if (d.plact === "lgcoverpick"){ var li = $("plLgCover"); if (li) li.click(); }
   else if (d.plact === "lglogopick"){ var ll = $("plLgLogo"); if (ll) ll.click(); }
+  else if (d.plact === "logopick"){ var tl = $("plLogo"); if (tl) tl.click(); }
+  else if (d.plact === "coverpick"){ var tc = $("plCover"); if (tc) tc.click(); }
   else if (d.plact === "cancel"){ plRender(); }
   else if (d.plact){ await plAct(d.plact, t); }
 });
