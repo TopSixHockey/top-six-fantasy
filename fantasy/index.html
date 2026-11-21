@@ -995,7 +995,7 @@ $("luReset").addEventListener("click", function(){
 var PL = { leagues: [], cur: null, sub: "matchups", week: 1, tf: "all", teams: [], mu: [], scores: {}, trans: [], names: {}, mode: "list", msg: "", good: false };
 var PCATS = [["g","G"],["a","A"],["p","PTS"],["pm","+/-"],["shots","SOG"],["wins","W"],["svp","SV%"]];
 function plSv(sa, ga){ sa = num(sa); return sa > 0 ? 1 - num(ga) / sa : null; }
-function plCat(s, k, ff){ if (ff && (k === "wins" || k === "svp") && num(s.gp) < 1) return -1; if (k === "p") return num(s.g) + num(s.a); if (k === "svp"){ var q = plSv(s.sa, s.ga); return q === null ? -1 : q; } return num(s[k]); }
+function plCat(s, k, ff){ if (ff && (k === "wins" || k === "svp") && num(s.gp) < 2) return -1; if (k === "p") return num(s.g) + num(s.a); if (k === "svp"){ var q = plSv(s.sa, s.ga); return q === null ? -1 : q; } return num(s[k]); }
 function plToday(){ return new Date().toLocaleDateString("en-CA", { timeZone: "America/Toronto" }); }
 function plDay(s){ var p = String(s).split("-"); return Date.UTC(+p[0], +p[1] - 1, +p[2]) / 864e5; }
 function plWeekStart(lg, w){ var d = new Date((plDay(lg.start_date) + (w - 1) * 7) * 864e5); return d.toLocaleDateString("en-US", { timeZone: "UTC", month: "short", day: "numeric" }); }
@@ -1223,7 +1223,7 @@ function plMatchDetailHtml(lg, me, m){
   function side(id, right){ var t = plTeam(id); return '<div class="md-tm' + (right ? " r" : "") + '" data-plteam="' + esc(id) + '"><div class="md-n">' + plTeamName(id) + '</div><div class="md-mg">' + esc(PL.names[(t || {}).user_id] || "") + '</div><div class="md-rec">' + (recs[id] || "0-0-0") + '</div></div>'; }
   var wa = fin && res.w === "a" ? "w" : "", wb = fin && res.w === "b" ? "w" : "";
   h += '<div class="md-head">' + side(m.team_a, true) + plAvatar(plTeam(m.team_a)) + '<div class="md-sc"><span class="' + wa + '">' + (big ? plNum(res.a) : res.a) + '</span><span class="mu-vs">vs</span><span class="' + wb + '">' + (big ? plNum(res.b) : res.b) + '</span></div>' + plAvatar(plTeam(m.team_b)) + side(m.team_b, false) + '</div>';
-  var TC = [["g","G"],["a","A"],["p","PTS"],["pm","+/-"],["shots","SOG"],["wins","W"],["svp","SV%"],["gs","GS"],["pts","FPTS"]];
+  var TC = [["g","G"],["a","A"],["p","PTS"],["pm","+/-"],["shots","SOG"],["wins","W"],["svp","SV%"],["pts","FPTS"]];
   var catWin = {}; if (!big && md.day === "tot") PCATS.forEach(function(c, i){ if (res.cats[i]) catWin[c[0]] = res.cats[i].w; });
   function tot(tid){
     var o = { g: 0, a: 0, p: 0, pm: 0, shots: 0, wins: 0, sa: 0, ga: 0, svp: null, gs: 0, pts: 0 };
@@ -1235,9 +1235,9 @@ function plMatchDetailHtml(lg, me, m){
   h += '<div class="md-scroll"><table class="md-t"><thead><tr><th class="l">Team</th>' + TC.map(function(c){ return '<th>' + c[1] + '</th>'; }).join("") + '</tr></thead><tbody>';
   [m.team_a, m.team_b].forEach(function(tid, ti){
     var o = tot(tid), side2 = ti === 0 ? "a" : "b";
-    h += '<tr><td class="md-pl">' + plAvatar(plTeam(tid)).replace("mu-av", "mu-av sm") + '<span><span class="md-pn">' + plTeamName(tid) + '</span></span></td>' + TC.map(function(c){ var cell = fmt(c[0], o[c[0]]); if (!big && fin && md.day === "tot" && (c[0] === "wins" || c[0] === "svp") && o.gs < 1) cell = '<td class="neg" title="No goalie start this week: forfeited">F</td>'; return catWin[c[0]] === side2 ? cell.replace("<td", '<td style="color:var(--ok);font-weight:800"') : cell; }).join("") + '</tr>';
+    h += '<tr><td class="md-pl">' + plAvatar(plTeam(tid)).replace("mu-av", "mu-av sm") + '<span><span class="md-pn">' + plTeamName(tid) + '</span></span></td>' + TC.map(function(c){ var cell = fmt(c[0], o[c[0]]); if (!big && fin && md.day === "tot" && (c[0] === "wins" || c[0] === "svp") && o.gs < 2) cell = '<td class="neg" title="Fewer than 2 goalie starts this week: forfeited">F</td>'; return catWin[c[0]] === side2 ? cell.replace("<td", '<td style="color:var(--ok);font-weight:800"') : cell; }).join("") + '</tr>';
   });
-  h += '</tbody></table></div>' + (big ? "" : '<small class="note" style="text-align:center">Category winners are shown in green on the Totals tab. A team needs at least 1 goalie start in the week, or it forfeits W and SV% (shown as F once the week is done).</small>');
+  h += '</tbody></table></div>' + (big ? "" : '<div class="why" style="text-align:center;margin:8px 0 4px">Goalie starts this week: <b>' + plTeamName(m.team_a) + '</b> ' + tot(m.team_a).gs + '/2 &middot; <b>' + plTeamName(m.team_b) + '</b> ' + tot(m.team_b).gs + '/2</div><small class="note" style="text-align:center">Category winners are shown in green on the Totals tab. A team needs at least 2 goalie starts in the week, or it forfeits W and SV% (shown as F once the week is done).</small>');
   if (!data){ return h + '<div class="pl-empty">' + (md.err ? esc(md.err) : "Loading players…") + '</div>'; }
   function bucket(p){ return p.g === "G" ? "G" : p.g === "F" ? "F" : "D"; }
   function listFor(tid){ var o = {}; (data[tid] || []).forEach(function(x){ var p = BYID[x.player_id]; if (!p) return; (o[bucket(p)] = o[bucket(p)] || []).push({ x: x, p: p }); }); Object.keys(o).forEach(function(k){ o[k].sort(function(a, b){ return num(b.x.pts) - num(a.x.pts); }); }); return o; }
