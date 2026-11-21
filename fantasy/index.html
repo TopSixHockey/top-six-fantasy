@@ -1160,7 +1160,7 @@ function plMatchupsHtml(lg, me){
   h += plLgCoverHtml(lg);
   if (!ms.length) return h + '<div class="pl-empty">No matchups this week.</div>';
   if (!began) h += '<div class="pl-note">This week hasn\'t started. Scores begin counting on ' + plWeekStart(lg, w) + '.</div>';
-  h += '<div class="mu-card"><div class="mu-hd"><span>&#127942; Week ' + w + ' Matchups <small>' + plWeekStart(lg, w) + ' &ndash; ' + plWeekEnd(lg, w) + '</small></span><span>' + status + '</span></div>';
+  h += '<div class="mu-card"><div class="mu-hd"><span>Week ' + w + ' Matchups <small>' + plWeekStart(lg, w) + ' &ndash; ' + plWeekEnd(lg, w) + '</small></span><span>' + status + '</span></div>';
   ms.sort(function(x, y){ var mx = me && (x.team_a === me.id || x.team_b === me.id) ? 0 : 1, my = me && (y.team_a === me.id || y.team_b === me.id) ? 0 : 1; return mx - my; });
   function side(id, right){ return '<div class="mu-t' + (right ? " r" : "") + '" data-plteam="' + esc(id) + '" title="' + esc(PL.names[(plTeam(id) || {}).user_id] || "") + '"><div class="mu-n">' + plTeamName(id) + '</div><div class="mu-rec">' + (recs[id] || "0-0-0") + '</div></div>'; }
   ms.forEach(function(m){
