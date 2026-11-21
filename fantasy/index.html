@@ -326,6 +326,7 @@ td.pos{color:var(--ok)}td.neg{color:var(--bad)}td.pts{color:#ff9f43}td.fp{font-w
   <a class="back" href="../">&larr; Line combinations</a>
   <span class="sp"></span>
   <span id="who" class="why"></span>
+  <a class="back hide" id="profLink" href="../#profile">Profile</a>
   <button class="sec hide" id="signout">Sign out</button>
 </header>
 <div class="tabs">
@@ -804,7 +805,7 @@ $("lb").addEventListener("click", function(e){
 async function applySession(session){
   user = session && session.user ? session.user : null;
   $("who").textContent = user ? (user.user_metadata && user.user_metadata.display_name) || user.email : "";
-  $("signout").classList.toggle("hide", !user);
+  $("signout").classList.toggle("hide", !user); if ($("profLink")) $("profLink").classList.toggle("hide", !user);
   await loadEntries(); refresh();
   if (typeof plOnAuth === "function") plOnAuth();
 }
