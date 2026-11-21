@@ -1310,9 +1310,9 @@ function bdLogo() {
     var s = document.querySelector("header svg.logo"); if (!s) return "";
     var c = s.cloneNode(true), g = c.children[1];
     c.setAttribute("xmlns", "http://www.w3.org/2000/svg"); c.removeAttribute("class");
-    c.setAttribute("viewBox", "-50 -46 340 340"); c.setAttribute("width", "340"); c.setAttribute("height", "340");
-    var bgc = document.createElementNS("http://www.w3.org/2000/svg", "circle"); bgc.setAttribute("cx", "120"); bgc.setAttribute("cy", "124"); bgc.setAttribute("r", "170"); bgc.setAttribute("fill", "#dfe4e8"); c.insertBefore(bgc, g);
-    Array.prototype.slice.call(g.children).forEach(function (k) { if (k.tagName === "path" && /^(#0f2a4a|#d62d2d)$/i.test(k.getAttribute("fill") || "")) k.parentNode.removeChild(k); });
+    c.setAttribute("viewBox", "-25.5 -21.5 291 291"); c.setAttribute("width", "291"); c.setAttribute("height", "291");
+    var bgc = document.createElementNS("http://www.w3.org/2000/svg", "circle"); bgc.setAttribute("cx", "120"); bgc.setAttribute("cy", "124"); bgc.setAttribute("r", "145.5"); bgc.setAttribute("fill", "#dfe4e8"); c.insertBefore(bgc, g);
+    Array.prototype.slice.call(g.children[0].children).forEach(function (k) { if (k.tagName === "path" && /^(#0f2a4a|#d62d2d)$/i.test(k.getAttribute("fill") || "")) k.parentNode.removeChild(k); });
     BD_LOGO = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(c)], { type: "image/svg+xml" }));
   } catch (e) { BD_LOGO = ""; }
   return BD_LOGO;
