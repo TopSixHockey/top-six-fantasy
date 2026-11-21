@@ -472,16 +472,21 @@ function whyNot(p){
   if (p.g !== "G"){
     var a = RULES.ages.filter(function(x){ return x.y === p.ay; })[0];
     if (!a) return "Not eligible (born " + p.by + ")";
-    if (c.age[p.ay] >= a.n) return "Age " + a.label + " spots full";
+    if (c.age[p.ay] >= a.n) return "Age " + agLbl(a) + " spots full";
   }
   if (p.imp && c.imp >= RULES.maxImports) return "Import limit reached";
   if (p.dr && c.dr >= RULES.maxDrafted) return "NHL-drafted limit reached";
   return "";
 }
+function a16(league){ return league === "WHL" ? "15/16" : "16"; }
+function agLbl(a){ return a.y === 2010 ? a16((typeof entry !== "undefined" && entry && entry.league) ? entry.league : ($("lg") ? $("lg").value : "")) : a.label; }
+function agOptText(lgx){ var o = $("ag") && $("ag").options[1]; if (o) o.text = lgx === "WHL" ? "15/16 (born 2010 or 2011)" : (lgx === "" ? "16 (born 2010; 2011 in the WHL)" : "16 (born 2010)"); }
 function ageLabel(p){
   if (p.g === "G") return "G";
   var a = RULES.ages.filter(function(x){ return x.y === p.ay; })[0];
-  return a ? a.label : "n/a";
+  if (!a) return "n/a";
+if (p.ay === 2010 && p.lgn === "WHL") return p.by === 2011 ? "15" : "16";
+return a.label;
 }
 function locked(){ return !!(entry && entry.locked_at); }
 
@@ -531,6 +536,7 @@ function setSort(k){
 function renderPool(){
   if (!POOL.length) return;
   var q = $("q").value.trim().toLowerCase(), lg = (entry && entry.league) ? entry.league : $("lg").value, ps = $("ps").value, ag = $("ag").value, tg = $("tg").value, el = $("el").checked;
+agOptText(lg);
   var cols = ps === "G" ? COLS_G : COLS_S;
   if (sortKey !== "name" && !cols.some(function(c){ return c[0] === sortKey; })){ sortKey = "fp"; sortDir = -1; }
   var arrow = function(k){ return sortKey === k ? (sortDir < 0 ? " ▼" : " ▲") : ""; };
@@ -576,7 +582,7 @@ function renderRoster(){
   $("teamDetail").classList.toggle("hide", !showTeam);
   if (!showTeam) return;
   var c = counts(roster), lk = locked();
-  var r = RULES.ages.map(function(a){ return rule("Age " + a.label, c.age[a.y], a.n); });
+  var r = RULES.ages.map(function(a){ return rule("Age " + agLbl(a), c.age[a.y], a.n); });
   r.push(rule("Forwards", c.F, RULES.F), rule("Defence", c.D, RULES.D), rule("Goalies", c.G, RULES.G));
   r.push('<div class="rule ' + (c.imp > RULES.maxImports ? "over" : "") + '"><span>Imports (max ' + RULES.maxImports + ')</span><b>' + c.imp + '</b></div>');
   r.push('<div class="rule ' + (c.dr > RULES.maxDrafted ? "over" : "") + '"><span>NHL drafted (max ' + RULES.maxDrafted + ')</span><b>' + c.dr + '</b></div>');
@@ -1780,7 +1786,7 @@ function plLobbyHtml(lg, me){
   var isC = lg.commissioner === user.id, h = '';
   h += '<div class="pl-note"><b>' + (lg.draft_at ? 'Draft: ' + esc(plWhen(lg.draft_at)) + ' &middot; <span id="drCount">' + esc(plCountdown(lg.draft_at)) + '</span>' : 'The commissioner hasn\'t picked a draft time yet.') + '</b><br>' +
     '20 rounds, snake order (order is drawn at random when the draft starts). ' + (lg.pick_seconds ? lg.pick_seconds + ' seconds per pick' : 'No time limit per pick') + (lg.pick_seconds ? ', then the best available player is picked automatically.' : '.') +
-    '<br>' + (lg.use_quotas ? 'Quotas on: age rules (at least 1 sixteen, at least 4 seventeen, 1 to 2 overage, no limits on 18 and 19), 1 to 3 imports, max 5 NHL-drafted.' : 'Roster: 12 forwards, 6 defence, 2 goalies. No age or import quotas.') + '</div>';
+    '<br>' + (lg.use_quotas ? 'Quotas on: age rules (at least 1 ' + (lg.chl_league === "WHL" ? "15/16-year-old" : "sixteen") + ', at least 4 seventeen, 1 to 2 overage, no limits on 18 and 19), 1 to 3 imports, max 5 NHL-drafted.' : 'Roster: 12 forwards, 6 defence, 2 goalies. No age or import quotas.') + '</div>';
   if (isC){
     h += '<h2>Draft settings</h2><div class="pl-form">' +
       '<label>Draft date and time<input id="pldAt" type="datetime-local" value="' + esc(plLocalInput(lg.draft_at)) + '"></label>' +
@@ -1798,7 +1804,7 @@ function plRoomHtml(lg, me){
     '<div class="pl-sub"><button class="pill" data-pldt="players" id="drTP">Players</button><button class="pill" data-pldt="queue" id="drTQ">Draft list</button></div>' +
     '<div id="drFilt" class="dr-filters"><input type="search" id="drQ" placeholder="Search player or team" value="' + esc(PL.dq) + '">' +
     '<select id="drPos"><option value="">All positions</option><option value="F">Forwards</option><option value="D">Defence</option><option value="G">Goalies</option></select>' +
-    '<select id="drAge"><option value="">All ages</option><option value="2010">16</option><option value="2009">17</option><option value="2008">18</option><option value="2007">19</option><option value="2006">20</option></select></div>' +
+    '<select id="drAge"><option value="">All ages</option><option value="2010">' + a16(lg.chl_league) + '</option><option value="2009">17</option><option value="2008">18</option><option value="2007">19</option><option value="2006">20</option></select></div>' +
     '<div class="dr-scroll" id="drList"></div></div><div>' +
     '<div class="pl-sub"><button class="pill" data-plds="results" id="drSR">Draft results</button><button class="pill" data-plds="team" id="drST">My team</button></div>' +
     '<div id="drSide"></div></div></div></div>';
@@ -1881,7 +1887,7 @@ return '<div class="pl-note">Build your draft list before the draft. It shows up
 '<div id="drPre"><div class="pl-sub"><button class="pill" data-pldt="players" id="drTP">All players</button><button class="pill" data-pldt="queue" id="drTQ">Draft list</button></div>' +
 '<div id="drFilt" class="dr-filters"><input type="search" id="drQ" placeholder="Search player or team" value="' + esc(PL.dq) + '">' +
 '<select id="drPos"><option value="">All positions</option><option value="F">Forwards</option><option value="D">Defence</option><option value="G">Goalies</option></select>' +
-'<select id="drAge"><option value="">All ages</option><option value="2010">16</option><option value="2009">17</option><option value="2008">18</option><option value="2007">19</option><option value="2006">20</option></select></div>' +
+'<select id="drAge"><option value="">All ages</option><option value="2010">' + a16(lg.chl_league) + '</option><option value="2009">17</option><option value="2008">18</option><option value="2007">19</option><option value="2006">20</option></select></div>' +
 '<div class="dr-scroll" id="drList"></div></div>';
 }
 async function plPreLoad(){
@@ -1925,7 +1931,7 @@ function plDraftSide(lg, me){
         (lines[g[0]].length ? lines[g[0]].map(function(p){ return '<div><span class="nmh" data-pid="' + esc(p.id) + '">' + esc(p.name) + '</span> <span class="dr-sub">' + esc(p.pos) + ' &middot; ' + esc(p.team) + '</span></div>'; }).join("") : '<div class="why">None yet</div>') + '</div>';
     });
     if (lg.use_quotas){
-      h += '<div class="why">Ages: ' + [[2010,"16","min 1"],[2009,"17","min 4"],[2008,"18",""],[2007,"19",""],[2006,"20","min 1, max 2"]].map(function(a){ return a[1] + ': ' + (c.age[a[0]] || 0) + (a[2] ? ' (' + a[2] + ')' : ""); }).join(" &middot; ") + '<br>Imports ' + c.imp + ' (min 1, max 3) &middot; NHL-drafted ' + c.dr + '/5</div>';
+      h += '<div class="why">Ages: ' + [[2010,a16(lg.chl_league),"min 1"],[2009,"17","min 4"],[2008,"18",""],[2007,"19",""],[2006,"20","min 1, max 2"]].map(function(a){ return a[1] + ': ' + (c.age[a[0]] || 0) + (a[2] ? ' (' + a[2] + ')' : ""); }).join(" &middot; ") + '<br>Imports ' + c.imp + ' (min 1, max 3) &middot; NHL-drafted ' + c.dr + '/5</div>';
     }
   } else {
     if (PL.dv === "team"){ box.innerHTML = plDraftViewBar() + plDraftTeamHtml(lg, me); return; }
@@ -2037,6 +2043,7 @@ else if (id === "drTm"){ PL.dtm = e.target.value; plDraftUpdate(true); }
 /* ---- Private leagues: My team and free agents (add / drop) ---- */
 PL.roster = []; PL.fq = ""; PL.fpos = ""; PL.fage = ""; PL.ftag = ""; PL.fshow = ""; PL.fper = ""; PL.perData = {}; PL.perBusy = null; PL.fsort = "fp"; PL.fshown = 60; PL.addPid = null; PL.dropPid = null;
 var AGELBL = { 2010: 16, 2009: 17, 2008: 18, 2007: 19, 2006: 20 };
+function plAgeTxt(p){ return p.lgn === "WHL" && p.ay === 2010 ? (p.by === 2011 ? "15" : "16") : (AGELBL[p.ay] || ""); }
 function plEff(lg){ var t = plDay(plToday()); return t < plDay(lg.start_date) ? 1 : Math.floor((t - plDay(lg.start_date)) / 7) + 2; }
 function plEffTxt(lg){ var e = plEff(lg); return e > lg.weeks ? "The season is over." : "Moves take effect Monday " + plWeekStart(lg, e) + " (Week " + e + "). A dropped player keeps scoring for you until then, and an added player starts scoring then."; }
 async function plLoadRoster(){
@@ -2083,7 +2090,7 @@ function plJy(p){
   if (!JERS){ if (!PL.jl){ PL.jl = true; loadJerseys().then(function(){ plRender(); }, function(){ PL.jl = false; }); } return ""; }
   return '<span class="pj">' + JERS.jersey(p.num, JERS.map[tnorm(p.team)] || GENERIC, p.name.split(" ").slice(1).join(" ") || p.name) + '</span>';
 }
-function plPlayerCell(p, lg){ return plJy(p) + '<span class="pj-t"><span class="nmh" data-pid="' + esc(p.id) + '">' + esc(p.name) + '</span><span class="dr-sub"> ' + esc(p.pos) + ' &middot; ' + esc(p.team) + ' &middot; ' + (AGELBL[p.ay] || "") + '</span>' + (lg.use_quotas ? (p.imp ? '<span class="dr-tag">IMP</span>' : "") + (p.dr ? '<span class="dr-tag">NHL</span>' : "") : "") + '</span>'; }
+function plPlayerCell(p, lg){ return plJy(p) + '<span class="pj-t"><span class="nmh" data-pid="' + esc(p.id) + '">' + esc(p.name) + '</span><span class="dr-sub"> ' + esc(p.pos) + ' &middot; ' + esc(p.team) + ' &middot; ' + plAgeTxt(p) + '</span>' + (lg.use_quotas ? (p.imp ? '<span class="dr-tag">IMP</span>' : "") + (p.dr ? '<span class="dr-tag">NHL</span>' : "") : "") + '</span>'; }
 function plMyTeamHtml(lg, me){
   if (lg.status !== "active") return '<div class="pl-note">Rosters open once the draft is finished.</div>';
   var hold = plMyHold(me), eff = plEff(lg), started = plStarted(lg), h = '<div class="pl-note">Weekly adds: <b>' + plAddsUsed(lg, me) + '/' + ADDS_PER_WEEK + '</b></div>';
@@ -2111,7 +2118,7 @@ function plPlayersHtml(lg, me){
     '<select id="faPer"><option value="">Season totals</option><option value="14">Last 14 days</option><option value="30">Last 30 days</option></select>' +
     '<select id="faShow"><option value="">Free agents</option><option value="all">All players</option><option value="own">Rostered</option></select>' +
     '<select id="faPos"><option value="">All positions</option><option value="F">Forwards</option><option value="D">Defence</option><option value="G">Goalies</option></select>' +
-    '<select id="faAge"><option value="">All ages</option><option value="2010">16</option><option value="2009">17</option><option value="2008">18</option><option value="2007">19</option><option value="2006">20</option></select>' +
+    '<select id="faAge"><option value="">All ages</option><option value="2010">' + a16(lg.chl_league) + '</option><option value="2009">17</option><option value="2008">18</option><option value="2007">19</option><option value="2006">20</option></select>' +
     '<select id="faTag"><option value="">All types</option><option value="imp">Imports</option><option value="dr">NHL drafted</option></select></div>' +
     '<div class="dr-scroll" id="faList"></div>';
   return h;
@@ -2276,7 +2283,7 @@ function plBoxes(tid, attr, key, sel, excl){
   var order = { F: 0, D: 1, G: 2 };
   rows.sort(function(a, b){ return (order[a.g] - order[b.g]) || (b.fp - a.fp); });
   return rows.map(function(p){
-    return '<label style="display:block;padding:3px 0;cursor:pointer"><input type="checkbox" data-' + attr + '="' + key + '" value="' + esc(p.id) + '"' + (sel.indexOf(p.id) >= 0 ? " checked" : "") + '> ' + esc(p.name) + ' <span class="why">' + esc(p.pos) + ' &middot; ' + esc(p.team) + ' &middot; ' + (AGELBL[p.ay] || "") + '</span></label>';
+    return '<label style="display:block;padding:3px 0;cursor:pointer"><input type="checkbox" data-' + attr + '="' + key + '" value="' + esc(p.id) + '"' + (sel.indexOf(p.id) >= 0 ? " checked" : "") + '> ' + esc(p.name) + ' <span class="why">' + esc(p.pos) + ' &middot; ' + esc(p.team) + ' &middot; ' + plAgeTxt(p) + '</span></label>';
   }).join("");
 }
 function plTradeRuleTxt(lg){
