@@ -1511,7 +1511,7 @@ function plTeamRosterHtml(lg, t){
 }
 function plTeamPageHtml(lg, t){
   var me = plMine(), canTrade = me && t.id !== me.id && lg.status === "active";
-return '<div class="md-bar"><button class="sec md-back" data-plteamback="1">&lsaquo; Back</button>' + (canTrade ? '<button data-pltrpropose="' + esc(t.id) + '" style="margin-left:auto">Propose trade</button>' : "") + '</div>' + plCover(t) + plTeamInfo(lg, t) + plTeamRosterHtml(lg, t);
+return '<div class="md-bar"><button class="sec md-back" data-plteamback="1">&lsaquo; Back</button></div>' + plCover(t) + (canTrade ? '<div style="display:flex;align-items:center;gap:12px"><div style="flex:1;min-width:0">' + plTeamInfo(lg, t) + '</div><button data-pltrpropose="' + esc(t.id) + '" style="flex:none;margin-bottom:8px">Propose trade</button></div>' : plTeamInfo(lg, t)) + plTeamRosterHtml(lg, t);
 }
 async function plUploadCover(inp){
   var f = inp.files && inp.files[0], me = plMine(); if (!f || !me) return;
