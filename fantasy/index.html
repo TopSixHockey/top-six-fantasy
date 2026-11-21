@@ -343,7 +343,8 @@ td.pos{color:var(--ok)}td.neg{color:var(--bad)}td.pts{color:#ff9f43}td.fp{font-w
       <select id="lg"><option value="">All leagues</option><option value="OHL">OHL</option><option value="WHL">WHL</option><option value="QMJHL">QMJHL</option></select>
       <select id="ps"><option value="">All positions</option><option value="F">Forwards</option><option value="D">Defence</option><option value="G">Goalies</option></select>
       <select id="ag"><option value="">All ages</option><option value="2010">16 (born 2010 or 2011)</option><option value="2009">17 (born 2009)</option><option value="2008">18 (born 2008)</option><option value="2007">19 (born 2007)</option><option value="2006">20 / OA (born 2006)</option></select>
-      <label class="chk"><input type="checkbox" id="el" checked> Only players I can add</label>
+      <select id="tg"><option value="">All types</option><option value="imp">Imports</option><option value="dr">NHL drafted</option></select>
+<label class="chk"><input type="checkbox" id="el" checked> Only players I can add</label>
     </div>
     <div class="tbl"><table class="pt">
       <thead id="poolHead"></thead>
@@ -529,7 +530,7 @@ function setSort(k){
 }
 function renderPool(){
   if (!POOL.length) return;
-  var q = $("q").value.trim().toLowerCase(), lg = (entry && entry.league) ? entry.league : $("lg").value, ps = $("ps").value, ag = $("ag").value, el = $("el").checked;
+  var q = $("q").value.trim().toLowerCase(), lg = (entry && entry.league) ? entry.league : $("lg").value, ps = $("ps").value, ag = $("ag").value, tg = $("tg").value, el = $("el").checked;
   var cols = ps === "G" ? COLS_G : COLS_S;
   if (sortKey !== "name" && !cols.some(function(c){ return c[0] === sortKey; })){ sortKey = "fp"; sortDir = -1; }
   var arrow = function(k){ return sortKey === k ? (sortDir < 0 ? " ▼" : " ▲") : ""; };
@@ -542,6 +543,8 @@ function renderPool(){
     if (lg && p.lgn !== lg) continue;
     if (ps && p.g !== ps) continue;
     if (ag && String(p.ay) !== ag) continue;
+if (tg === "imp" && !p.imp) continue;
+if (tg === "dr" && !p.dr) continue;
     if (q && (p.name + " " + p.team).toLowerCase().indexOf(q) < 0) continue;
     var why = canAdd ? whyNot(p) : "";
     if (el && why) continue;
@@ -843,7 +846,7 @@ document.addEventListener("click", function(e){
     navSave();
   }
 });
-["q","lg","ps","ag","el"].forEach(function(id){ $(id).addEventListener("input", function(){ shown = SHOW; renderPool(); }); });
+["q","lg","ps","ag","tg","el"].forEach(function(id){ $(id).addEventListener("input", function(){ shown = SHOW; renderPool(); }); });
 $("tn").addEventListener("input", saveName);
 $("lbMonthSel").addEventListener("change", loadLeaderboard);
 
