@@ -816,7 +816,8 @@ $("login").addEventListener("click", async function(){
 });
 $("signup").addEventListener("click", async function(){
   authMsg("");
-  var dn = $("dn").value.trim() || $("em").value.split("@")[0];
+  var dn = $("dn").value.trim();
+if (dn.length < 2 || dn.length > 30){ authMsg("Choose a display name (2 to 30 characters). It is shown to other players instead of your email."); return; }
   var r = await SB.auth.signUp({ email: $("em").value.trim(), password: $("pw").value, options: { data: { display_name: dn }, emailRedirectTo: location.origin + location.pathname } });
   if (r.error) authMsg(r.error.message);
   else if (!r.data.session) authMsg("Account created. Check your email to confirm it, then log in.", true);
