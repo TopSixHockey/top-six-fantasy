@@ -1361,6 +1361,10 @@ async function plUploadLogo(inp){
     await plLoadLeague(); plMsg("Team logo saved.", true); plRender();
   } catch (e){ plMsg((e && e.message) || String(e)); }
 }
+function plStatTd(k, v){
+  var cls = k === "pts" ? "pts" : k === "fp" ? "fp" : (k === "pm" && v != null) ? (v > 0 ? "pos" : v < 0 ? "neg" : "") : "";
+  return "<td" + (cls ? ' class="' + cls + '"' : "") + ">" + fmtStat(k, v) + "</td>";
+}
 function plCoverBanner(t){
   var hue = 0, s = t.id, i;
   for (i = 0; i < s.length; i++) hue = (hue * 31 + s.charCodeAt(i)) % 360;
@@ -1379,7 +1383,7 @@ function plTeamRosterHtml(lg, t){
     var rows = hold.map(function(r){ return { r: r, p: BYID[r.player_id] }; }).filter(function(x){ return x.p && x.p.g === g[0]; }).sort(function(a, b){ return b.p.fp - a.p.fp; });
     var cols = g[0] === "G" ? COLS_G : [["gp","GP"],["g","G"],["a","A"],["pts","P"],["pm","+/-"],["fp","FPts"]];
     h += '<h2 style="margin:14px 0 6px">' + g[1] + ' <span class="why">' + rows.length + '/' + g[2] + '</span></h2><div class="dr-scroll" style="max-height:none"><table><thead><tr><th>Player</th>' + cols.map(function(c){ return '<th>' + c[1] + '</th>'; }).join("") + '</tr></thead><tbody>';
-    rows.forEach(function(x){ h += '<tr><td class="pn">' + plPlayerCell(x.p, lg) + '</td>' + cols.map(function(c){ return '<td>' + fmtStat(c[0], statVal(x.p, c[0])) + '</td>'; }).join("") + '</tr>'; });
+    rows.forEach(function(x){ h += '<tr><td class="pn">' + plPlayerCell(x.p, lg) + '</td>' + cols.map(function(c){ return plStatTd(c[0], statVal(x.p, c[0])); }).join("") + '</tr>'; });
     if (!rows.length) h += '<tr><td colspan="' + (cols.length + 1) + '" class="why">No ' + g[1].toLowerCase() + '.</td></tr>';
     h += '</tbody></table></div>';
   });
@@ -1742,7 +1746,7 @@ function plMyTeamHtml(lg, me){
     var cols = g[0] === "G" ? COLS_G : [["gp","GP"],["g","G"],["a","A"],["pts","P"],["pm","+/-"],["fp","FPts"]];
     h += '<h2 style="margin:14px 0 6px">' + g[1] + ' <span class="why">' + rows.length + '/' + g[2] + '</span></h2><div class="dr-scroll" style="max-height:none"><table><thead><tr><th>Player</th>' + cols.map(function(c){ return '<th>' + c[1] + '</th>'; }).join("") + '<th></th></tr></thead><tbody>';
     rows.forEach(function(x){
-      h += '<tr><td class="pn">' + plPlayerCell(x.p, lg) + (started && x.r.from_week === eff ? ' <span class="dr-tag">joins Week ' + eff + '</span>' : "") + '</td>' + cols.map(function(c){ return '<td>' + fmtStat(c[0], statVal(x.p, c[0])) + '</td>'; }).join("") + '<td><button class="sec" data-plmtdrop="' + esc(x.p.id) + '">Drop</button></td></tr>';
+      h += '<tr><td class="pn">' + plPlayerCell(x.p, lg) + (started && x.r.from_week === eff ? ' <span class="dr-tag">joins Week ' + eff + '</span>' : "") + '</td>' + cols.map(function(c){ return plStatTd(c[0], statVal(x.p, c[0])); }).join("") + '<td><button class="sec" data-plmtdrop="' + esc(x.p.id) + '">Drop</button></td></tr>';
     });
     if (!rows.length) h += '<tr><td colspan="' + (cols.length + 2) + '" class="why">No ' + g[1].toLowerCase() + '. Add one from the Players tab.</td></tr>';
     h += '</tbody></table></div>';
