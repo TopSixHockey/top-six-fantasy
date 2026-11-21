@@ -1141,7 +1141,7 @@ function plLeagueHtml(){
   var showWk = PL.sub === "matchups" && !PL.teamView && !PL.md && lg.status !== "setup";
   var h = '<div class="mu-top"><div class="mu-title">' + plLgLogoHtml(lg) + '<div><h2>' + esc(lg.name) + '</h2><span class="why">' + esc(lg.chl_league) + ' &middot; ' + modeTxt + ' &middot; ' + lg.weeks + ' weeks from ' + plWeekStart(lg, 1) + ' &middot; ' + esc(stTxt) + '</span></div></div>' + (PL.pills || "") + '</div>';
   h += '<div class="pl-sub">';
-  [["matchups","Matchups"],["myteam","My Team"],["players","Players"],["trades","Trades" + (plTradeTodo(lg, me) ? " (" + plTradeTodo(lg, me) + ")" : "")],["standings","Standings"],["trans","Transactions"],["draft","Draft" + (lg.status === "drafting" ? " (LIVE)" : "")],["league","League"]].forEach(function(s){ h += '<button class="pill' + (PL.sub === s[0] ? " on" : "") + '" data-plsub="' + s[0] + '">' + s[1] + '</button>'; });
+  [["matchups","Matchups"],["myteam","My Team"],["players","Players"],["trades","Trades" + (plTradeTodo(lg, me) ? " (" + plTradeTodo(lg, me) + ")" : "")],["standings","Standings"],["trans","Transactions"],["draft","Draft" + (lg.status === "drafting" ? " (LIVE)" : "")],["league","League"]].filter(function(s){ return s[0] !== "trades" || PL.trades.length || PL.sub === "trades"; }).forEach(function(s){ h += '<button class="pill' + (PL.sub === s[0] ? " on" : "") + '" data-plsub="' + s[0] + '">' + s[1] + '</button>'; });
   if (showWk) h += '<span class="sp"></span>' + plMuWkNav(lg, PL.week);
   h += '</div>';
   if (PL.teamView && plTeam(PL.teamView)) return h + plTeamPageHtml(lg, plTeam(PL.teamView));
@@ -1272,7 +1272,7 @@ $("plView").addEventListener("click", function(e){
     if (mine0 && tt.id === mine0.id){ PL.teamView = null; PL.md = null; PL.sub = "myteam"; } else PL.teamView = tt.id;
     plRender(); window.scrollTo(0, 0); return;
   }
-  if (d.plteamback){ PL.teamView = null; plRender(); return; }
+  if (d.plteamback){ PL.trOpen = null; PL.teamView = null; plRender(); return; }
   if (d.plmu){
     var m = PL.mu.filter(function(x){ return x.id === d.plmu; })[0]; if (!m || !m.team_b) return;
     PL.md = { id: m.id, day: "tot" }; PL.mdc = {}; plMdLoad(); plRender(); window.scrollTo(0, 0);
@@ -1511,7 +1511,7 @@ function plTeamRosterHtml(lg, t){
 }
 function plTeamPageHtml(lg, t){
   var me = plMine(), canTrade = me && t.id !== me.id && lg.status === "active";
-return '<div class="md-bar"><button class="sec md-back" data-plteamback="1">&lsaquo; Back</button></div>' + plCover(t) + (canTrade ? '<div style="display:flex;align-items:center;gap:12px"><div style="flex:1;min-width:0">' + plTeamInfo(lg, t) + '</div><button data-pltrpropose="' + esc(t.id) + '" style="flex:none;margin-bottom:8px">Propose trade</button></div>' : plTeamInfo(lg, t)) + plTeamRosterHtml(lg, t);
+return '<div class="md-bar"><button class="sec md-back" data-plteamback="1">&lsaquo; Back</button></div>' + plCover(t) + (canTrade ? '<div style="display:flex;align-items:center;gap:12px"><div style="flex:1;min-width:0">' + plTeamInfo(lg, t) + '</div><button data-pltrpropose="' + esc(t.id) + '" style="flex:none;margin-bottom:8px">Propose trade</button></div>' : plTeamInfo(lg, t)) + (canTrade && PL.trOpen === t.id ? plTradeFormHtml(lg, me, t) : "") + plTeamRosterHtml(lg, t);
 }
 async function plUploadCover(inp){
   var f = inp.files && inp.files[0], me = plMine(); if (!f || !me) return;
@@ -2062,7 +2062,7 @@ $("plView").addEventListener("click", async function(e){
 });
 
 /* ---- Private leagues: trades ---- */
-PL.trades = []; PL.votes = {}; PL.tr = { to: "", give: [], get: [], drop: [] }; PL.acc = null;
+PL.trades = []; PL.votes = {}; PL.tr = { to: "", give: [], get: [], drop: [] }; PL.trOpen = null; PL.acc = null;
 function plIncoming(me){ return me ? PL.trades.filter(function(t){ return t.status === "pending" && t.to_team === me.id; }) : []; }
 function plTradeTodo(lg, me){
   if (!me) return 0;
@@ -2107,10 +2107,28 @@ function plAccPanel(t, me){
   return '<tr><td colspan="4"><div class="pl-note" style="color:var(--tx)"><b>Accepting this trade</b>' + (a.msg ? '<br>' + esc(a.msg) : "") + '<br>' + (plFit(me.id, t.get, t.give) ? 'It would leave your roster with ' + esc(plFit(me.id, t.get, t.give)) + '. Tick the players you will drop to make room.' : 'Your roster fits. You can still drop players if you like.') +
     '</div>' + plBoxes(me.id, "pltracc", "drop", a.drop, t.get) + '<div class="row" style="margin-top:10px"><button data-pltraccok="1"' + (fit ? " disabled" : "") + '>Confirm and accept</button><button class="sec" data-pltracccancel="1">Back</button>' + (fit ? ' <span class="why">Still over: ' + esc(fit) + '</span>' : "") + '</div></td></tr>';
 }
+function plTradeNote(lg){
+return '<div class="pl-note">Swap players with another team, any numbers each way (1 to 5). The team taking on more players drops players to fit the roster limits (20 players, 12 F, 6 D, 2 G). A trade takes effect the next day, and trades don\'t use up your ' + ADDS_PER_WEEK + ' adds a week.<br>' + esc(plTradeRuleTxt(lg)) + '</div>';
+}
+function plTradeFormHtml(lg, me, tt){
+var h = plTradeNote(lg) + '<h2 style="margin-top:14px">Propose a trade with ' + esc(tt.name) + '</h2>';
+if (PL.tr.to){
+    var T = PL.tr, fit = T.give.length && T.get.length ? plFit(me.id, T.give.concat(T.drop), T.get) : "", ok = T.give.length >= 1 && T.get.length >= 1 && T.give.length <= 5 && T.get.length <= 5 && !fit;
+    h += '<div style="display:flex;gap:22px;flex-wrap:wrap;margin-top:10px"><div style="flex:1;min-width:250px"><b>You give (' + T.give.length + ')</b>' + plBoxes(me.id, "pltr", "give", T.give, T.drop) + '</div><div style="flex:1;min-width:250px"><b>You get (' + T.get.length + ')</b>' + plBoxes(T.to, "pltr", "get", T.get) + '</div></div>';
+    if (T.give.length && T.get.length){
+      h += '<details style="margin-top:12px"' + (fit || T.drop.length ? " open" : "") + '><summary>' + (fit ? 'This leaves you with ' + esc(fit) + '. Choose players to drop' : "Players you will drop to make room (only if needed)") + '</summary>' + plBoxes(me.id, "pltr", "drop", T.drop, T.give) + '</details>';
+    }
+    h += '<div class="row" style="margin-top:12px"><button data-pltrsend="1"' + (ok ? "" : " disabled") + '>Send offer</button>' + (ok ? "" : ' <span class="why">' + (fit ? "Drop players so your roster fits." : "Pick at least one player on each side.") + '</span>') + '</div>';
+  }
+  
+h += '<div style="margin-top:8px"><button class="sec" data-pltrclose="1">Cancel</button></div>';
+return h;
+}
 function plTradesHtml(lg, me){
+if (!PL.trades.length) return '<div class="pl-note">No trades yet. To propose one, open a team\'s page (tap a team in Standings or Matchups) and tap Propose trade.</div>';
   if (lg.status !== "active") return '<div class="pl-note">Trades open once the draft is finished.</div>';
   if (!me) return '<div class="pl-note">Only managers in this league can trade.</div>';
-  var h = '<div class="pl-note">Swap players with another team, any numbers each way (1 to 5). The team taking on more players drops players to fit the roster limits (20 players, 12 F, 6 D, 2 G). A trade takes effect the next day, and trades don\'t use up your ' + ADDS_PER_WEEK + ' adds a week.<br>' + esc(plTradeRuleTxt(lg)) + '</div>';
+  var h = "";
   var inc = plIncoming(me), out = PL.trades.filter(function(t){ return t.status === "pending" && t.from_team === me.id; });
   if (inc.length){
     h += '<h2>Offers to you</h2><table><thead><tr><th>From</th><th>You give</th><th>You get</th><th></th></tr></thead><tbody>';
@@ -2139,16 +2157,6 @@ function plTradesHtml(lg, me){
       h += '<tr><td>' + plTeamName(t.from_team) + ' &harr; ' + plTeamName(t.to_team) + '</td><td>' + plTeamName(t.from_team) + ' sends:<br>' + plTradeNames(t.give) + plTradeDrops(t.from_drop, "They") + '<div style="margin-top:6px">' + plTeamName(t.to_team) + ' sends:<br>' + plTradeNames(t.get) + plTradeDrops(t.to_drop, "They") + '</div></td><td>' + st + '</td><td>' + act + '</td></tr>';
     });
     h += '</tbody></table>';
-  }
-  h += '<h2 style="margin-top:18px">Propose a trade</h2><div class="pl-form"><label>Trade with<select id="trTo"><option value="">Choose a team</option>' +
-    PL.teams.filter(function(t){ return t.id !== me.id; }).map(function(t){ return '<option value="' + esc(t.id) + '"' + (PL.tr.to === t.id ? " selected" : "") + '>' + esc(t.name) + '</option>'; }).join("") + '</select></label></div>';
-  if (PL.tr.to){
-    var T = PL.tr, fit = T.give.length && T.get.length ? plFit(me.id, T.give.concat(T.drop), T.get) : "", ok = T.give.length >= 1 && T.get.length >= 1 && T.give.length <= 5 && T.get.length <= 5 && !fit;
-    h += '<div style="display:flex;gap:22px;flex-wrap:wrap;margin-top:10px"><div style="flex:1;min-width:250px"><b>You give (' + T.give.length + ')</b>' + plBoxes(me.id, "pltr", "give", T.give, T.drop) + '</div><div style="flex:1;min-width:250px"><b>You get (' + T.get.length + ')</b>' + plBoxes(T.to, "pltr", "get", T.get) + '</div></div>';
-    if (T.give.length && T.get.length){
-      h += '<details style="margin-top:12px"' + (fit || T.drop.length ? " open" : "") + '><summary>' + (fit ? 'This leaves you with ' + esc(fit) + '. Choose players to drop' : "Players you will drop to make room (only if needed)") + '</summary>' + plBoxes(me.id, "pltr", "drop", T.drop, T.give) + '</details>';
-    }
-    h += '<div class="row" style="margin-top:12px"><button data-pltrsend="1"' + (ok ? "" : " disabled") + '>Send offer</button>' + (ok ? "" : ' <span class="why">' + (fit ? "Drop players so your roster fits." : "Pick at least one player on each side.") + '</span>') + '</div>';
   }
   var done = PL.trades.filter(function(t){ return ["pending", "review", "voting"].indexOf(t.status) < 0; }).slice(0, 12);
   if (done.length){
@@ -2191,11 +2199,12 @@ $("plView").addEventListener("click", async function(e){
   var t = e.target.closest ? e.target.closest("button") : null; if (!t || t.disabled) return;
   var d = t.dataset, lg = plLg(), me = plMine(); if (!lg) return;
   var done = async function(res, okMsg){ if (res.error) plMsg(res.error.message); else if (res.data) plMsg("That trade could not go through: " + res.data); else plMsg(okMsg, true); await plLoadLeague(); plRender(); };
-  if (d.pltrpropose){ PL.tr = { to: d.pltrpropose, give: [], get: [], drop: [] }; PL.teamView = null; PL.md = null; PL.sub = "trades"; plMsg(""); await plLoadRoster(); plRender(); window.scrollTo(0, 0); return; }
+  if (d.pltrpropose){ PL.tr = { to: d.pltrpropose, give: [], get: [], drop: [] }; PL.trOpen = d.pltrpropose; plMsg(""); await plLoadRoster(); plRender(); return; }
+if (d.pltrclose){ PL.trOpen = null; PL.tr = { to: "", give: [], get: [], drop: [] }; plRender(); return; }
 if (d.pltrsend){
     var r = await SB.rpc("propose_trade", { p_league: lg.id, p_to: PL.tr.to, p_give: PL.tr.give, p_get: PL.tr.get, p_drop: PL.tr.drop });
     if (r.error){ plMsg(r.error.message); plRender(); return; }
-    PL.tr = { to: "", give: [], get: [], drop: [] }; plMsg("Offer sent. They can accept or decline it from the Trades tab.", true); await plLoadRoster(); plRender(); return;
+    PL.tr = { to: "", give: [], get: [], drop: [] }; PL.trOpen = null; plMsg("Offer sent. You can see it, or cancel it, in the Trades tab until they respond.", true); await plLoadRoster(); plRender(); return;
   }
   if (d.pltrok){
     var tr = PL.trades.filter(function(x){ return x.id === d.pltrok; })[0];
