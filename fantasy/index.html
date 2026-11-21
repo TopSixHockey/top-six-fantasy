@@ -1850,7 +1850,7 @@ function plJy(p){
 function plPlayerCell(p, lg){ return plJy(p) + '<span class="pj-t"><span class="nmh" data-pid="' + esc(p.id) + '">' + esc(p.name) + '</span><span class="dr-sub"> ' + esc(p.pos) + ' &middot; ' + esc(p.team) + ' &middot; ' + (AGELBL[p.ay] || "") + '</span>' + (lg.use_quotas ? (p.imp ? '<span class="dr-tag">IMP</span>' : "") + (p.dr ? '<span class="dr-tag">NHL</span>' : "") : "") + '</span>'; }
 function plMyTeamHtml(lg, me){
   if (lg.status !== "active") return '<div class="pl-note">Rosters open once the draft is finished.</div>';
-  var hold = plMyHold(me), eff = plEff(lg), started = plStarted(lg), h = '';
+  var hold = plMyHold(me), eff = plEff(lg), started = plStarted(lg), h = '<div class="pl-note">Weekly adds: <b>' + plAddsUsed(lg, me) + '/' + ADDS_PER_WEEK + '</b></div>';
   if (PL.dropPid && BYID[PL.dropPid]) h += '<div class="pl-note" id="plDropBox" style="color:var(--tx)">' + esc(plEffTxt(lg)) + plMoveInfo(lg, me) + '<div style="margin-top:10px">Are you sure you want to drop <b>' + esc(BYID[PL.dropPid].name) + '</b>? <button class="danger" data-plmtyes="1">Yes, drop</button> <button class="sec" data-plmtcancel="1">Cancel</button></div></div>';
   var leaving = PL.roster.filter(function(r){ return me && r.team_id === me.id && r.to_week === eff && started; });
   [["F","Forwards",12],["D","Defence",6],["G","Goalies",2]].forEach(function(g){
