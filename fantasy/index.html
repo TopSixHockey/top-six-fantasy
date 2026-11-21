@@ -352,7 +352,7 @@ td.pos{color:var(--ok)}td.neg{color:var(--bad)}td.pts{color:#ff9f43}td.fp{font-w
       <div class="total"><span class="why">Team total (season to date)</span><big id="tot">0.0</big></div>
       <div class="row" id="lockRow"></div>
       <div class="slots" id="slots"></div>
-      <small class="note">Scoring: goal 3 · assist 2 · +/- 0.5 · shot 0.2 · PIM 0.1. Goalies: win 3 · shutout 4 · plus a per-game bonus for save % above .900 and GAA below 3.00.</small>
+      <small class="note">Scoring: goal 3 · assist 2 · +/- 0.5 · shot 0.2 · PIM 0.1. Goalies: win 5 · shutout 5 · plus 2 for every game with a save % above .900.</small>
       </div>
     </div>
   </section>
@@ -402,7 +402,7 @@ var RULES = {
   ages: [ {y:2010, label:"16", n:3}, {y:2009, label:"17", n:4}, {y:2008, label:"18", n:4}, {y:2007, label:"19", n:4}, {y:2006, label:"20 (OA)", n:3} ],
   F: 12, D: 6, G: 2, maxImports: 3, maxDrafted: 5
 };
-var SCORE = { g:3, a:2, pm:0.5, shots:0.2, pim:0.1, w:3, so:4, svBase:0.900, svMult:20, gaaBase:3.0, gaaMult:0.3 };
+var SCORE = { g:3, a:2, pm:0.5, shots:0.2, pim:0.1, w:5, so:5, g900:2 };
 
 var $ = function(id){ return document.getElementById(id); };
 function esc(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){ return { "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]; }); }
@@ -421,10 +421,7 @@ var entries = {}, active = null, picking = false, pendingPick = null;   // entri
 function fpts(p){
   var s = p.s;
   if (p.g === "G"){
-    var v = num(s.wins) * SCORE.w + num(s.so) * SCORE.so, gp = num(s.gp);
-    if (s.svp != null) v += gp * (num(s.svp) - SCORE.svBase) * SCORE.svMult;
-    if (s.gaa != null) v += gp * (SCORE.gaaBase - num(s.gaa)) * SCORE.gaaMult;
-    return v;
+    return num(s.wins) * SCORE.w + num(s.so) * SCORE.so + num(s.g900) * SCORE.g900;
   }
   return num(s.g)*SCORE.g + num(s.a)*SCORE.a + num(s.pm)*SCORE.pm + num(s.shots)*SCORE.shots + num(s.pim)*SCORE.pim;
 }
@@ -839,8 +836,7 @@ function popHtml(p){
     var sv = s.svp == null ? "\u2014" : num(s.svp).toFixed(3).replace(/^0/, ""), gaa = s.gaa == null ? "\u2014" : num(s.gaa).toFixed(2);
     st = pstat("GP", gp) + pstat("W", num(s.wins)) + pstat("SO", num(s.so)) + pstat("SV%", sv) + pstat("GAA", gaa);
     rows = pline("Wins", num(s.wins) + " \u00d7 " + SCORE.w, num(s.wins) * SCORE.w) + pline("Shutouts", num(s.so) + " \u00d7 " + SCORE.so, num(s.so) * SCORE.so);
-    rows += s.svp != null ? pline("Save % bonus", gp + " GP \u00d7 (" + sv + " \u2212 .900) \u00d7 " + SCORE.svMult, gp * (num(s.svp) - SCORE.svBase) * SCORE.svMult) : pline("Save % bonus", "no save % yet", 0);
-    rows += s.gaa != null ? pline("GAA bonus", gp + " GP \u00d7 (3.00 \u2212 " + gaa + ") \u00d7 " + SCORE.gaaMult, gp * (SCORE.gaaBase - num(s.gaa)) * SCORE.gaaMult) : pline("GAA bonus", "no GAA yet", 0);
+    rows += pline("Games above .900 SV%", num(s.g900) + " × " + SCORE.g900, num(s.g900) * SCORE.g900);
   } else {
     var pts = num(s.g) + num(s.a);
     st = pstat("GP", gp) + pstat("G", num(s.g)) + pstat("A", num(s.a)) + pstat("PTS", pts, "pp") + pstat("+/-", (num(s.pm) > 0 ? "+" : "") + num(s.pm), num(s.pm) > 0 ? "pos" : num(s.pm) < 0 ? "neg" : "") + pstat("SOG", s.shots == null ? "\u2014" : num(s.shots)) + pstat("PIM", num(s.pim));
