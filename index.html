@@ -67,6 +67,34 @@ footer{font-size:.74rem;color:var(--mute);text-align:center;padding:0 12px 20px}
 .p.hv{cursor:pointer}
 .bgimg{position:fixed;left:50%;top:0;transform:translateX(-50%);width:min(760px,100vw);height:100vh;height:100lvh;object-fit:cover;object-position:center top;display:block;z-index:0;pointer-events:none}
 .rink{-webkit-clip-path:inset(0 round 18px);clip-path:inset(0 round 18px)}
+
+.board{margin-top:18px;padding:16px;border:1px solid var(--board);border-radius:14px;background:var(--pill)}
+.board h2{margin:0 0 10px;font-size:1.05rem}
+.bd-note{margin:0 0 10px;font-size:.85rem;color:var(--mute)}
+.board textarea,.board input[type=text],.board input[type=email],.board input[type=password]{width:100%;font:inherit;padding:8px 10px;border-radius:8px;border:1px solid var(--board);background:var(--bg);color:var(--ink)}
+.board textarea{resize:vertical;min-height:64px}
+.bd-fields{display:grid;gap:8px;margin-bottom:10px}
+.bd-act{display:flex;gap:8px;align-items:center;margin-top:6px;flex-wrap:wrap}
+.bd-send{font:inherit;font-weight:700;border:0;border-radius:8px;padding:7px 16px;background:#2b5fa8;color:#fff;cursor:pointer}
+.bd-b{font:inherit;font-size:.82rem;border:1px solid var(--board);border-radius:99px;padding:3px 11px;background:transparent;color:var(--mute);cursor:pointer}
+.bd-b.on{color:#c8102e;border-color:#c8102e}
+.bd-b:disabled{opacity:.55;cursor:default}
+.bd-l{font:inherit;font-size:.78rem;border:0;background:none;color:var(--mute);text-decoration:underline;cursor:pointer;padding:0 10px 0 0}
+.bd-me{display:flex;gap:10px;align-items:center;margin-bottom:10px}
+.bd-avwrap{cursor:pointer;display:inline-flex}
+.bd-av{width:36px;height:36px;border-radius:50%;flex:none;object-fit:cover;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:.95rem}
+.bd-big{width:48px;height:48px;font-size:1.2rem}
+.bd-thread{border-top:1px solid var(--board);padding:12px 0 4px}
+.bd-post{display:flex;gap:10px;padding:0 0 10px}
+.bd-rep{margin-left:46px;padding-left:12px;border-left:2px solid var(--board)}
+.bd-main{min-width:0;flex:1}
+.bd-hd{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.bd-time{font-size:.74rem;color:var(--mute)}
+.bd-to{font-size:.74rem;color:var(--mute);margin-top:1px}
+.bd-body{white-space:pre-wrap;overflow-wrap:anywhere;margin-top:3px}
+.bd-rbox{margin-top:8px}
+.bd-msg{font-size:.85rem;margin:8px 0;color:#c8102e}.bd-msg.good{color:#1f8a4c}
+.bd-fine{font-size:.72rem;color:var(--mute);margin:10px 0 0}
 </style>
 </head>
 <body>
@@ -113,8 +141,10 @@ footer{font-size:.74rem;color:var(--mute);text-align:center;padding:0 12px 20px}
 <img class="bgimg" id="bgimg" src="rink.jpg" alt="">
 <div class="in" id="out"></div>
 </div>
+<section class="board" id="board" aria-label="Message board"></section>
 </main>
 <footer>Unofficial fan project. Not affiliated with the OHL, WHL, QMJHL, CHL or any club. Lines updated Nov 14, 2026.</footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 // Dark-jersey colours per team (best estimates): [name, body, yoke, stripe1, stripe2, number, number outline]
 var C = {
@@ -1238,7 +1268,7 @@ return fin;
 function esc2(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
 var BGS = {};
 function render(k) {
-  curKey = k; hidePop();
+  curKey = k; hidePop(); if (typeof bdShow === "function") bdShow(k);
   var bg = document.getElementById("bgimg"), want = BGS[k] || "rink.jpg"; if (bg && bg.getAttribute("src") !== want) bg.setAttribute("src", want);
   var c = C[k], d = L[k], out = document.getElementById("out");
   if (d) {
@@ -1253,6 +1283,155 @@ scStop();
     out.innerHTML = '<div class="empty"><div class="p">' + jersey("00", c, "Name") + '</div><p><b>' + c[0] + '</b></p><p>Lines haven’t been loaded for this team yet.</p></div>';
   }
 }
+/* ---- Message board (same login as the fantasy game) ---- */
+var BD = { sb: null, user: null, key: "", rows: [], reply: null, msg: "", good: false, me: null, loading: false, err: "", timer: null };
+function bdEsc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+try { if (window.supabase && window.supabase.createClient) BD.sb = window.supabase.createClient("https://kiznoqzcnvpdnxdzjbur.supabase.co", "sb_publishable_zzyL8DzHhqqMUOrnUoV--Q_W_WPbV5A"); } catch (e) {}
+function bdName(u) { return (u && u.user_metadata && u.user_metadata.display_name) || (u && u.email ? u.email.split("@")[0] : "Fan"); }
+function bdHue(id) { var h = 0, s = String(id || "x"); for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 360; return h; }
+function bdAv(url, name, id, cls) {
+  var c = "bd-av" + (cls ? " " + cls : "");
+  if (url && /^(data:image\/|https:\/\/)/.test(url)) return '<img class="' + c + '" src="' + bdEsc(url) + '" alt="">';
+  return '<span class="' + c + '" style="background:hsl(' + bdHue(id) + ',45%,42%)">' + bdEsc(String(name || "?").charAt(0).toUpperCase()) + '</span>';
+}
+function bdWhen(iso) { return new Date(iso).toLocaleString(undefined, { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }); }
+function bdTyping() {
+  var b = document.getElementById("board"), a = document.activeElement; if (!b) return false;
+  if (a && b.contains(a) && (a.tagName === "TEXTAREA" || a.tagName === "INPUT")) return true;
+  var t = b.querySelectorAll("textarea, input[type=text], input[type=email], input[type=password]");
+  for (var i = 0; i < t.length; i++) if (t[i].value) return true;
+  return false;
+}
+async function bdMe() {
+  if (!BD.user || !BD.sb) { BD.me = null; return; }
+  try { var r = await BD.sb.from("profiles").select("avatar_url").eq("id", BD.user.id).maybeSingle(); BD.me = r.data || null; } catch (e) { BD.me = null; }
+}
+async function bdLoad(quiet) {
+  if (!BD.sb || !BD.key) return;
+  var k = BD.key, r;
+  try { r = await BD.sb.rpc("lineup_board", { p_team: k }); } catch (e) { r = { error: { message: "Could not load the board." } }; }
+  if (k !== BD.key) return;
+  BD.loading = false;
+  if (r.error) { BD.rows = []; BD.err = r.error.message; } else { BD.rows = r.data || []; BD.err = ""; }
+  if (!BD.me || !BD.me.avatar_url) { var mine = BD.rows.filter(function (p) { return p.mine && p.avatar_url; })[0]; if (mine) BD.me = { avatar_url: mine.avatar_url }; }
+  if (!(quiet && bdTyping())) bdPaint();
+}
+function bdShow(k) {
+  BD.key = k; BD.reply = null; BD.msg = ""; BD.rows = []; BD.loading = true; BD.err = "";
+  bdPaint(); bdLoad();
+  if (!BD.timer && BD.sb) BD.timer = setInterval(function () { if (!document.hidden) bdLoad(true); }, 20000);
+}
+function bdPaint() {
+  var b = document.getElementById("board"); if (!b) return;
+  var drafts = {};
+  b.querySelectorAll("textarea, input[type=text], input[type=email], input[type=password]").forEach(function (t) { if (t.id) drafts[t.id] = t.value; });
+  var byId = {}; BD.rows.forEach(function (p) { byId[p.id] = p; });
+  function root(p) { var n = 0; while (p.parent_id && byId[p.parent_id] && n++ < 50) p = byId[p.parent_id]; return p; }
+  var tops = [], kids = {};
+  BD.rows.forEach(function (p) { var rt = root(p); if (rt.id === p.id) tops.push(p); else (kids[rt.id] = kids[rt.id] || []).push(p); });
+  Object.keys(kids).forEach(function (id) { kids[id].reverse(); });
+  function one(p, isReply) {
+    var par = p.parent_id && byId[p.parent_id];
+    var h = '<div class="bd-post' + (isReply ? " bd-rep" : "") + '">' + bdAv(p.avatar_url, p.display_name, p.user_id) + '<div class="bd-main"><div class="bd-hd"><b>' + bdEsc(p.display_name) + '</b><span class="bd-time">' + bdEsc(bdWhen(p.created_at)) + '</span></div>';
+    if (isReply && par) h += '<div class="bd-to">Replying to ' + bdEsc(par.display_name) + '</div>';
+    h += '<div class="bd-body">' + bdEsc(p.body) + '</div><div class="bd-act">';
+    h += '<button type="button" class="bd-b' + (p.liked ? " on" : "") + '" data-bd="like" data-id="' + p.id + '"' + (BD.user ? "" : ' disabled title="Log in to like"') + '>' + (p.liked ? "♥" : "♡") + " " + (p.likes > 0 ? p.likes : "Like") + '</button>';
+    if (BD.user) h += '<button type="button" class="bd-b" data-bd="reply" data-id="' + p.id + '">Reply</button>';
+    if (p.mine) h += '<button type="button" class="bd-b" data-bd="del" data-id="' + p.id + '">Delete</button>';
+    h += '</div>';
+    if (BD.reply === p.id) h += '<div class="bd-rbox"><textarea id="bdr" maxlength="1000" rows="2" placeholder="Reply to ' + bdEsc(p.display_name) + '"></textarea><div class="bd-act"><button type="button" class="bd-send" data-bd="sendreply">Post reply</button><button type="button" class="bd-b" data-bd="cancel">Cancel</button></div></div>';
+    return h + '</div></div>';
+  }
+  var team = (typeof C !== "undefined" && C[BD.key] && C[BD.key][0]) || "Team";
+  var h = '<h2>' + bdEsc(team) + ' message board</h2>';
+  if (!BD.sb) h += '<p class="bd-note">The message board is unavailable right now.</p>';
+  else if (BD.user) {
+    var av = BD.me && BD.me.avatar_url;
+    h += '<div class="bd-me"><label class="bd-avwrap" title="Change profile picture">' + bdAv(av, bdName(BD.user), BD.user.id, "bd-big") + '<input type="file" id="bdFile" accept="image/*" hidden></label><div><b>' + bdEsc(bdName(BD.user)) + '</b><div><button type="button" class="bd-l" data-bd="photo">' + (av ? "Change photo" : "Add profile picture") + '</button>' + (av ? '<button type="button" class="bd-l" data-bd="nophoto">Remove photo</button>' : "") + '<button type="button" class="bd-l" data-bd="out">Log out</button></div></div></div>';
+    h += '<textarea id="bdt" maxlength="1000" rows="3" placeholder="Share a thought about this lineup…"></textarea><div class="bd-act"><button type="button" class="bd-send" data-bd="send">Post</button></div>';
+  } else {
+    h += '<p class="bd-note">Log in to post, like and reply. Your Top Six Fantasy account works here too.</p><div class="bd-fields"><input id="bdEm" type="email" placeholder="Email" autocomplete="email"><input id="bdPw" type="password" placeholder="Password" autocomplete="current-password"><input id="bdDn" type="text" placeholder="Display name (new accounts only)" maxlength="30"></div><div class="bd-act"><button type="button" class="bd-send" data-bd="login">Log in</button><button type="button" class="bd-b" data-bd="signup">Create account</button></div>';
+  }
+  if (BD.msg) h += '<div class="bd-msg' + (BD.good ? " good" : "") + '">' + bdEsc(BD.msg) + '</div>';
+  if (BD.err) h += '<div class="bd-msg">' + bdEsc(BD.err) + '</div>';
+  if (BD.loading) h += '<p class="bd-note" style="margin-top:12px">Loading posts…</p>';
+  else if (!tops.length && !BD.err) h += '<p class="bd-note" style="margin-top:12px">No posts yet. Be the first to post.</p>';
+  tops.forEach(function (p) { h += '<div class="bd-thread">' + one(p, false) + (kids[p.id] || []).map(function (r) { return one(r, true); }).join("") + '</div>'; });
+  h += '<p class="bd-fine">Posts are public. Keep it friendly.</p>';
+  b.innerHTML = h;
+  Object.keys(drafts).forEach(function (id) { var el = document.getElementById(id); if (el && drafts[id]) el.value = drafts[id]; });
+}
+function bdSay(m, good) { BD.msg = m || ""; BD.good = !!good; bdPaint(); }
+async function bdPost(body, parent) {
+  body = (body || "").trim(); if (!body || !BD.user) return;
+  var r = await BD.sb.from("lineup_posts").insert({ team_key: BD.key, body: body, parent_id: parent || null });
+  if (r.error) { bdSay(r.error.message); return; }
+  BD.msg = ""; BD.reply = null;
+  var t = document.getElementById("bdt"); if (t) t.value = "";
+  await bdLoad();
+}
+async function bdLike(id) {
+  var p = BD.rows.filter(function (x) { return String(x.id) === String(id); })[0]; if (!p || !BD.user) return;
+  var was = p.liked; p.liked = !was; p.likes += was ? -1 : 1; bdPaint();
+  var r = was ? await BD.sb.from("lineup_likes").delete().eq("post_id", p.id).eq("user_id", BD.user.id) : await BD.sb.from("lineup_likes").insert({ post_id: p.id });
+  if (r.error) { p.liked = was; p.likes += was ? 1 : -1; bdSay(r.error.message); }
+}
+function bdResize(file) {
+  return new Promise(function (ok, no) {
+    var img = new Image(), u = URL.createObjectURL(file);
+    img.onload = function () {
+      var s = 96, c = document.createElement("canvas"); c.width = s; c.height = s;
+      var m = Math.min(img.width, img.height), sx = (img.width - m) / 2, sy = (img.height - m) / 2;
+      c.getContext("2d").drawImage(img, sx, sy, m, m, 0, 0, s, s);
+      URL.revokeObjectURL(u); ok(c.toDataURL("image/jpeg", 0.82));
+    };
+    img.onerror = function () { URL.revokeObjectURL(u); no(new Error("That file is not a picture.")); };
+    img.src = u;
+  });
+}
+async function bdSetAvatar(url) {
+  var r = await BD.sb.rpc("set_my_avatar", { p_url: url });
+  if (r.error) { bdSay(r.error.message); return; }
+  BD.me = { avatar_url: url }; BD.msg = ""; await bdLoad();
+}
+document.addEventListener("click", async function (e) {
+  var t = e.target.closest ? e.target.closest("[data-bd]") : null; if (!t || !BD.sb) return;
+  var a = t.getAttribute("data-bd"), id = t.getAttribute("data-id");
+  if (a === "login") {
+    var r = await BD.sb.auth.signInWithPassword({ email: document.getElementById("bdEm").value.trim(), password: document.getElementById("bdPw").value });
+    if (r.error) bdSay(r.error.message);
+  } else if (a === "signup") {
+    var em = document.getElementById("bdEm").value.trim(), dn = document.getElementById("bdDn").value.trim() || em.split("@")[0];
+    var r2 = await BD.sb.auth.signUp({ email: em, password: document.getElementById("bdPw").value, options: { data: { display_name: dn }, emailRedirectTo: location.origin + location.pathname } });
+    if (r2.error) bdSay(r2.error.message); else if (!r2.data.session) bdSay("Account created. Check your email to confirm it, then log in.", true);
+  } else if (a === "out") { await BD.sb.auth.signOut(); }
+  else if (a === "send") { await bdPost(document.getElementById("bdt").value, null); }
+  else if (a === "sendreply") { var rb = document.getElementById("bdr"); await bdPost(rb && rb.value, BD.reply); }
+  else if (a === "reply") { BD.reply = Number(id); bdPaint(); var x = document.getElementById("bdr"); if (x) x.focus(); }
+  else if (a === "cancel") { BD.reply = null; bdPaint(); }
+  else if (a === "like") { await bdLike(id); }
+  else if (a === "del") {
+    if (!confirm("Delete this post? Replies to it will be deleted too.")) return;
+    var d = await BD.sb.from("lineup_posts").delete().eq("id", id);
+    if (d.error) bdSay(d.error.message); else await bdLoad();
+  } else if (a === "photo") { var f = document.getElementById("bdFile"); if (f) f.click(); }
+  else if (a === "nophoto") { await bdSetAvatar(null); }
+});
+document.addEventListener("change", async function (e) {
+  if (!e.target || e.target.id !== "bdFile" || !e.target.files || !e.target.files[0]) return;
+  try { await bdSetAvatar(await bdResize(e.target.files[0])); } catch (err) { bdSay(err.message); }
+});
+document.addEventListener("keydown", function (e) {
+  if (e.key !== "Enter" || !(e.metaKey || e.ctrlKey) || !e.target || (e.target.id !== "bdt" && e.target.id !== "bdr")) return;
+  e.preventDefault(); if (e.target.id === "bdt") bdPost(e.target.value, null); else bdPost(e.target.value, BD.reply);
+});
+if (BD.sb) {
+  BD.sb.auth.onAuthStateChange(function (ev, s) {
+    BD.user = (s && s.user) || null; BD.me = null; BD.msg = "";
+    setTimeout(async function () { await bdMe(); if (BD.key) bdLoad(); }, 0);
+  });
+}
+
 var sel = document.getElementById("team"), lsel = document.getElementById("league");
 function leagueOf(k) { return k.indexOf("whl_") === 0 ? "WHL" : (k.indexOf("qmjhl_") === 0 ? "QMJHL" : "OHL"); }
 function fillTeams(lg, pick) {
