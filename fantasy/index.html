@@ -1247,11 +1247,11 @@ function plMatchDetailHtml(lg, me, m){
     var x = it.x, p = it.p, g = num(x.g), a = num(x.a);
     var jy = JERS ? '<span class="md-jy">' + JERS.jersey(p.num, JERS.map[tnorm(p.team)] || GENERIC, p.name.split(" ").slice(1).join(" ") || p.name) + '</span>' : '<span class="md-ph">' + esc(ini(p.name)) + '</span>';
     var nm = '<td class="md-pl" data-pid="' + esc(p.id) + '">' + jy + '<span><span class="md-pn">' + esc(p.name) + '</span><br><span class="md-ps">' + esc(p.team) + ' &middot; ' + esc(p.pos) + '</span></span></td>';
-    var vals = goalie ? [["wins", num(x.wins)], ["svp", plSv(x.sa, x.ga)], ["pts", num(x.pts)]] : [["g", g], ["a", a], ["p", g + a], ["pm", num(x.pm)], ["shots", num(x.shots)], ["pts", num(x.pts)]];
+    var vals = goalie ? [["wins", num(x.wins)], ["svp", plSv(x.sa, x.ga)], ["pts", num(x.pts)]] : [["g", g], ["a", a], ["p", g + a], ["pm", num(x.pm)], ["shots", num(x.shots)], ["ppp", num(x.ppp)], ["pts", num(x.pts)]];
     return nm + vals.map(function(c){ return fmt(c[0], c[1]); }).join("");
   }
   function table(buckets, goalie){
-    var cols = goalie ? [["wins","W"],["svp","SV%"],["pts","FPTS"]] : [["g","G"],["a","A"],["p","PTS"],["pm","+/-"],["shots","SOG"],["pts","FPTS"]];
+    var cols = goalie ? [["wins","W"],["svp","SV%"],["pts","FPTS"]] : [["g","G"],["a","A"],["p","PTS"],["pm","+/-"],["shots","SOG"],["ppp","PPP"],["pts","FPTS"]];
     var head = '<th class="l">' + (goalie ? "Goalie" : "Player") + '</th>' + cols.map(function(c){ return '<th>' + c[1] + '</th>'; }).join("");
     var out = '<div class="md-scroll"><table class="md-t"><thead><tr>' + head + '<th>Pos</th>' + head + '</tr></thead><tbody>', rows = 0;
     buckets.forEach(function(b){
@@ -1501,7 +1501,7 @@ function plTeamRosterHtml(lg, t){
   var hold = plMyHold(t), h = "";
   [["F","Forwards",12],["D","Defence",6],["G","Goalies",2]].forEach(function(g){
     var rows = hold.map(function(r){ return { r: r, p: BYID[r.player_id] }; }).filter(function(x){ return x.p && x.p.g === g[0]; }).sort(function(a, b){ return b.p.fp - a.p.fp; });
-    var cols = g[0] === "G" ? COLS_G : [["gp","GP"],["g","G"],["a","A"],["pts","P"],["pm","+/-"],["fp","FPts"]];
+    var cols = g[0] === "G" ? COLS_G : [["gp","GP"],["g","G"],["a","A"],["pts","P"],["pm","+/-"],["shots","SOG"],["ppp","PPP"],["fp","FPts"]];
     h += '<h2 style="margin:14px 0 6px">' + g[1] + ' <span class="why">' + rows.length + '/' + g[2] + '</span></h2><div class="dr-scroll" style="max-height:none"><table><thead><tr><th>Player</th>' + cols.map(function(c){ return '<th>' + c[1] + '</th>'; }).join("") + '</tr></thead><tbody>';
     rows.forEach(function(x){ h += '<tr><td class="pn">' + plPlayerCell(x.p, lg) + '</td>' + cols.map(function(c){ return plStatTd(c[0], statVal(x.p, c[0])); }).join("") + '</tr>'; });
     if (!rows.length) h += '<tr><td colspan="' + (cols.length + 1) + '" class="why">No ' + g[1].toLowerCase() + '.</td></tr>';
@@ -1717,7 +1717,7 @@ function plDraftList(lg, me, my){
     var key = PL.dsort;
     rows = rows.slice().sort(function(a, b){ var x = key === "name" ? a.name : statVal(a, key), y = key === "name" ? b.name : statVal(b, key); if (key === "name") return x.localeCompare(y); if (x == null && y == null) return 0; if (x == null) return 1; if (y == null) return -1; return (key === "gaa" ? x - y : y - x) || (b.fp - a.fp); });
   }
-  var cols = PL.dpos === "G" ? COLS_G : [["gp","GP"],["g","G"],["a","A"],["pts","P"],["pm","+/-"],["fp","FPts"]];
+  var cols = PL.dpos === "G" ? COLS_G : [["gp","GP"],["g","G"],["a","A"],["pts","P"],["pm","+/-"],["shots","SOG"],["ppp","PPP"],["fp","FPts"]];
   h += '<table><thead><tr><th>Rk</th><th data-pldsort="name">Player</th>';
   cols.forEach(function(c){ h += '<th data-pldsort="' + c[0] + '">' + c[1] + (PL.dsort === c[0] ? " &#9660;" : "") + '</th>'; });
   h += '<th></th></tr></thead><tbody>';
@@ -1905,7 +1905,7 @@ function plMyTeamHtml(lg, me){
   var irN = plIrHold(me).length, own = plOwned(), leaving = PL.roster.filter(function(r){ return me && r.team_id === me.id && r.to_week === eff && started && !own[r.player_id]; });
   [["F","Forwards",12],["D","Defence",6],["G","Goalies",2]].forEach(function(g){
     var rows = hold.map(function(r){ return { r: r, p: BYID[r.player_id] }; }).filter(function(x){ return x.p && x.p.g === g[0]; }).sort(function(a, b){ return b.p.fp - a.p.fp; });
-    var cols = g[0] === "G" ? COLS_G : [["gp","GP"],["g","G"],["a","A"],["pts","P"],["pm","+/-"],["fp","FPts"]];
+    var cols = g[0] === "G" ? COLS_G : [["gp","GP"],["g","G"],["a","A"],["pts","P"],["pm","+/-"],["shots","SOG"],["ppp","PPP"],["fp","FPts"]];
     h += '<h2 style="margin:14px 0 6px">' + g[1] + ' <span class="why">' + rows.length + '/' + g[2] + '</span></h2><div class="dr-scroll" style="max-height:none"><table><thead><tr><th>Player</th>' + cols.map(function(c){ return '<th>' + c[1] + '</th>'; }).join("") + '<th></th></tr></thead><tbody>';
     rows.forEach(function(x){
       h += '<tr><td class="pn">' + plPlayerCell(x.p, lg) + (started && x.r.from_week === eff && !x.r.seg ? ' <span class="dr-tag">joins Week ' + eff + '</span>' : "") + (PL.inj && PL.inj[x.p.id] ? ' <span class="ir-x" title="Injured on the latest lineup card">&#10010;</span>' : "") + '</td>' + cols.map(function(c){ return plStatTd(c[0], statVal(x.p, c[0])); }).join("") + '<td>' + (PL.inj && PL.inj[x.p.id] && irN < 3 ? '<button class="sec" data-plir="' + esc(x.p.id) + '">Move to IR</button> ' : "") + '<button class="sec" data-plmtdrop="' + esc(x.p.id) + '">Drop</button></td></tr>';
