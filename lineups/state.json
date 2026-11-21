@@ -128,11 +128,11 @@
  },
  "qmjhl:32758:away": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "qmjhl:32758:home": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "qmjhl:32854:home": {
   "done": true,
@@ -199,6 +199,22 @@
   "flipped": false
  },
  "whl:1023315:home": {
+  "done": true,
+  "flipped": false
+ },
+ "whl:1023317:away": {
+  "done": true,
+  "flipped": false
+ },
+ "whl:1023317:home": {
+  "done": true,
+  "flipped": false
+ },
+ "whl:1023318:away": {
+  "done": true,
+  "flipped": false
+ },
+ "whl:1023318:home": {
   "done": true,
   "flipped": false
  },
