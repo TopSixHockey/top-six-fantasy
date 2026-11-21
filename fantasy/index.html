@@ -1134,6 +1134,7 @@ function plRender(){
   else h += plLeagueHtml();
   box.innerHTML = h;
   plSyncTimers(); plChatSync(); if ($("drBar")) plDraftUpdate(true);
+if ($("drPre")){ var lgp = plLg(); if (lgp && PL.preFor !== lgp.id){ PL.preFor = lgp.id; plPreLoad(); } else plPreUpdate(); }
 if (PL.sub === "draft" && PL.mode === "list" && !PL.teamView && plLg() && PL.draftEnteredFor !== plLg().id){ PL.draftEnteredFor = plLg().id; setTimeout(plEnterDraft, 0); }
   plNoticeShow();
   if ($("faList")){ plFaList(); if ($("faPos")){ $("faPos").value = PL.fpos; $("faAge").value = PL.fage; $("faTag").value = PL.ftag; if ($("faShow")) $("faShow").value = PL.fshow; if ($("faPer")) $("faPer").value = PL.fper; } }
@@ -1791,7 +1792,7 @@ function plLobbyHtml(lg, me){
 function plRoomHtml(lg, me){
   var h = '<div class="dr"><div class="dr-bar" id="drBar"><div class="dr-now" id="drNow"></div><div class="dr-clock" id="drClock"></div><div id="drBtns"></div></div>' +
     '<div id="drMsg"></div><div class="dr-order" id="drOrder"></div><div class="dr-grid"><div>' +
-    '<div class="pl-sub"><button class="pill" data-pldt="players" id="drTP">Players</button><button class="pill" data-pldt="queue" id="drTQ">Queue</button></div>' +
+    '<div class="pl-sub"><button class="pill" data-pldt="players" id="drTP">Players</button><button class="pill" data-pldt="queue" id="drTQ">Draft list</button></div>' +
     '<div id="drFilt" class="dr-filters"><input type="search" id="drQ" placeholder="Search player or team" value="' + esc(PL.dq) + '">' +
     '<select id="drPos"><option value="">All positions</option><option value="F">Forwards</option><option value="D">Defence</option><option value="G">Goalies</option></select>' +
     '<select id="drAge"><option value="">All ages</option><option value="2010">16</option><option value="2009">17</option><option value="2008">18</option><option value="2007">19</option><option value="2006">20</option></select></div>' +
@@ -1801,6 +1802,7 @@ function plRoomHtml(lg, me){
   return h;
 }
 function plDraftUpdate(force){
+if ($("drPre") && !$("drBar")){ plPreUpdate(); return; }
   var lg = plLg(), me = plMine(); if (!lg || !$("drBar")) return;
   if (PL.picksFor !== lg.id){ PL.picks = []; PL.queue = []; PL.picksFor = lg.id; }
   if ($("drPos").value !== PL.dpos) $("drPos").value = PL.dpos;
@@ -1818,7 +1820,7 @@ function plDraftUpdate(force){
   else for (var k = lg.cur_pick; k < Math.min(tot, lg.cur_pick + 12); k++){ var tt = plTeam(plPickTeam(lg, k)); oh += '<div class="dr-chip' + (k === lg.cur_pick ? " cur" : "") + (me && tt && tt.id === me.id ? " mine" : "") + '"><i>Rd ' + plRP(lg, k) + '</i><b>' + (tt ? esc(tt.name) : "") + '</b></div>'; }
   if ($("drOrder").innerHTML !== oh) $("drOrder").innerHTML = oh;
   $("drTP").classList.toggle("on", PL.dt === "players"); $("drTQ").classList.toggle("on", PL.dt === "queue");
-  $("drTQ").textContent = "Queue (" + PL.queue.length + ")";
+  $("drTQ").textContent = "Draft list (" + PL.queue.length + ")";
   $("drFilt").classList.toggle("hide", PL.dt !== "players");
   $("drSR").classList.toggle("on", PL.ds === "results"); $("drST").classList.toggle("on", PL.ds === "team");
   var sig = [PL.picks.length, PL.queue.length, my, PL.dt, PL.dq, PL.dpos, PL.dage, PL.dsort, PL.dshown, PL.ds, lg.status].join("|");
@@ -1864,11 +1866,37 @@ function plDraftList(lg, me, my){
     h += '<tr><td class="why">' + rk[p.id] + '</td><td class="pn"><span class="nmh" data-pid="' + esc(p.id) + '">' + esc(p.name) + '</span><span class="dr-sub"> ' + esc(p.pos) + ' &middot; ' + esc(p.team) + '</span>' + (lg.use_quotas ? (p.imp ? '<span class="dr-tag">IMP</span>' : "") + (p.dr ? '<span class="dr-tag">NHL</span>' : "") : "") + extra + '</td>';
     cols.forEach(function(c){ h += '<td' + (c[0] === "pts" ? ' class="pts"' : '') + '>' + fmtStat(c[0], statVal(p, c[0])) + '</td>'; });
     h += '<td>' + (canPick ? '<button data-pldraft="' + esc(p.id) + '"' + (why ? ' disabled title="' + esc(why) + '"' : "") + '>Draft</button> ' : "") +
-      (qset[p.id] ? '<button class="sec" data-pldqrm="' + esc(p.id) + '" title="Remove from queue">&minus;</button>' : '<button class="sec" data-pldq="' + esc(p.id) + '" title="Add to queue (auto-pick uses your queue first)">+</button>') + '</td></tr>';
+      (qset[p.id] ? '<button class="sec" data-pldqrm="' + esc(p.id) + '" title="Remove from draft list">&minus;</button>' : '<button class="sec" data-pldq="' + esc(p.id) + '" title="Add to draft list (auto-pick uses your list first)">+</button>') + '</td></tr>';
   });
-  if (!rows.length) h += '<tr><td colspan="' + (cols.length + 3) + '" class="pl-empty">' + (PL.dt === "queue" ? "Your queue is empty. Use + on a player to add them; auto-pick takes from your queue first." : "No players match.") + '</td></tr>';
+  if (!rows.length) h += '<tr><td colspan="' + (cols.length + 3) + '" class="pl-empty">' + (PL.dt === "queue" ? "Your draft list is empty. Use + on a player to add them; auto-pick takes from your list first." : "No players match.") + '</td></tr>';
   h += '</tbody></table>' + (more ? '<div style="padding:8px;text-align:center"><button class="sec" data-pldmore="1">Show more</button></div>' : "");
   box.innerHTML = h;
+}
+function plPreDraftHtml(lg, me){
+if (!me) return '<div class="pl-note">Join this league with a team to build a draft list.</div>';
+return '<div class="pl-note">Build your draft list before the draft. It shows up in the draft room as your Draft list, and auto-pick takes from it first, in the order you added players.</div>' +
+'<div id="drPre"><div class="pl-sub"><button class="pill" data-pldt="players" id="drTP">All players</button><button class="pill" data-pldt="queue" id="drTQ">Draft list</button></div>' +
+'<div id="drFilt" class="dr-filters"><input type="search" id="drQ" placeholder="Search player or team" value="' + esc(PL.dq) + '">' +
+'<select id="drPos"><option value="">All positions</option><option value="F">Forwards</option><option value="D">Defence</option><option value="G">Goalies</option></select>' +
+'<select id="drAge"><option value="">All ages</option><option value="2010">16</option><option value="2009">17</option><option value="2008">18</option><option value="2007">19</option><option value="2006">20</option></select></div>' +
+'<div class="dr-scroll" id="drList"></div></div>';
+}
+async function plPreLoad(){
+var lg = plLg(), me = plMine(); if (!lg || !me) return;
+try {
+var r = await SB.from("pdraft_queue").select("*").eq("team_id", me.id).order("added_at", { ascending: true });
+if (r.data){ PL.queue = r.data; if (PL.picksFor !== lg.id){ PL.picks = []; PL.picksFor = lg.id; } }
+} catch (e) {}
+plPreUpdate();
+}
+function plPreUpdate(){
+var lg = plLg(), me = plMine(); if (!lg || !me || !$("drPre")) return;
+if ($("drPos").value !== PL.dpos) $("drPos").value = PL.dpos;
+if ($("drAge").value !== PL.dage) $("drAge").value = PL.dage;
+$("drTP").classList.toggle("on", PL.dt === "players"); $("drTQ").classList.toggle("on", PL.dt === "queue");
+$("drTQ").textContent = "Draft list (" + PL.queue.length + ")";
+$("drFilt").classList.toggle("hide", PL.dt !== "players");
+plDraftList(lg, me, false);
 }
 function plDraftViewBar(){
 return '<div class="row" style="margin-bottom:8px;gap:6px"><button class="pill' + (PL.dv === "team" ? "" : " on") + '" data-pldv="pick">By pick</button><button class="pill' + (PL.dv === "team" ? " on" : "") + '" data-pldv="team">By team</button></div>';
@@ -1938,6 +1966,8 @@ function plSyncTimers(){
   if (!want && PL.pt){ clearInterval(PL.pt); clearInterval(PL.ct); PL.pt = null; PL.ct = null; }
 }
 async function plEnterDraft(){
+var lg0 = plLg(), me0 = plMine();
+if (lg0 && me0 && lg0.status !== "drafting" && lg0.status !== "active"){ try { var q0 = await SB.from("pdraft_queue").select("*").eq("team_id", me0.id).order("added_at", { ascending: true }); PL.queue = q0.data || []; PL.picks = []; PL.picksFor = lg0.id; } catch (e) {} }
   var lg = plLg(), me = plMine(); if (!lg) return;
   PL.dsig = ""; PL.dmsg = "";
   if (lg.status === "drafting" || lg.status === "active"){
@@ -2071,7 +2101,7 @@ function plMyTeamHtml(lg, me){
   return h;
 }
 function plPlayersHtml(lg, me){
-  if (lg.status !== "active") return '<div class="pl-note">Free agents open once the draft is finished.</div>';
+  if (lg.status !== "active"){ return lg.status === "complete" ? '<div class="pl-note">Free agents open once the draft is finished.</div>' : plPreDraftHtml(lg, me); }
   var h = '<div class="pl-note">' + esc(plEffTxt(lg)) + '</div>';
   h += '<div id="faAdd">' + plAddPanel(lg, me) + '</div>';
   h += '<div class="dr-filters"><input type="search" id="faQ" placeholder="Search player or team" value="' + esc(PL.fq) + '">' +
