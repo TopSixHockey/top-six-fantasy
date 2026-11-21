@@ -1510,7 +1510,8 @@ function plTeamRosterHtml(lg, t){
   return h + plIrHtml(lg, t, false);
 }
 function plTeamPageHtml(lg, t){
-  return '<div class="md-bar"><button class="sec md-back" data-plteamback="1">&lsaquo; Back</button></div>' + plCover(t) + plTeamInfo(lg, t) + plTeamRosterHtml(lg, t);
+  var me = plMine(), canTrade = me && t.id !== me.id && lg.status === "active";
+return '<div class="md-bar"><button class="sec md-back" data-plteamback="1">&lsaquo; Back</button>' + (canTrade ? '<button data-pltrpropose="' + esc(t.id) + '" style="margin-left:auto">Propose trade</button>' : "") + '</div>' + plCover(t) + plTeamInfo(lg, t) + plTeamRosterHtml(lg, t);
 }
 async function plUploadCover(inp){
   var f = inp.files && inp.files[0], me = plMine(); if (!f || !me) return;
@@ -2190,7 +2191,8 @@ $("plView").addEventListener("click", async function(e){
   var t = e.target.closest ? e.target.closest("button") : null; if (!t || t.disabled) return;
   var d = t.dataset, lg = plLg(), me = plMine(); if (!lg) return;
   var done = async function(res, okMsg){ if (res.error) plMsg(res.error.message); else if (res.data) plMsg("That trade could not go through: " + res.data); else plMsg(okMsg, true); await plLoadLeague(); plRender(); };
-  if (d.pltrsend){
+  if (d.pltrpropose){ PL.tr = { to: d.pltrpropose, give: [], get: [], drop: [] }; PL.teamView = null; PL.md = null; PL.sub = "trades"; plMsg(""); await plLoadRoster(); plRender(); window.scrollTo(0, 0); return; }
+if (d.pltrsend){
     var r = await SB.rpc("propose_trade", { p_league: lg.id, p_to: PL.tr.to, p_give: PL.tr.give, p_get: PL.tr.get, p_drop: PL.tr.drop });
     if (r.error){ plMsg(r.error.message); plRender(); return; }
     PL.tr = { to: "", give: [], get: [], drop: [] }; plMsg("Offer sent. They can accept or decline it from the Trades tab.", true); await plLoadRoster(); plRender(); return;
