@@ -141,6 +141,7 @@ td.pos{color:var(--ok)}td.neg{color:var(--bad)}td.pts{color:#ff9f43}td.fp{font-w
 .mu-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:4px 0 12px;flex-wrap:wrap}
 .mu-top h2{margin:0;font-size:26px}
 .mu-title{display:flex;align-items:center;gap:14px;min-width:0}
+.mu-title .why{display:block;margin-top:3px}
 .lglogo{position:relative;width:64px;height:64px;border-radius:14px;overflow:hidden;flex:none;background:var(--panel2)}
 .lglogo img{width:100%;height:100%;object-fit:cover;display:block}
 .lglogo-btns{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:rgba(11,29,58,.72);opacity:0;pointer-events:none;transition:opacity .15s}
@@ -1123,7 +1124,8 @@ function plLeagueHtml(){
   var lg = plLg(), me = plMine();
   var modeTxt = lg.scoring_mode === "points" ? "Total fantasy points" : "Categories";
   var stTxt = { setup: "Setting up", scheduled: "Schedule set", drafting: "Drafting", active: "In season", complete: "Complete" }[lg.status] || lg.status;
-  var h = '<div class="pl-head"><h2>' + esc(lg.name) + '</h2><span class="why">' + esc(lg.chl_league) + ' &middot; ' + modeTxt + ' &middot; ' + lg.weeks + ' weeks from ' + plWeekStart(lg, 1) + ' &middot; ' + esc(stTxt) + '</span></div>';
+  var showWk = PL.sub === "matchups" && !PL.teamView && !PL.md && lg.status !== "setup";
+  var h = '<div class="mu-top"><div class="mu-title">' + plLgLogoHtml(lg) + '<div><h2>' + esc(lg.name) + '</h2><span class="why">' + esc(lg.chl_league) + ' &middot; ' + modeTxt + ' &middot; ' + lg.weeks + ' weeks from ' + plWeekStart(lg, 1) + ' &middot; ' + esc(stTxt) + '</span></div></div>' + (showWk ? plMuWkNav(lg, PL.week) : '') + '</div>';
   h += '<div class="pl-sub">';
   [["matchups","Matchups"],["myteam","My Team"],["players","Players"],["trades","Trades" + (plTradeTodo(lg, me) ? " (" + plTradeTodo(lg, me) + ")" : "")],["standings","Standings"],["trans","Transactions"],["draft","Draft" + (lg.status === "drafting" ? " (LIVE)" : "")],["league","League"]].forEach(function(s){ h += '<button class="pill' + (PL.sub === s[0] ? " on" : "") + '" data-plsub="' + s[0] + '">' + s[1] + '</button>'; });
   h += '</div>';
@@ -1138,6 +1140,9 @@ function plLeagueHtml(){
   return h + plMatchupsHtml(lg, me);
 }
 function plTeamName(id){ var t = plTeam(id); return t ? esc(t.name) : "Team removed"; }
+function plMuWkNav(lg, w){
+  return '<div class="mu-wk"><button data-plwk="-1"' + (w <= 1 ? " disabled" : "") + ' aria-label="Previous week">&lsaquo;</button><span class="wk-dd" tabindex="0">Week ' + w + plWkMenu(plWkRange(lg.weeks), w, "plwkset") + '</span><button data-plwk="1"' + (w >= lg.weeks ? " disabled" : "") + ' aria-label="Next week">&rsaquo;</button></div>';
+}
 function plMatchupsHtml(lg, me){
   if (lg.status === "setup") return '<div class="pl-note">The schedule isn\'t set yet. ' + (lg.commissioner === user.id ? 'Once everyone has joined, open the League tab and set the schedule.' : 'The commissioner will set it once everyone has joined.') + '</div>';
   if (PL.md){ var dm = PL.mu.filter(function(x){ return x.id === PL.md.id; })[0]; if (dm && dm.team_b) return plMatchDetailHtml(lg, me, dm); PL.md = null; }
@@ -1145,7 +1150,7 @@ function plMatchupsHtml(lg, me){
   var fin = plDone(lg, w), began = plStarted(lg) && !(plDay(plToday()) < plDay(lg.start_date) + (w - 1) * 7);
   var status = fin ? "Final" : began ? "In progress" : "Upcoming";
   var recs = {}; plStandings(lg).forEach(function(r){ recs[r.t.id] = r.w + "-" + r.l + "-" + r.tie; });
-  var h = '<div class="mu-top"><div class="mu-title">' + plLgLogoHtml(lg) + '<h2>' + esc(lg.name) + '</h2></div><div class="mu-wk"><button data-plwk="-1"' + (w <= 1 ? " disabled" : "") + ' aria-label="Previous week">&lsaquo;</button><span class="wk-dd" tabindex="0">Week ' + w + plWkMenu(plWkRange(lg.weeks), w, "plwkset") + '</span><button data-plwk="1"' + (w >= lg.weeks ? " disabled" : "") + ' aria-label="Next week">&rsaquo;</button></div></div>';
+  var h = '';
   h += plLgCoverHtml(lg);
   if (!ms.length) return h + '<div class="pl-empty">No matchups this week.</div>';
   if (!began) h += '<div class="pl-note">This week hasn\'t started. Scores begin counting on ' + plWeekStart(lg, w) + '.</div>';
