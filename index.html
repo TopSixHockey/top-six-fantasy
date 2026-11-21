@@ -107,6 +107,7 @@ footer{font-size:.74rem;color:var(--mute);text-align:center;padding:0 12px 20px}
 .pf-top{display:flex;gap:14px;align-items:center}
 .pf-sec{margin-top:18px;padding-top:12px;border-top:1px solid var(--board)}
 .pf-fields{display:grid;gap:8px;margin-bottom:10px}
+.bd-def{filter:grayscale(1);box-shadow:0 0 0 1px rgba(255,255,255,.35)}
 </style>
 </head>
 <body>
@@ -1301,9 +1302,24 @@ function bdEsc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, functio
 try { if (window.supabase && window.supabase.createClient) BD.sb = window.supabase.createClient("https://kiznoqzcnvpdnxdzjbur.supabase.co", "sb_publishable_zzyL8DzHhqqMUOrnUoV--Q_W_WPbV5A"); } catch (e) {}
 function bdName(u) { return (u && u.user_metadata && u.user_metadata.display_name) || (u && u.email ? u.email.split("@")[0] : "Fan"); }
 function bdHue(id) { var h = 0, s = String(id || "x"); for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 360; return h; }
+var BD_LOGO = null;
+function bdLogo() {
+  if (BD_LOGO !== null) return BD_LOGO;
+  BD_LOGO = "";
+  try {
+    var s = document.querySelector("header svg.logo"); if (!s) return "";
+    var c = s.cloneNode(true), g = c.children[1];
+    c.setAttribute("xmlns", "http://www.w3.org/2000/svg"); c.removeAttribute("class");
+    c.setAttribute("viewBox", "-1 3 242 242"); c.setAttribute("width", "242"); c.setAttribute("height", "242");
+    Array.prototype.slice.call(g.children).forEach(function (k) { if (k.tagName === "path" && /^(#0f2a4a|#d62d2d)$/i.test(k.getAttribute("fill") || "")) k.parentNode.removeChild(k); });
+    BD_LOGO = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(c)], { type: "image/svg+xml" }));
+  } catch (e) { BD_LOGO = ""; }
+  return BD_LOGO;
+}
 function bdAv(url, name, id, cls) {
   var c = "bd-av" + (cls ? " " + cls : "");
   if (url && /^(data:image\/|https:\/\/)/.test(url)) return '<img class="' + c + '" src="' + bdEsc(url) + '" alt="">';
+  var lg = bdLogo(); if (lg) return '<img class="' + c + ' bd-def" src="' + lg + '" alt="">';
   return '<span class="' + c + '" style="background:hsl(' + bdHue(id) + ',45%,42%)">' + bdEsc(String(name || "?").charAt(0).toUpperCase()) + '</span>';
 }
 function bdWhen(iso) { return new Date(iso).toLocaleString(undefined, { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }); }
