@@ -1381,7 +1381,7 @@ function bdPaint() {
     h += '<div class="bd-me">' + bdAv(av, bdName(BD.user), BD.user.id, "bd-big") + '<b>' + bdEsc(bdName(BD.user)) + '</b></div>';
     h += '<textarea id="bdt" maxlength="1000" rows="3" placeholder="Share a thought about this lineup…"></textarea><div class="bd-act"><button type="button" class="bd-send" data-bd="send">Post</button></div>';
   } else {
-    h += '<p class="bd-note">Log in to post, like and reply. Your Top Six Fantasy account works here too.</p><div class="bd-fields"><input id="bdEm" type="email" placeholder="Email" autocomplete="email"><input id="bdPw" type="password" placeholder="Password" autocomplete="current-password"><input id="bdDn" type="text" placeholder="Display name (new accounts only)" maxlength="30"></div><div class="bd-act"><button type="button" class="bd-send" data-bd="login">Log in</button><button type="button" class="bd-b" data-bd="signup">Create account</button></div>';
+    h += '<p class="bd-note">Log in to post, like and reply. Your Top Six Fantasy account works here too.</p><div class="bd-act"><button type="button" class="bd-send" data-bd="openlogin">Log in</button><button type="button" class="bd-b" data-bd="opensignup">Create account</button></div>';
   }
   if (BD.msg) h += '<div class="bd-msg' + (BD.good ? " good" : "") + '">' + bdEsc(BD.msg) + '</div>';
   if (BD.err) h += '<div class="bd-msg">' + bdEsc(BD.err) + '</div>';
@@ -1428,6 +1428,8 @@ async function bdSetAvatar(url) {
 document.addEventListener("click", async function (e) {
   var t = e.target.closest ? e.target.closest("[data-bd]") : null; if (!t || !BD.sb) return;
   var a = t.getAttribute("data-bd"), id = t.getAttribute("data-id");
+  if (a === "openlogin") { pfOpen("login"); return; }
+  if (a === "opensignup") { pfOpen("signup"); return; }
   if (a === "login") {
     var r = await BD.sb.auth.signInWithPassword({ email: document.getElementById("bdEm").value.trim(), password: document.getElementById("bdPw").value });
     if (r.error) bdSay(r.error.message);
