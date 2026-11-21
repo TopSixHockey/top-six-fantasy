@@ -354,7 +354,7 @@ td.pos{color:var(--ok)}td.neg{color:var(--bad)}td.pts{color:#ff9f43}td.fp{font-w
       <div class="total"><span class="why">Team total (season to date)</span><big id="tot">0.0</big></div>
       <div class="row" id="lockRow"></div>
       <div class="slots" id="slots"></div>
-      <small class="note">Scoring: goal 3 · assist 2 · +/- 0.5 · shot 0.2 · PIM 0.1. Goalies: win 5 · shutout 5 · plus 2 for every game with a save % above .900.</small>
+      <small class="note">Scoring: goal 3 · assist 2 · +/- 0.5 · shot 0.2 · power play point 1. Goalies: win 5 · shutout 5 · plus 2 for every game with a save % above .900.</small>
       </div>
     </div>
   </section>
@@ -404,7 +404,7 @@ var RULES = {
   ages: [ {y:2010, label:"16", n:3}, {y:2009, label:"17", n:4}, {y:2008, label:"18", n:4}, {y:2007, label:"19", n:4}, {y:2006, label:"20 (OA)", n:3} ],
   F: 12, D: 6, G: 2, maxImports: 3, maxDrafted: 5
 };
-var SCORE = { g:3, a:2, pm:0.5, shots:0.2, pim:0.1, w:5, so:5, g900:2 };
+var SCORE = { g:3, a:2, pm:0.5, shots:0.2, ppp:1, w:5, so:5, g900:2 };
 
 var $ = function(id){ return document.getElementById(id); };
 function esc(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){ return { "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]; }); }
@@ -425,7 +425,7 @@ function fpts(p){
   if (p.g === "G"){
     return num(s.wins) * SCORE.w + num(s.so) * SCORE.so + num(s.g900) * SCORE.g900;
   }
-  return num(s.g)*SCORE.g + num(s.a)*SCORE.a + num(s.pm)*SCORE.pm + num(s.shots)*SCORE.shots + num(s.pim)*SCORE.pim;
+  return num(s.g)*SCORE.g + num(s.a)*SCORE.a + num(s.pm)*SCORE.pm + num(s.shots)*SCORE.shots + num(s.ppp)*SCORE.ppp;
 }
 function norm(r){
   var s = r.player_stats; if (Array.isArray(s)) s = s[0]; s = s || {};
@@ -471,7 +471,7 @@ function authMsg(text, good){ $("authMsg").innerHTML = text ? '<div class="msg '
 
 /* ---- Pool ---- */
 var SHOW = 120, shown = SHOW, sortKey = "fp", sortDir = -1;
-var COLS_S = [["gp","GP"],["g","G"],["a","A"],["pts","P"],["pm","+/-"],["shots","SOG"],["pim","PIM"],["fp","FPts"]];
+var COLS_S = [["gp","GP"],["g","G"],["a","A"],["pts","P"],["pm","+/-"],["shots","SOG"],["ppp","PPP"],["fp","FPts"]];
 var COLS_G = [["gp","GP"],["wins","W"],["so","SO"],["svp","SV%"],["gaa","GAA"],["fp","FPts"]];
 function statVal(p, k){
   var s = p.s;
@@ -485,7 +485,7 @@ function statVal(p, k){
   }
   if (k === "shots") return s.shots == null ? null : num(s.shots);
   if (k === "pm") return s.pm == null ? null : num(s.pm);
-  if (k === "gp" || k === "g" || k === "a" || k === "pm" || k === "pim") return num(s[k]);
+  if (k === "gp" || k === "g" || k === "a" || k === "pm" || k === "pim" || k === "ppp") return num(s[k]);
   return null;
 }
 function fmtStat(k, v){
@@ -842,11 +842,11 @@ function popHtml(p){
     rows += pline("Games above .900 SV%", num(s.g900) + " × " + SCORE.g900, num(s.g900) * SCORE.g900);
   } else {
     var pts = num(s.g) + num(s.a);
-    st = pstat("GP", gp) + pstat("G", num(s.g)) + pstat("A", num(s.a)) + pstat("PTS", pts, "pp") + pstat("+/-", (num(s.pm) > 0 ? "+" : "") + num(s.pm), num(s.pm) > 0 ? "pos" : num(s.pm) < 0 ? "neg" : "") + pstat("SOG", s.shots == null ? "\u2014" : num(s.shots)) + pstat("PIM", num(s.pim));
+    st = pstat("GP", gp) + pstat("G", num(s.g)) + pstat("A", num(s.a)) + pstat("PTS", pts, "pp") + pstat("+/-", (num(s.pm) > 0 ? "+" : "") + num(s.pm), num(s.pm) > 0 ? "pos" : num(s.pm) < 0 ? "neg" : "") + pstat("SOG", s.shots == null ? "\u2014" : num(s.shots)) + pstat("PPP", num(s.ppp));
     rows = pline("Goals", num(s.g) + " \u00d7 " + SCORE.g, num(s.g) * SCORE.g) + pline("Assists", num(s.a) + " \u00d7 " + SCORE.a, num(s.a) * SCORE.a) +
       pline("Plus/minus", (num(s.pm) > 0 ? "+" : "") + num(s.pm) + " \u00d7 " + SCORE.pm, num(s.pm) * SCORE.pm) +
       pline("Shots", s.shots == null ? "not tracked yet" : num(s.shots) + " \u00d7 " + SCORE.shots, num(s.shots) * SCORE.shots) +
-      pline("Penalty min.", num(s.pim) + " \u00d7 " + SCORE.pim, num(s.pim) * SCORE.pim);
+      pline("Power play points", num(s.ppp) + " \u00d7 " + SCORE.ppp, num(s.ppp) * SCORE.ppp);
   }
   return h + '<div class="pt">Season stats</div><div class="pst">' + st + '<div class="fp"><b>FPTS</b><span>' + num(p.fp).toFixed(1) + '</span></div></div>';
 }
@@ -992,7 +992,7 @@ $("luReset").addEventListener("click", function(){
 
 /* ---- Private head-to-head leagues (phase 1: setup, schedule, matchups, standings) ---- */
 var PL = { leagues: [], cur: null, sub: "matchups", week: 1, tf: "all", teams: [], mu: [], scores: {}, trans: [], names: {}, mode: "list", msg: "", good: false };
-var PCATS = [["g","G"],["a","A"],["p","PTS"],["pm","+/-"],["shots","SOG"],["wins","W"],["svp","SV%"]];
+var PCATS = [["g","G"],["a","A"],["p","PTS"],["pm","+/-"],["shots","SOG"],["ppp","PPP"],["wins","W"],["svp","SV%"]];
 function plSv(sa, ga){ sa = num(sa); return sa > 0 ? 1 - num(ga) / sa : null; }
 function plCat(s, k, ff){ if (ff && (k === "wins" || k === "svp") && num(s.gp) < 2) return -1; if (k === "p") return num(s.g) + num(s.a); if (k === "svp"){ var q = plSv(s.sa, s.ga); return q === null ? -1 : q; } return num(s[k]); }
 function plToday(){ return new Date().toLocaleDateString("en-CA", { timeZone: "America/Toronto" }); }
@@ -1005,7 +1005,7 @@ function plDone(lg, w){ return plDay(plToday()) >= plDay(lg.start_date) + w * 7;
 function plLg(){ for (var i = 0; i < PL.leagues.length; i++) if (PL.leagues[i].id === PL.cur) return PL.leagues[i]; return null; }
 function plTeam(id){ for (var i = 0; i < PL.teams.length; i++) if (PL.teams[i].id === id) return PL.teams[i]; return null; }
 function plMine(){ for (var i = 0; i < PL.teams.length; i++) if (user && PL.teams[i].user_id === user.id) return PL.teams[i]; return null; }
-function plSc(w, t){ return PL.scores[w + "|" + t] || { pts: 0, g: 0, a: 0, pm: 0, shots: 0, pim: 0, wins: 0, so: 0, sa: 0, ga: 0, gp: 0 }; }
+function plSc(w, t){ return PL.scores[w + "|" + t] || { pts: 0, g: 0, a: 0, pm: 0, shots: 0, pim: 0, ppp: 0, wins: 0, so: 0, sa: 0, ga: 0, gp: 0 }; }
 function plNextMonday(){ var d = plDay(plToday()); var dow = new Date(d * 864e5).getUTCDay(); var add = (8 - dow) % 7; if (add === 0) add = 7; return new Date((d + add) * 864e5).toISOString().slice(0, 10); }
 function plMsg(m, good){ PL.msg = m || ""; PL.good = !!good; }
 function plMsgHtml(){ return PL.msg ? '<div class="msg' + (PL.good ? " good" : "") + '">' + esc(PL.msg) + '</div>' : ""; }
@@ -1123,7 +1123,7 @@ function plCreateHtml(){
     '<label>Your team name<input id="plcTeam" maxlength="40" placeholder="e.g. Top Shelf"></label>' +
     '<label>Junior league<select id="plcChl"><option>OHL</option><option>WHL</option><option>QMJHL</option></select></label>' +
     '<label>Teams<select id="plcMax">' + plOpts([8,10,12,14,16], 10) + '</select></label>' +
-    '<label>Scoring<select id="plcMode"><option value="points">Total fantasy points</option><option value="categories">Categories (G, A, PTS, +/-, SOG, W, SV%)</option></select></label>' +
+    '<label>Scoring<select id="plcMode"><option value="points">Total fantasy points</option><option value="categories">Categories (G, A, PTS, +/-, SOG, PPP, W, SV%)</option></select></label>' +
     '<label>Week 1 starts (a Monday)<input id="plcStart" type="date" value="' + plNextMonday() + '"></label>' +
     '<label>Weeks in season<select id="plcWeeks">' + plOpts([4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20], 10) + '</select></label></div>' +
     '<div class="row"><button data-plact="create">Create league</button><button class="sec" data-plmode="list">Cancel</button></div>' +
@@ -1222,12 +1222,12 @@ function plMatchDetailHtml(lg, me, m){
   function side(id, right){ var t = plTeam(id); return '<div class="md-tm' + (right ? " r" : "") + '" data-plteam="' + esc(id) + '"><div class="md-n">' + plTeamName(id) + '</div><div class="md-mg">' + esc(PL.names[(t || {}).user_id] || "") + '</div><div class="md-rec">' + (recs[id] || "0-0-0") + '</div></div>'; }
   var wa = fin && res.w === "a" ? "w" : "", wb = fin && res.w === "b" ? "w" : "";
   h += '<div class="md-head">' + side(m.team_a, true) + plAvatar(plTeam(m.team_a)) + '<div class="md-sc"><span class="' + wa + '">' + (big ? plNum(res.a) : res.a) + '</span><span class="mu-vs">vs</span><span class="' + wb + '">' + (big ? plNum(res.b) : res.b) + '</span></div>' + plAvatar(plTeam(m.team_b)) + side(m.team_b, false) + '</div>';
-  var TC = [["g","G"],["a","A"],["p","PTS"],["pm","+/-"],["shots","SOG"],["wins","W"],["svp","SV%"],["pts","FPTS"]];
+  var TC = [["g","G"],["a","A"],["p","PTS"],["pm","+/-"],["shots","SOG"],["ppp","PPP"],["wins","W"],["svp","SV%"],["pts","FPTS"]];
   var catWin = {}; if (!big && md.day === "tot") PCATS.forEach(function(c, i){ if (res.cats[i]) catWin[c[0]] = res.cats[i].w; });
   function tot(tid){
-    var o = { g: 0, a: 0, p: 0, pm: 0, shots: 0, wins: 0, sa: 0, ga: 0, svp: null, gs: 0, pts: 0 };
+    var o = { g: 0, a: 0, p: 0, pm: 0, shots: 0, ppp: 0, wins: 0, sa: 0, ga: 0, svp: null, gs: 0, pts: 0 };
     if (md.day === "tot"){ var s = plSc(w, tid); Object.keys(o).forEach(function(k){ if (k !== "p" && k !== "svp" && k !== "gs") o[k] = num(s[k]); }); o.gs = num(s.gp); }
-    else ((data || {})[tid] || []).forEach(function(x){ ["g","a","pm","shots","wins","sa","ga","pts"].forEach(function(k){ o[k] += num(x[k]); }); if (BYID[x.player_id] && BYID[x.player_id].g === "G") o.gs += num(x.gp); });
+    else ((data || {})[tid] || []).forEach(function(x){ ["g","a","pm","shots","ppp","wins","sa","ga","pts"].forEach(function(k){ o[k] += num(x[k]); }); if (BYID[x.player_id] && BYID[x.player_id].g === "G") o.gs += num(x.gp); });
     o.p = o.g + o.a; o.svp = plSv(o.sa, o.ga); return o;
   }
   function fmt(k, v){ if (k === "svp") return '<td>' + (v === null || v === undefined ? "-" : v.toFixed(3).replace(/^0/, "")) + '</td>'; if (k === "pm") return '<td class="' + (v > 0 ? "pos" : v < 0 ? "neg" : "") + '">' + (v > 0 ? "+" : "") + plNum(v) + '</td>'; if (k === "pts") return '<td class="fp">' + plNum(v) + '</td>'; return '<td>' + (v ? plNum(v) : "-") + '</td>'; }
@@ -1941,7 +1941,7 @@ function plAddPanel(lg, me){
 function plPerView(p, pd){
   var x = pd[p.id] || {}, s;
   if (p.g === "G") s = { gp: num(x.gp), wins: num(x.wins), so: num(x.so), g900: num(x.g900), svp: num(x.sa) > 0 ? 1 - num(x.ga) / num(x.sa) : null, gaa: num(x.secs) > 0 ? num(x.ga) * 3600 / num(x.secs) : null };
-  else s = { gp: num(x.gp), g: num(x.g), a: num(x.a), pm: x.gp ? x.pm : 0, pim: num(x.pim), shots: x.gp ? x.shots : 0 };
+  else s = { gp: num(x.gp), g: num(x.g), a: num(x.a), pm: x.gp ? x.pm : 0, ppp: num(x.ppp), shots: x.gp ? x.shots : 0 };
   var o = {}; for (var k in p) o[k] = p[k];
   o.s = s; o.fp = fpts({ g: p.g, s: s });
   return o;
@@ -1981,7 +1981,7 @@ function plFaList(){
   });
   var key = PL.fsort;
   rows = rows.slice().sort(function(a, b){ var x = key === "name" ? a.name : statVal(V(a), key), y = key === "name" ? b.name : statVal(V(b), key); if (key === "name") return x.localeCompare(y); if (x == null && y == null) return 0; if (x == null) return 1; if (y == null) return -1; return (key === "gaa" ? x - y : y - x) || (V(b).fp - V(a).fp); });
-  var cols = PL.fpos === "G" ? COLS_G : [["gp","GP"],["g","G"],["a","A"],["pts","P"],["pm","+/-"],["shots","SOG"],["pim","PIM"],["fp","FPts"]];
+  var cols = PL.fpos === "G" ? COLS_G : [["gp","GP"],["g","G"],["a","A"],["pts","P"],["pm","+/-"],["shots","SOG"],["ppp","PPP"],["fp","FPts"]];
   var h = '<table><thead><tr><th>Rk</th><th data-plfsort="name">Player</th>' + cols.map(function(c){ return '<th data-plfsort="' + c[0] + '">' + c[1] + (PL.fsort === c[0] ? " &#9660;" : "") + '</th>'; }).join("") + '<th>' + (PL.fshow ? "Owner" : "") + '</th></tr></thead><tbody>';
   rows.slice(0, PL.fshown).forEach(function(p){
     var extra = p.g === "G" && PL.fpos !== "G" ? '<div class="dr-sub">W ' + num(V(p).s.wins) + ' &middot; SV% ' + (V(p).s.svp != null ? fmtStat("svp", V(p).s.svp) : "-") + ' &middot; GAA ' + (V(p).s.gaa != null ? fmtStat("gaa", V(p).s.gaa) : "-") + '</div>' : "";
