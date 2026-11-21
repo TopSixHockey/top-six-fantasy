@@ -139,6 +139,13 @@ td.pos{color:var(--ok)}td.neg{color:var(--bad)}td.pts{color:#ff9f43}td.fp{font-w
 .pl-me{outline:2px solid var(--acc)}
 .mu-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:4px 0 12px;flex-wrap:wrap}
 .mu-top h2{margin:0;font-size:26px}
+.mu-title{display:flex;align-items:center;gap:14px;min-width:0}
+.lglogo{position:relative;width:64px;height:64px;border-radius:14px;overflow:hidden;flex:none;background:var(--panel2)}
+.lglogo img{width:100%;height:100%;object-fit:cover;display:block}
+.lglogo-btns{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:rgba(11,29,58,.72);opacity:0;pointer-events:none;transition:opacity .15s}
+.lglogo:hover .lglogo-btns,.lglogo-btns:focus-within{opacity:1;pointer-events:auto}
+@media(hover:none){.lglogo-btns{opacity:1;pointer-events:auto;background:transparent;justify-content:flex-end;padding-bottom:4px}}
+.lglogo-btns .sec{padding:3px 9px;font-size:11px;background:rgba(11,29,58,.92)}
 .wk-dd{position:relative;cursor:pointer;user-select:none;outline:0}
 .wk-dd::after{content:"\25BE";margin-left:6px;font-size:11px;color:var(--mute)}
 .wk-menu{display:none;position:absolute;top:100%;left:50%;transform:translateX(-50%);z-index:60;min-width:130px;max-height:70vh;overflow:auto;padding:6px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 24px rgba(0,0,0,.45);line-height:1.2;text-align:left}
@@ -1125,7 +1132,7 @@ function plMatchupsHtml(lg, me){
   var fin = plDone(lg, w), began = plStarted(lg) && !(plDay(plToday()) < plDay(lg.start_date) + (w - 1) * 7);
   var status = fin ? "Final" : began ? "In progress" : "Upcoming";
   var recs = {}; plStandings(lg).forEach(function(r){ recs[r.t.id] = r.w + "-" + r.l + "-" + r.tie; });
-  var h = '<div class="mu-top"><h2>Matchups</h2><div class="mu-wk"><button data-plwk="-1"' + (w <= 1 ? " disabled" : "") + ' aria-label="Previous week">&lsaquo;</button><span class="wk-dd" tabindex="0">Week ' + w + plWkMenu(plWkRange(lg.weeks), w, "plwkset") + '</span><button data-plwk="1"' + (w >= lg.weeks ? " disabled" : "") + ' aria-label="Next week">&rsaquo;</button></div></div>';
+  var h = '<div class="mu-top"><div class="mu-title">' + plLgLogoHtml(lg) + '<h2>' + esc(lg.name) + '</h2></div><div class="mu-wk"><button data-plwk="-1"' + (w <= 1 ? " disabled" : "") + ' aria-label="Previous week">&lsaquo;</button><span class="wk-dd" tabindex="0">Week ' + w + plWkMenu(plWkRange(lg.weeks), w, "plwkset") + '</span><button data-plwk="1"' + (w >= lg.weeks ? " disabled" : "") + ' aria-label="Next week">&rsaquo;</button></div></div>';
   h += plLgCoverHtml(lg);
   if (!ms.length) return h + '<div class="pl-empty">No matchups this week.</div>';
   if (!began) h += '<div class="pl-note">This week hasn\'t started. Scores begin counting on ' + plWeekStart(lg, w) + '.</div>';
@@ -1412,6 +1419,28 @@ async function plUploadLgCover(inp){
     await plLoadLeagues(); await plLoadLeague(); plMsg("League cover photo saved.", true); plRender();
   } catch (e){ plMsg((e && e.message) || String(e)); }
 }
+function plLgLogoHtml(lg){
+  var isC = lg.commissioner === user.id;
+  var h = '<div class="lglogo"><img src="' + esc(lg.logo_url || "/league-default-logo.jpg") + '" alt="" onerror="this.remove()">';
+  if (isC) h += '<div class="lglogo-btns"><button class="sec" data-plact="lglogopick">Change</button>' + (lg.logo_url ? '<button class="sec" data-plact="lglogoremove">Remove</button>' : "") + '</div><input type="file" id="plLgLogo" accept="image/png,image/jpeg,image/webp,image/gif" hidden>';
+  return h + '</div>';
+}
+async function plUploadLgLogo(inp){
+  var f = inp.files && inp.files[0], lg = plLg(); if (!f || !lg || lg.commissioner !== user.id) return;
+  plMsg("");
+  if (!/^image\//.test(f.type)){ plMsg("Choose an image file."); return; }
+  if (f.size > 15e6){ plMsg("That image is too large. Pick one under 15 MB."); return; }
+  try {
+    var blob = await plCrop(f, { w: 256, h: 256, title: "Position the league logo", type: "image/png" });
+    inp.value = ""; if (!blob) return;
+    var path = user.id + "/league-logo-" + lg.id + "-" + Date.now() + ".png";
+    var up = await SB.storage.from("team-logos").upload(path, blob, { contentType: "image/png", upsert: false });
+    if (up.error) throw up.error;
+    var pub = SB.storage.from("team-logos").getPublicUrl(path).data.publicUrl;
+    var r = await SB.rpc("set_pleague_logo", { p_league: lg.id, p_url: pub }); if (r.error) throw r.error;
+    await plLoadLeagues(); await plLoadLeague(); plMsg("League logo saved.", true); plRender();
+  } catch (e){ plMsg((e && e.message) || String(e)); }
+}
 function plCoverBanner(t){
   var hue = 0, s = t.id, i;
   for (i = 0; i < s.length; i++) hue = (hue * 31 + s.charCodeAt(i)) % 360;
@@ -1468,6 +1497,8 @@ async function plAct(a, el){
     var me = plMine(); if (me){ await plDo(function(){ return SB.rpc("rename_pteam", { p_team: me.id, p_name: v("plRename") }); }, "Team name saved."); await plLoadLeague(); }
   } else if (a === "logoremove"){
     var me2 = plMine(); if (me2){ await plDo(function(){ return SB.rpc("set_pteam_logo", { p_team: me2.id, p_url: null }); }, "Logo removed."); await plLoadLeague(); }
+  } else if (a === "lglogoremove"){
+    var lg6 = plLg(); if (lg6 && lg6.commissioner === user.id){ await plDo(function(){ return SB.rpc("set_pleague_logo", { p_league: lg6.id, p_url: null }); }, "League logo removed."); await plLoadLeagues(); await plLoadLeague(); }
   } else if (a === "lgcoverremove"){
     var lg5 = plLg(); if (lg5 && lg5.commissioner === user.id){ await plDo(function(){ return SB.rpc("set_pleague_cover", { p_league: lg5.id, p_url: null }); }, "League cover photo removed."); await plLoadLeagues(); await plLoadLeague(); }
   } else if (a === "coverremove"){
@@ -1506,6 +1537,7 @@ $("plView").addEventListener("click", async function(e){
   else if (d.plwk){ PL.week = Math.max(1, Math.min(plLg().weeks, PL.week + (+d.plwk))); plRender(); }
   else if (d.plremove){ await plDo(function(){ return SB.rpc("remove_pteam", { p_team: d.plremove }); }, "Team removed."); await plLoadLeague(); plRender(); }
   else if (d.plact === "lgcoverpick"){ var li = $("plLgCover"); if (li) li.click(); }
+  else if (d.plact === "lglogopick"){ var ll = $("plLgLogo"); if (ll) ll.click(); }
   else if (d.plact === "cancel"){ plRender(); }
   else if (d.plact){ await plAct(d.plact, t); }
 });
@@ -2025,6 +2057,7 @@ $("plView").addEventListener("change", function(e){
   if (t.id === "plLogo"){ plUploadLogo(t); return; }
   if (t.id === "plCover"){ plUploadCover(t); return; }
   if (t.id === "plLgCover"){ plUploadLgCover(t); return; }
+  if (t.id === "plLgLogo"){ plUploadLgLogo(t); return; }
   if (t.id === "trTo"){ PL.tr = { to: t.value, give: [], get: [], drop: [] }; plMsg(""); plRender(); return; }
   if (d.pltr || d.pltracc){
     var a = d.pltr ? PL.tr[d.pltr] : PL.acc.drop, i = a.indexOf(t.value);
