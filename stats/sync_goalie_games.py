@@ -116,6 +116,14 @@ def summary_rows(league, gid, wanted):
     d = U.ht(league, feed="gc", tab="gamesummary", game_id=gid, lang_code="en")
     g = (d.get("GC") or {}).get("Gamesummary") or {}
     day = (g.get("meta") or {}).get("date_played") or str(g.get("game_date_iso_8601") or "")[:10]
+    ppp = collections.Counter()   # power play points: the scorer and each assist on a power play goal
+    for gl in g.get("goals") or []:
+        if str(gl.get("power_play")) != "1":
+            continue
+        for who in ("goal_scorer", "assist1_player", "assist2_player"):
+            pid_ = (gl.get(who) or {}).get("player_id")
+            if pid_:
+                ppp[str(pid_)] += 1
     out = []
     for side in ("home_team_lineup", "visitor_team_lineup"):
         for p in (g.get(side) or {}).get("players") or []:
@@ -128,7 +136,7 @@ def summary_rows(league, gid, wanted):
             pmv = U.to_num(p.get("plusminus"))
             row = {"player_id": pid, "game_id": gid, "played_on": day,
                    "g": int(U.to_num(p.get("goals")) or 0), "a": int(U.to_num(p.get("assists")) or 0),
-                   "pim": int(U.to_num(p.get("pim")) or 0)}
+                   "pim": int(U.to_num(p.get("pim")) or 0), "ppp": ppp[str(p.get("player_id"))]}
             if shots is not None:
                 row["shots"] = int(shots)
             if pmv is not None:
@@ -137,7 +145,7 @@ def summary_rows(league, gid, wanted):
     return out
 
 def fill_gaps(matched, dry):
-    """WHL logs have no shots and QMJHL logs no +/-: fill them in from each game's box score."""
+    """Fill in what the player game logs lack from each game's box score: power play points (all leagues), WHL shots, QMJHL +/-."""
     req = urllib.request.Request(sb_base() + "/rest/v1/rpc/game_gaps", data=b"{}",
                                  headers=U.sb_headers({}), method="POST")
     with urllib.request.urlopen(req, timeout=60) as r:
