@@ -1850,8 +1850,8 @@ function plJy(p){
 function plPlayerCell(p, lg){ return plJy(p) + '<span class="pj-t"><span class="nmh" data-pid="' + esc(p.id) + '">' + esc(p.name) + '</span><span class="dr-sub"> ' + esc(p.pos) + ' &middot; ' + esc(p.team) + ' &middot; ' + (AGELBL[p.ay] || "") + '</span>' + (lg.use_quotas ? (p.imp ? '<span class="dr-tag">IMP</span>' : "") + (p.dr ? '<span class="dr-tag">NHL</span>' : "") : "") + '</span>'; }
 function plMyTeamHtml(lg, me){
   if (lg.status !== "active") return '<div class="pl-note">Rosters open once the draft is finished.</div>';
-  var hold = plMyHold(me), eff = plEff(lg), started = plStarted(lg), h = '<div class="pl-note">' + esc(plEffTxt(lg)) + plMoveInfo(lg, me) + '</div>';
-  if (PL.dropPid && BYID[PL.dropPid]) h += '<div class="pl-note" style="color:var(--tx)">Drop <b>' + esc(BYID[PL.dropPid].name) + '</b>? <button class="danger" data-plmtyes="1">Yes, drop</button> <button class="sec" data-plmtcancel="1">Cancel</button></div>';
+  var hold = plMyHold(me), eff = plEff(lg), started = plStarted(lg), h = '';
+  if (PL.dropPid && BYID[PL.dropPid]) h += '<div class="pl-note" id="plDropBox" style="color:var(--tx)">' + esc(plEffTxt(lg)) + plMoveInfo(lg, me) + '<div style="margin-top:10px">Are you sure you want to drop <b>' + esc(BYID[PL.dropPid].name) + '</b>? <button class="danger" data-plmtyes="1">Yes, drop</button> <button class="sec" data-plmtcancel="1">Cancel</button></div></div>';
   var leaving = PL.roster.filter(function(r){ return me && r.team_id === me.id && r.to_week === eff && started; });
   [["F","Forwards",12],["D","Defence",6],["G","Goalies",2]].forEach(function(g){
     var rows = hold.map(function(r){ return { r: r, p: BYID[r.player_id] }; }).filter(function(x){ return x.p && x.p.g === g[0]; }).sort(function(a, b){ return b.p.fp - a.p.fp; });
@@ -1920,7 +1920,7 @@ $("plView").addEventListener("click", async function(e){
   var t = e.target.closest ? e.target.closest("button, th[data-plfsort]") : null; if (!t || t.disabled) return;
   var d = t.dataset, lg = plLg();
   if (d.plsub === "myteam" || d.plsub === "players" || d.plsub === "trades"){ PL.addPid = null; PL.dropPid = null; await plLoadRoster(); plRender(); return; }
-  if (d.plmtdrop){ PL.dropPid = d.plmtdrop; plMsg(""); plRender(); return; }
+  if (d.plmtdrop){ PL.dropPid = d.plmtdrop; plMsg(""); plRender(); var db = $("plDropBox"); if (db && db.scrollIntoView) db.scrollIntoView({ block: "nearest" }); return; }
   if (d.plmtcancel){ PL.dropPid = null; plRender(); return; }
   if (d.plmtyes){ await plMove(null, PL.dropPid); return; }
   if (d.pladd !== undefined){ PL.addPid = d.pladd; PL.claimMode = false; plMsg(""); plRender(); var a = $("faAdd"); if (a && a.scrollIntoView) a.scrollIntoView({ block: "nearest" }); return; }
