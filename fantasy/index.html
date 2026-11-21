@@ -484,6 +484,7 @@ function statVal(p, k){
     return null;
   }
   if (k === "shots") return s.shots == null ? null : num(s.shots);
+  if (k === "pm") return s.pm == null ? null : num(s.pm);
   if (k === "gp" || k === "g" || k === "a" || k === "pm" || k === "pim") return num(s[k]);
   return null;
 }
@@ -1940,7 +1941,7 @@ function plAddPanel(lg, me){
 function plPerView(p, pd){
   var x = pd[p.id] || {}, s;
   if (p.g === "G") s = { gp: num(x.gp), wins: num(x.wins), so: num(x.so), g900: num(x.g900), svp: num(x.sa) > 0 ? 1 - num(x.ga) / num(x.sa) : null, gaa: num(x.secs) > 0 ? num(x.ga) * 3600 / num(x.secs) : null };
-  else s = { gp: num(x.gp), g: num(x.g), a: num(x.a), pm: num(x.pm), pim: num(x.pim), shots: x.gp ? x.shots : 0 };
+  else s = { gp: num(x.gp), g: num(x.g), a: num(x.a), pm: x.gp ? x.pm : 0, pim: num(x.pim), shots: x.gp ? x.shots : 0 };
   var o = {}; for (var k in p) o[k] = p[k];
   o.s = s; o.fp = fpts({ g: p.g, s: s });
   return o;
@@ -1964,7 +1965,7 @@ function plFaList(){
     if (!pd){ box.innerHTML = '<div class="pl-empty">Loading the last ' + PL.fper + ' days…</div>'; plLoadPeriod(lg); return; }
     view = {};
     POOL.forEach(function(p){ if (p.lgn === lg.chl_league) view[p.id] = plPerView(p, pd); });
-    Object.keys(pd).forEach(function(id){ if (pd[id].g !== undefined && pd[id].shots === null) noShots = true; });
+    Object.keys(pd).forEach(function(id){ if (pd[id].g !== undefined && (pd[id].shots === null || pd[id].pm === null)) noShots = true; });
   }
   var V = function(p){ return view ? view[p.id] : p; };
   POOL.filter(function(p){ return p.lgn === lg.chl_league; }).sort(function(a, b){ return V(b).fp - V(a).fp; }).forEach(function(p){ rk[p.id] = ++rn; });
@@ -1987,7 +1988,7 @@ function plFaList(){
     h += '<tr><td class="why">' + rk[p.id] + '</td><td class="pn">' + plPlayerCell(p, lg) + extra + (wv[p.id] ? '<div class="dr-sub">On waivers until ' + esc(plWhenShort(wv[p.id].until)) + '</div>' : "") + '</td>' + cols.map(function(c){ return '<td' + (c[0] === "pts" ? ' class="pts"' : '') + '>' + fmtStat(c[0], statVal(V(p), c[0])) + '</td>'; }).join("") + '<td>' + (owned[p.id] ? '<span class="why">' + plTeamName(owned[p.id]) + '</span>' : plAddBtn(p, wv, capped)) + '</td></tr>';
   });
   if (!rows.length) h += '<tr><td colspan="' + (cols.length + 3) + '" class="pl-empty">No players match.</td></tr>';
-  h += '</tbody></table>' + (view && noShots ? '<div class="pl-note">Some players have no game-by-game shot totals (the WHL does not publish them), so SOG shows a dash and their FPTS in this view leaves shots out.</div>' : "") + (rows.length > PL.fshown ? '<div style="padding:8px;text-align:center"><button class="sec" data-plfmore="1">Show more</button></div>' : "");
+  h += '</tbody></table>' + (view && noShots ? '<div class="pl-note">Some leagues do not publish every stat game by game (WHL shots, QMJHL +/-). Those show a dash here and are left out of FPTS in this view.</div>' : "") + (rows.length > PL.fshown ? '<div style="padding:8px;text-align:center"><button class="sec" data-plfmore="1">Show more</button></div>' : "");
   box.innerHTML = h;
 }
 async function plMove(add, drop){
