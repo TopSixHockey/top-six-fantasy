@@ -1430,7 +1430,8 @@ document.addEventListener("click", async function (e) {
     var r = await BD.sb.auth.signInWithPassword({ email: document.getElementById("bdEm").value.trim(), password: document.getElementById("bdPw").value });
     if (r.error) bdSay(r.error.message);
   } else if (a === "signup") {
-    var em = document.getElementById("bdEm").value.trim(), dn = document.getElementById("bdDn").value.trim() || em.split("@")[0];
+    var em = document.getElementById("bdEm").value.trim(), dn = document.getElementById("bdDn").value.trim();
+    if (dn.length < 2) { bdSay("Choose a display name (2 to 30 characters). It is shown on your posts instead of your email."); return; }
     var r2 = await BD.sb.auth.signUp({ email: em, password: document.getElementById("bdPw").value, options: { data: { display_name: dn }, emailRedirectTo: location.origin + location.pathname } });
     if (r2.error) bdSay(r2.error.message); else if (!r2.data.session) bdSay("Account created. Check your email to confirm it, then log in.", true);
   } else if (a === "out") { await BD.sb.auth.signOut(); }
@@ -1479,7 +1480,7 @@ function pfPaint() {
     h += '<div class="pf-top"><label class="bd-avwrap" title="Change profile picture">' + bdAv(av, bdName(BD.user), BD.user.id, "bd-big") + '<input type="file" id="pfFile" accept="image/*" hidden></label><div><button type="button" class="bd-b" data-pf="photo">' + (av ? "Change photo" : "Add photo") + '</button>' + (av ? '<div style="margin-top:6px"><button type="button" class="bd-l" data-pf="nophoto">Remove photo</button></div>' : "") + '</div></div>';
     h += '<label class="pf-l" for="pfName">Display name</label><div class="pf-row"><input id="pfName" type="text" maxlength="30" value="' + bdEsc(bdName(BD.user)) + '"><button type="button" class="bd-send" data-pf="name">Save</button></div>';
     h += '<label class="pf-l">Email</label><div>' + bdEsc(BD.user.email || "") + '</div>';
-    h += '<label class="pf-l" for="pfNew">New password</label><div class="pf-row"><input id="pfNew" type="password" autocomplete="new-password" placeholder="At least 6 characters"><button type="button" class="bd-b" data-pf="pw">Update</button></div>';
+    h += '<label class="pf-l" for="pfNew">New password</label><input id="pfNew" type="password" autocomplete="new-password" placeholder="At least 6 characters"><label class="pf-l" for="pfNew2">Confirm new password</label><div class="pf-row"><input id="pfNew2" type="password" autocomplete="new-password" placeholder="Type it again"><button type="button" class="bd-b" data-pf="pw">Update</button></div>';
     h += '<div class="pf-sec"><button type="button" class="bd-b" data-pf="out">Log out</button></div>';
   } else {
     h += '<p class="bd-note">Log in to post, like and reply. Your Top Six Fantasy account works here too.</p><div class="pf-fields"><input id="pfEm" type="email" placeholder="Email" autocomplete="email"><input id="pfPw" type="password" placeholder="Password" autocomplete="current-password"><input id="pfDn" type="text" placeholder="Display name (new accounts only)" maxlength="30"></div><div class="bd-act"><button type="button" class="bd-send" data-pf="login">Log in</button><button type="button" class="bd-b" data-pf="signup">Create account</button></div>';
@@ -1515,14 +1516,16 @@ document.addEventListener("click", async function (e) {
   } else if (a === "pw") {
     var p = val("pfNew");
     if (p.length < 6) { pfSay("Passwords need at least 6 characters."); return; }
+    if (p !== val("pfNew2")) { pfSay("The two passwords do not match."); return; }
     var pr = await BD.sb.auth.updateUser({ password: p });
-    if (pr.error) pfSay(pr.error.message); else { var pi = document.getElementById("pfNew"); if (pi) pi.value = ""; pfSay("Password updated.", true); }
+    if (pr.error) pfSay(pr.error.message); else { var pi = document.getElementById("pfNew"), pj = document.getElementById("pfNew2"); if (pi) pi.value = ""; if (pj) pj.value = ""; pfSay("Password updated.", true); }
   } else if (a === "out") { await BD.sb.auth.signOut(); pfClose(); }
   else if (a === "login") {
     var lr = await BD.sb.auth.signInWithPassword({ email: val("pfEm").trim(), password: val("pfPw") });
     if (lr.error) pfSay(lr.error.message);
   } else if (a === "signup") {
-    var em = val("pfEm").trim(), dn = val("pfDn").trim() || em.split("@")[0];
+    var em = val("pfEm").trim(), dn = val("pfDn").trim();
+    if (dn.length < 2) { pfSay("Choose a display name (2 to 30 characters). It is shown on your posts instead of your email."); return; }
     var sr = await BD.sb.auth.signUp({ email: em, password: val("pfPw"), options: { data: { display_name: dn }, emailRedirectTo: location.origin + location.pathname } });
     if (sr.error) pfSay(sr.error.message); else if (!sr.data.session) pfSay("Account created. Check your email to confirm it, then log in.", true);
   }
