@@ -1113,7 +1113,7 @@ function plRender(){
   box.innerHTML = h;
   plSyncTimers(); if ($("drBar")) plDraftUpdate(true);
   plNoticeShow();
-  if ($("faList")){ plFaList(); if ($("faPos")){ $("faPos").value = PL.fpos; $("faAge").value = PL.fage; $("faTag").value = PL.ftag; if ($("faShow")) $("faShow").value = PL.fshow; } }
+  if ($("faList")){ plFaList(); if ($("faPos")){ $("faPos").value = PL.fpos; $("faAge").value = PL.fage; $("faTag").value = PL.ftag; if ($("faShow")) $("faShow").value = PL.fshow; if ($("faPer")) $("faPer").value = PL.fper; } }
 }
 function plOpts(vals, sel){ return vals.map(function(v){ return '<option value="' + v + '"' + (String(v) === String(sel) ? " selected" : "") + '>' + v + '</option>'; }).join(""); }
 function plCreateHtml(){
@@ -1847,7 +1847,7 @@ $("plView").addEventListener("input", function(e){
 });
 
 /* ---- Private leagues: My team and free agents (add / drop) ---- */
-PL.roster = []; PL.fq = ""; PL.fpos = ""; PL.fage = ""; PL.ftag = ""; PL.fshow = ""; PL.fsort = "fp"; PL.fshown = 60; PL.addPid = null; PL.dropPid = null;
+PL.roster = []; PL.fq = ""; PL.fpos = ""; PL.fage = ""; PL.ftag = ""; PL.fshow = ""; PL.fper = ""; PL.perData = {}; PL.perBusy = null; PL.fsort = "fp"; PL.fshown = 60; PL.addPid = null; PL.dropPid = null;
 var AGELBL = { 2010: 16, 2009: 17, 2008: 18, 2007: 19, 2006: 20 };
 function plEff(lg){ var t = plDay(plToday()); return t < plDay(lg.start_date) ? 1 : Math.floor((t - plDay(lg.start_date)) / 7) + 2; }
 function plEffTxt(lg){ var e = plEff(lg); return e > lg.weeks ? "The season is over." : "Moves take effect Monday " + plWeekStart(lg, e) + " (Week " + e + "). A dropped player keeps scoring for you until then, and an added player starts scoring then."; }
@@ -1920,6 +1920,7 @@ function plPlayersHtml(lg, me){
   var h = '<div class="pl-note">' + esc(plEffTxt(lg)) + '</div>';
   h += '<div id="faAdd">' + plAddPanel(lg, me) + '</div>';
   h += '<div class="dr-filters"><input type="search" id="faQ" placeholder="Search player or team" value="' + esc(PL.fq) + '">' +
+    '<select id="faPer"><option value="">Season totals</option><option value="14">Last 14 days</option><option value="30">Last 30 days</option></select>' +
     '<select id="faShow"><option value="">Free agents</option><option value="all">All players</option><option value="own">Rostered</option></select>' +
     '<select id="faPos"><option value="">All positions</option><option value="F">Forwards</option><option value="D">Defence</option><option value="G">Goalies</option></select>' +
     '<select id="faAge"><option value="">All ages</option><option value="2010">16</option><option value="2009">17</option><option value="2008">18</option><option value="2007">19</option><option value="2006">20</option></select>' +
@@ -1936,10 +1937,37 @@ function plAddPanel(lg, me){
   same.sort(function(a, b){ return a.fp - b.fp; }).forEach(function(q){ h += '<button class="sec" data-pladdgo="' + esc(q.id) + '">Drop ' + esc(q.name) + ' (' + q.fp.toFixed(1) + ')</button>'; });
   return h + '</div><div style="margin-top:8px"><button class="sec" data-pladdcancel="1">Cancel</button></div></div>';
 }
+function plPerView(p, pd){
+  var x = pd[p.id] || {}, s;
+  if (p.g === "G") s = { gp: num(x.gp), wins: num(x.wins), so: num(x.so), g900: num(x.g900), svp: num(x.sa) > 0 ? 1 - num(x.ga) / num(x.sa) : null, gaa: num(x.secs) > 0 ? num(x.ga) * 3600 / num(x.secs) : null };
+  else s = { gp: num(x.gp), g: num(x.g), a: num(x.a), pm: num(x.pm), pim: num(x.pim), shots: x.gp ? x.shots : 0 };
+  var o = {}; for (var k in p) o[k] = p[k];
+  o.s = s; o.fp = fpts({ g: p.g, s: s });
+  return o;
+}
+async function plLoadPeriod(lg){
+  var key = lg.chl_league + ":" + PL.fper; if (PL.perData[key] || PL.perBusy === key) return;
+  PL.perBusy = key;
+  var iso = new Date(Date.now() - Number(PL.fper) * 86400000).toLocaleDateString("en-CA", { timeZone: "America/Toronto" });
+  var r = await SB.rpc("period_stats", { p_from: iso, p_league: lg.chl_league });
+  PL.perBusy = null;
+  if (r.error){ var b = $("faList"); if (b) b.innerHTML = '<div class="pl-empty">Could not load these stats. Try again in a moment.</div>'; return; }
+  PL.perData[key] = r.data || {};
+  plFaList();
+}
 function plFaList(){
   var lg = plLg(), me = plMine(), box = $("faList"); if (!lg || !box) return;
   var owned = plOwned(), wv = plWaiverMap(), capped = plCapped(lg, me), s = PL.fq.trim().toLowerCase(), rk = {}, rn = 0;
-  POOL.forEach(function(p){ if (p.lgn === lg.chl_league) rk[p.id] = ++rn; });
+  var view = null, noShots = false;
+  if (PL.fper){
+    var pd = PL.perData[lg.chl_league + ":" + PL.fper];
+    if (!pd){ box.innerHTML = '<div class="pl-empty">Loading the last ' + PL.fper + ' days…</div>'; plLoadPeriod(lg); return; }
+    view = {};
+    POOL.forEach(function(p){ if (p.lgn === lg.chl_league) view[p.id] = plPerView(p, pd); });
+    Object.keys(pd).forEach(function(id){ if (pd[id].g !== undefined && pd[id].shots === null) noShots = true; });
+  }
+  var V = function(p){ return view ? view[p.id] : p; };
+  POOL.filter(function(p){ return p.lgn === lg.chl_league; }).sort(function(a, b){ return V(b).fp - V(a).fp; }).forEach(function(p){ rk[p.id] = ++rn; });
   var rows = POOL.filter(function(p){
     if (p.lgn !== lg.chl_league) return false;
     if (PL.fshow === "own" ? !owned[p.id] : (PL.fshow !== "all" && owned[p.id])) return false;
@@ -1951,15 +1979,15 @@ function plFaList(){
     return true;
   });
   var key = PL.fsort;
-  rows = rows.slice().sort(function(a, b){ var x = key === "name" ? a.name : statVal(a, key), y = key === "name" ? b.name : statVal(b, key); if (key === "name") return x.localeCompare(y); if (x == null && y == null) return 0; if (x == null) return 1; if (y == null) return -1; return (key === "gaa" ? x - y : y - x) || (b.fp - a.fp); });
+  rows = rows.slice().sort(function(a, b){ var x = key === "name" ? a.name : statVal(V(a), key), y = key === "name" ? b.name : statVal(V(b), key); if (key === "name") return x.localeCompare(y); if (x == null && y == null) return 0; if (x == null) return 1; if (y == null) return -1; return (key === "gaa" ? x - y : y - x) || (V(b).fp - V(a).fp); });
   var cols = PL.fpos === "G" ? COLS_G : [["gp","GP"],["g","G"],["a","A"],["pts","P"],["pm","+/-"],["shots","SOG"],["pim","PIM"],["fp","FPts"]];
   var h = '<table><thead><tr><th>Rk</th><th data-plfsort="name">Player</th>' + cols.map(function(c){ return '<th data-plfsort="' + c[0] + '">' + c[1] + (PL.fsort === c[0] ? " &#9660;" : "") + '</th>'; }).join("") + '<th>' + (PL.fshow ? "Owner" : "") + '</th></tr></thead><tbody>';
   rows.slice(0, PL.fshown).forEach(function(p){
-    var extra = p.g === "G" && PL.fpos !== "G" ? '<div class="dr-sub">W ' + num(p.s.wins) + ' &middot; SV% ' + (p.s.svp != null ? fmtStat("svp", p.s.svp) : "-") + ' &middot; GAA ' + (p.s.gaa != null ? fmtStat("gaa", p.s.gaa) : "-") + '</div>' : "";
-    h += '<tr><td class="why">' + rk[p.id] + '</td><td class="pn">' + plPlayerCell(p, lg) + extra + (wv[p.id] ? '<div class="dr-sub">On waivers until ' + esc(plWhenShort(wv[p.id].until)) + '</div>' : "") + '</td>' + cols.map(function(c){ return '<td' + (c[0] === "pts" ? ' class="pts"' : '') + '>' + fmtStat(c[0], statVal(p, c[0])) + '</td>'; }).join("") + '<td>' + (owned[p.id] ? '<span class="why">' + plTeamName(owned[p.id]) + '</span>' : plAddBtn(p, wv, capped)) + '</td></tr>';
+    var extra = p.g === "G" && PL.fpos !== "G" ? '<div class="dr-sub">W ' + num(V(p).s.wins) + ' &middot; SV% ' + (V(p).s.svp != null ? fmtStat("svp", V(p).s.svp) : "-") + ' &middot; GAA ' + (V(p).s.gaa != null ? fmtStat("gaa", V(p).s.gaa) : "-") + '</div>' : "";
+    h += '<tr><td class="why">' + rk[p.id] + '</td><td class="pn">' + plPlayerCell(p, lg) + extra + (wv[p.id] ? '<div class="dr-sub">On waivers until ' + esc(plWhenShort(wv[p.id].until)) + '</div>' : "") + '</td>' + cols.map(function(c){ return '<td' + (c[0] === "pts" ? ' class="pts"' : '') + '>' + fmtStat(c[0], statVal(V(p), c[0])) + '</td>'; }).join("") + '<td>' + (owned[p.id] ? '<span class="why">' + plTeamName(owned[p.id]) + '</span>' : plAddBtn(p, wv, capped)) + '</td></tr>';
   });
   if (!rows.length) h += '<tr><td colspan="' + (cols.length + 3) + '" class="pl-empty">No players match.</td></tr>';
-  h += '</tbody></table>' + (rows.length > PL.fshown ? '<div style="padding:8px;text-align:center"><button class="sec" data-plfmore="1">Show more</button></div>' : "");
+  h += '</tbody></table>' + (view && noShots ? '<div class="pl-note">Some players have no game-by-game shot totals (the WHL does not publish them), so SOG shows a dash and their FPTS in this view leaves shots out.</div>' : "") + (rows.length > PL.fshown ? '<div style="padding:8px;text-align:center"><button class="sec" data-plfmore="1">Show more</button></div>' : "");
   box.innerHTML = h;
 }
 async function plMove(add, drop){
@@ -1993,6 +2021,7 @@ $("plView").addEventListener("input", function(e){
   if (id === "faQ"){ PL.fq = e.target.value; PL.fshown = 60; plFaList(); }
   else if (id === "faPos"){ PL.fpos = e.target.value; PL.fshown = 60; if (PL.fpos === "G" && PL.fsort !== "name" && !{ gp:1, wins:1, so:1, svp:1, gaa:1, fp:1 }[PL.fsort]) PL.fsort = "fp"; plFaList(); }
   else if (id === "faAge"){ PL.fage = e.target.value; PL.fshown = 60; plFaList(); }
+  else if (id === "faPer"){ PL.fper = e.target.value; PL.fshown = 60; plFaList(); }
   else if (id === "faShow"){ PL.fshow = e.target.value; PL.fshown = 60; plFaList(); }
   else if (id === "faTag"){ PL.ftag = e.target.value; PL.fshown = 60; plFaList(); }
 });
