@@ -144,6 +144,25 @@ td.pos{color:var(--ok)}td.neg{color:var(--bad)}td.pts{color:#ff9f43}td.fp{font-w
 .mu-title .why{display:block;margin-top:3px}
 .mu-top .pl-top{margin:0;flex:1;justify-content:flex-end}
 .pl-sub{align-items:center}
+.ch-wrap{display:flex;flex-direction:column;gap:10px;max-width:760px}
+.ch-list{height:min(62vh,560px);min-height:300px;overflow-y:auto;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column}
+.ch-empty{margin:auto;color:var(--mute);text-align:center}
+.ch-day{align-self:center;color:var(--mute);font-size:12px;font-weight:700;margin:12px 0 4px}
+.ch-row{display:flex;gap:8px;align-items:flex-start;margin-top:2px;max-width:88%}
+.ch-row.first{margin-top:10px}
+.ch-row.me{align-self:flex-end;flex-direction:row-reverse}
+.ch-col{min-width:0;display:flex;flex-direction:column}
+.ch-row.me .ch-col{align-items:flex-end}
+.ch-nm{font-size:12px;color:var(--mute);font-weight:700;margin:0 0 2px 4px}
+.ch-bub{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:7px 11px;white-space:pre-wrap;overflow-wrap:anywhere}
+.ch-row.me .ch-bub{background:var(--acc);border-color:var(--acc);color:#06121f}
+.ch-tm{font-size:11px;color:var(--mute);margin:2px 4px 0}
+.ch-sp{visibility:hidden}
+.ch-del{background:none;border:0;color:var(--mute);font-size:16px;line-height:1;padding:4px;opacity:0;cursor:pointer;align-self:center}
+.ch-row:hover .ch-del{opacity:1}
+@media(hover:none){.ch-del{opacity:.6}}
+.ch-form{display:flex;gap:8px;align-items:flex-end}
+.ch-form textarea{flex:1;resize:none;max-height:120px;background:var(--panel2);color:var(--tx);border:1px solid var(--line);border-radius:10px;padding:9px 12px;font:inherit}
 .mu-ico svg{width:23px;height:auto;display:inline-block;vertical-align:-5px;margin-right:8px}
 .lglogo{position:relative;width:64px;height:64px;border-radius:14px;overflow:hidden;flex:none;background:var(--panel2)}
 .lglogo img{width:100%;height:100%;object-fit:cover;display:block}
@@ -1055,7 +1074,7 @@ function navRestore(){
   var hh = (location.hash || "").replace(/^#/, "").split("/");
   if (hh[0] === "pl"){
     PL.cur = hh[1] || null;
-    if (/^(matchups|myteam|players|trades|standings|trans|draft|league)$/.test(hh[2] || "")) PL.sub = hh[2];
+    if (/^(matchups|myteam|players|trades|standings|trans|draft|chat|league)$/.test(hh[2] || "")) PL.sub = hh[2];
     PL.want = /^t-/.test(hh[3] || "") ? { team: hh[3].slice(2) } : { md: hh[3] || "" };
   }
   if (hh[0] === "pl" || hh[0] === "lb" || hh[0] === "lineup"){
@@ -1085,6 +1104,7 @@ async function plLoadLeague(){
   if (ids.length){ var p = await SB.from("profiles").select("id,display_name").in("id", ids); (p.data || []).forEach(function(x){ PL.names[x.id] = x.display_name; }); }
   PL.week = plCurWeek(lg);
   await plLoadRoster();
+  try { await plChatLoad(); } catch (e) {}
 }
 async function plOpen(){
   if (!user){ PL.mode = "list"; plRender(); return; }
@@ -1112,7 +1132,7 @@ function plRender(){
   else if (!plLg()) h += '<div class="pl-empty">You are not in any private leagues yet. Create one and invite your friends, or join with a code.</div>';
   else h += plLeagueHtml();
   box.innerHTML = h;
-  plSyncTimers(); if ($("drBar")) plDraftUpdate(true);
+  plSyncTimers(); plChatSync(); if ($("drBar")) plDraftUpdate(true);
   plNoticeShow();
   if ($("faList")){ plFaList(); if ($("faPos")){ $("faPos").value = PL.fpos; $("faAge").value = PL.fage; $("faTag").value = PL.ftag; if ($("faShow")) $("faShow").value = PL.fshow; if ($("faPer")) $("faPer").value = PL.fper; } }
 }
@@ -1141,7 +1161,7 @@ function plLeagueHtml(){
   var showWk = PL.sub === "matchups" && !PL.teamView && !PL.md && lg.status !== "setup";
   var h = '<div class="mu-top"><div class="mu-title">' + plLgLogoHtml(lg) + '<div><h2>' + esc(lg.name) + '</h2><span class="why">' + esc(lg.chl_league) + ' &middot; ' + modeTxt + ' &middot; ' + lg.weeks + ' weeks from ' + plWeekStart(lg, 1) + ' &middot; ' + esc(stTxt) + '</span></div></div>' + (PL.pills || "") + '</div>';
   h += '<div class="pl-sub">';
-  [["matchups","Matchups"],["myteam","My Team"],["players","Players"],["trades","Trades" + (plTradeTodo(lg, me) ? " (" + plTradeTodo(lg, me) + ")" : "")],["standings","Standings"],["trans","Transactions"],["draft","Draft" + (lg.status === "drafting" ? " (LIVE)" : "")],["league","League"]].filter(function(s){ return s[0] !== "trades" || PL.trades.length || PL.sub === "trades"; }).forEach(function(s){ h += '<button class="pill' + (PL.sub === s[0] ? " on" : "") + '" data-plsub="' + s[0] + '">' + s[1] + '</button>'; });
+  [["matchups","Matchups"],["myteam","My Team"],["players","Players"],["trades","Trades" + (plTradeTodo(lg, me) ? " (" + plTradeTodo(lg, me) + ")" : "")],["standings","Standings"],["trans","Transactions"],["draft","Draft" + (lg.status === "drafting" ? " (LIVE)" : "")],["chat",plChatLabel(lg)],["league","League"]].filter(function(s){ return s[0] !== "trades" || PL.trades.length || PL.sub === "trades"; }).forEach(function(s){ h += '<button class="pill' + (PL.sub === s[0] ? " on" : "") + '" data-plsub="' + s[0] + '">' + s[1] + '</button>'; });
   if (showWk) h += '<span class="sp"></span>' + plMuWkNav(lg, PL.week);
   h += '</div>';
   if (PL.teamView && plTeam(PL.teamView)) return h + plTeamPageHtml(lg, plTeam(PL.teamView));
@@ -1151,7 +1171,8 @@ function plLeagueHtml(){
   if (PL.sub === "players") return h + plPlayersHtml(lg, me);
   if (PL.sub === "trades") return h + plTradesHtml(lg, me);
   if (PL.sub === "draft") return h + plDraftHtml(lg, me);
-  if (PL.sub === "league") return h + plManageHtml(lg, me);
+  if (PL.sub === "chat") return h + plChatHtml(lg, me);
+if (PL.sub === "league") return h + plManageHtml(lg, me);
   return h + plMatchupsHtml(lg, me);
 }
 function plTeamName(id){ var t = plTeam(id); return t ? esc(t.name) : "Team removed"; }
@@ -1583,9 +1604,86 @@ $("plView").addEventListener("click", async function(e){
   else if (d.plact === "lglogopick"){ var ll = $("plLgLogo"); if (ll) ll.click(); }
   else if (d.plact === "logopick"){ var tl = $("plLogo"); if (tl) tl.click(); }
   else if (d.plact === "coverpick"){ var tc = $("plCover"); if (tc) tc.click(); }
-  else if (d.plact === "cancel"){ plRender(); }
+  else if (d.plact === "chatsend"){ await plChatSend(); }
+else if (d.plact === "chatdel"){ await plChatDel(+d.chid); }
+else if (d.plact === "cancel"){ plRender(); }
   else if (d.plact){ await plAct(d.plact, t); }
 });
+
+/* ---- Private leagues: league chat ---- */
+function plChatSeen(lg){ try { return +localStorage.getItem("tsf_chat_seen_" + lg.id) || 0; } catch (e) { return 0; } }
+function plChatMarkSeen(lg){ var m = PL.chatFor === lg.id && PL.chat.length ? PL.chat[PL.chat.length - 1].id : 0; try { if (m > plChatSeen(lg)) localStorage.setItem("tsf_chat_seen_" + lg.id, String(m)); } catch (e) {} }
+function plChatUnread(lg){ if (PL.chatFor !== lg.id) return 0; var s = plChatSeen(lg), n = 0; PL.chat.forEach(function(m){ if (m.id > s && (!user || m.user_id !== user.id)) n++; }); return n; }
+function plChatLabel(lg){ var n = PL.sub === "chat" ? 0 : plChatUnread(lg); return "League Chat" + (n ? " (" + (n > 99 ? "99+" : n) + ")" : ""); }
+function plChatBadge(){ var lg = plLg(), b = document.querySelector('button[data-plsub="chat"]'); if (lg && b) b.textContent = plChatLabel(lg); }
+async function plChatLoad(){
+var lg = plLg(); if (!lg || !user || PL.chatBusy) return false;
+PL.chatBusy = true;
+try {
+var r = await SB.from("pchat").select("*").eq("league_id", lg.id).order("id", { ascending: false }).limit(150);
+if (!r.data || lg.id !== PL.cur) return false;
+var rows = r.data.slice().reverse(), sig = rows.map(function(m){ return m.id; }).join(",");
+var changed = PL.chatFor !== lg.id || sig !== PL.chatSig;
+PL.chat = rows; PL.chatFor = lg.id; PL.chatSig = sig;
+return changed;
+} catch (e) { return false; } finally { PL.chatBusy = false; }
+}
+function plChatListHtml(lg){
+var rows = PL.chatFor === lg.id ? PL.chat : [];
+if (!rows.length) return '<div class="ch-empty">No messages yet. Say something to your league.</div>';
+var h = "", day = "", prev = null;
+rows.forEach(function(m){
+var d = new Date(m.created_at), dk = d.toLocaleDateString("en-CA", { timeZone: "America/Toronto" });
+if (dk !== day){ day = dk; prev = null; h += '<div class="ch-day">' + (dk === plToday() ? "Today" : d.toLocaleDateString("en-US", { timeZone: "America/Toronto", weekday: "short", month: "short", day: "numeric" })) + '</div>'; }
+var mine = !!user && m.user_id === user.id, t = plTeam(m.team_id);
+var first = !prev || prev.user_id !== m.user_id || (d - new Date(prev.created_at)) > 300000;
+var tm = d.toLocaleTimeString("en-US", { timeZone: "America/Toronto", hour: "numeric", minute: "2-digit" });
+h += '<div class="ch-row' + (mine ? " me" : "") + (first ? " first" : "") + '">' + (mine ? "" : (first ? plAvatar(t) : '<span class="mu-av ch-sp"></span>')) +
+'<div class="ch-col">' + (first && !mine ? '<div class="ch-nm">' + (t ? esc(t.name) : "Team removed") + '</div>' : "") + '<div class="ch-bub">' + esc(m.body) + '</div>' + (first ? '<div class="ch-tm">' + tm + '</div>' : "") + '</div>' +
+(mine ? '<button class="ch-del" data-plact="chatdel" data-chid="' + m.id + '" title="Delete message">&times;</button>' : "") + '</div>';
+prev = m;
+});
+return h;
+}
+function plChatHtml(lg, me){
+return '<div class="ch-wrap"><div id="chList" class="ch-list">' + plChatListHtml(lg) + '</div>' +
+(me ? '<div class="ch-form"><textarea id="chIn" rows="1" maxlength="500" placeholder="Message your league (Enter to send, Shift+Enter for a new line)"></textarea><button data-plact="chatsend">Send</button></div><small id="chErr" class="note"></small>' : '<small class="note">Only managers in this league can post.</small>') + '</div>';
+}
+function plChatPaint(stick){
+var el = $("chList"), lg = plLg(); if (!el || !lg) return;
+var near = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+el.innerHTML = plChatListHtml(lg);
+if (stick || near) el.scrollTop = el.scrollHeight;
+plChatMarkSeen(lg); plChatBadge();
+}
+async function plChatTick(force){
+if (!plLg() || !$("chList") || $("plView").classList.contains("hide")){ if (PL.cht){ clearInterval(PL.cht); PL.cht = null; } return; }
+var ch = await plChatLoad();
+if ($("chList") && (ch || force)) plChatPaint(!!force);
+}
+function plChatSync(){
+var lg = plLg(), want = !!(lg && user && PL.sub === "chat" && PL.mode === "list" && !PL.teamView && $("chList") && !$("plView").classList.contains("hide"));
+if (want && !PL.cht) PL.cht = setInterval(plChatTick, 4000);
+if (!want && PL.cht){ clearInterval(PL.cht); PL.cht = null; }
+if (want) plChatTick(true);
+}
+async function plChatSend(){
+var lg = plLg(), me = plMine(), inp = $("chIn"); if (!lg || !me || !inp || PL.chatSending) return;
+var body = inp.value.trim(); if (!body) return;
+PL.chatSending = true; inp.disabled = true;
+try {
+var r = await SB.from("pchat").insert({ league_id: lg.id, team_id: me.id, body: body.slice(0, 500) });
+if (r.error){ if ($("chErr")) $("chErr").textContent = "Could not send: " + r.error.message; }
+else { inp.value = ""; inp.style.height = "auto"; if ($("chErr")) $("chErr").textContent = ""; await plChatLoad(); plChatPaint(true); }
+} catch (e) { if ($("chErr")) $("chErr").textContent = "Could not send. Check your connection and try again."; }
+finally { PL.chatSending = false; var i2 = $("chIn"); if (i2){ i2.disabled = false; i2.focus(); } }
+}
+async function plChatDel(id){
+if (!id) return;
+try { await SB.from("pchat").delete().eq("id", id); await plChatLoad(); plChatPaint(false); } catch (e) {}
+}
+$("plView").addEventListener("keydown", function(e){ if (e.target && e.target.id === "chIn" && e.key === "Enter" && !e.shiftKey && !e.isComposing){ e.preventDefault(); plChatSend(); } });
+$("plView").addEventListener("input", function(e){ var t = e.target; if (t && t.id === "chIn"){ t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight, 120) + "px"; } });
 
 /* ---- Private leagues: live draft room ---- */
 PL.picks = []; PL.queue = []; PL.skew = 0; PL.dt = "players"; PL.ds = "results"; PL.dq = ""; PL.dpos = ""; PL.dage = ""; PL.dsort = "fp"; PL.dshown = 60; PL.dsig = ""; PL.dmsg = "";
