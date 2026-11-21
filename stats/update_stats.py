@@ -207,6 +207,14 @@ def fetch_whl_shots(season_id):
 
 
 # ---------- turning feed rows into player_stats rows ----------
+def power_play_points(r):
+    """Power play goals + power play assists (None when the feed has neither)."""
+    ppg, ppa = pick(r, "power_play_goals", "ppg"), pick(r, "power_play_assists", "ppa")
+    if ppg is None and ppa is None:
+        return None
+    return (ppg or 0) + (ppa or 0)
+
+
 def skater_stats(r):
     return {
         "gp": pick(r, "games_played", "gp"),
@@ -214,6 +222,7 @@ def skater_stats(r):
         "a": pick(r, "assists", "a"),
         "pm": pick(r, "plus_minus", "plusminus"),
         "pim": pick(r, "penalty_minutes", "pim"),
+        "ppp": power_play_points(r),
         "shots": pick(r, "shots", "shots_on_goal", "sog"),
     }
 
@@ -324,7 +333,7 @@ def clean(d):
     for k, v in d.items():
         if v is None:
             continue
-        out[k] = int(v) if k in ("gp", "g", "a", "pm", "pim", "shots", "wins", "so", "sa", "ga") else v
+        out[k] = int(v) if k in ("gp", "g", "a", "pm", "pim", "ppp", "shots", "wins", "so", "sa", "ga") else v
     return out
 
 
