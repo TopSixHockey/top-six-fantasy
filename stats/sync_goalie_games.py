@@ -122,9 +122,9 @@ def summary_rows(league, gid, wanted):
             pid = wanted.get(str(p.get("player_id")))
             if not pid or not day:
                 continue
-            shots = U.to_num(p.get("shots_on"))
+            shots = U.to_num(p.get("shots"))   # shots on goal (QMJHL "shots_on" is a different, smaller count)
             if shots is None:
-                shots = U.to_num(p.get("shots"))
+                shots = U.to_num(p.get("shots_on"))
             pmv = U.to_num(p.get("plusminus"))
             row = {"player_id": pid, "game_id": gid, "played_on": day,
                    "g": int(U.to_num(p.get("goals")) or 0), "a": int(U.to_num(p.get("assists")) or 0),
