@@ -72,10 +72,11 @@ def skater_games(league, season_id, feed_id, our_id):
     out = {}
     for gid, day, r in log_rows(league, season_id, feed_id):
         shots = U.to_num(r.get("shots"))
+        pmv = U.to_num(r.get("plusminus"))   # the QMJHL game log has no +/-: store null, not 0
         out[gid] = {
             "player_id": our_id, "game_id": gid, "played_on": day,
             "g": int(U.to_num(r.get("goals")) or 0), "a": int(U.to_num(r.get("assists")) or 0),
-            "pm": int(U.to_num(r.get("plusminus")) or 0), "pim": int(U.to_num(r.get("penalty_minutes")) or 0),
+            "pm": int(pmv) if pmv is not None else None, "pim": int(U.to_num(r.get("penalty_minutes")) or 0),
             "shots": int(shots) if shots is not None else None,
         }
     return list(out.values())
