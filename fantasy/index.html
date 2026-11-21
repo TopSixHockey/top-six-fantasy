@@ -1066,7 +1066,7 @@ function plStandings(lg){
 function navSave(){
   try {
     var t = document.querySelector(".tab.on"), tab = t && t.dataset ? t.dataset.tab : "build", h = tab === "build" ? "" : tab;
-    if (tab === "pl" && PL.cur){ h += "/" + PL.cur + "/" + (PL.sub || "matchups"); if (PL.teamView) h += "/t-" + PL.teamView; else if (PL.md && PL.sub === "matchups") h += "/" + PL.md.id; }
+    if (tab === "pl" && PL.cur){ h += "/" + ((plLg() && plLg().slug) || PL.cur) + "/" + (PL.sub || "matchups"); if (PL.teamView) h += "/t-" + PL.teamView; else if (PL.md && PL.sub === "matchups") h += "/" + PL.md.id; }
     history.replaceState(null, "", location.pathname + location.search + (h ? "#" + h : ""));
   } catch (e) {}
 }
@@ -1085,7 +1085,8 @@ async function plLoadLeagues(){
   var r = await SB.from("pleagues").select("*").order("created_at", { ascending: true });
   PL.leagues = r.data || [];
   if (r.error) plMsg(r.error.message);
-  if (!plLg()) PL.cur = PL.leagues.length ? PL.leagues[0].id : null;
+  if (PL.cur && !plLg()){ var want = String(PL.cur).toLowerCase(), found = null; PL.leagues.forEach(function(l){ if (l.slug && String(l.slug).toLowerCase() === want) found = l.id; }); if (found) PL.cur = found; else if (PL.leagues.length) plMsg("That league was not found. You may need an invite from its commissioner."); }
+if (!plLg()) PL.cur = PL.leagues.length ? PL.leagues[0].id : null;
 }
 async function plLoadLeague(){
   var lg = plLg(); if (!lg) return;
@@ -1332,11 +1333,19 @@ function plTransHtml(lg){
   rows.forEach(function(x){ var p = BYID[x.player_id]; h += '<tr><td>' + esc(String(x.created_at).slice(0, 10)) + '</td><td><span class="tl" data-plteam="' + esc(x.team_id) + '">' + plTeamName(x.team_id) + '</span></td><td>' + (kinds[x.kind] || x.kind) + '</td><td>' + esc(p ? p.name : "") + (x.note ? ' <span class="why">' + esc(x.note) + '</span>' : "") + '</td></tr>'; });
   return h + '</tbody></table>';
 }
+function plLeagueUrlHtml(lg, isC){
+if (!lg.slug) return "";
+var base = location.origin + "/fantasy/";
+var h = '<div class="pl-note">League URL: <span class="pl-code" style="word-break:break-all">' + esc(base + lg.slug) + '</span> <button class="sec" data-plact="copyurl">Copy</button><br><span class="why">Managers who are signed in go straight to this league.</span>';
+if (isC) h += '<div class="row" style="margin-top:8px"><span class="why">' + esc(base) + '</span><input id="plSlug" maxlength="30" value="' + esc(lg.slug) + '" style="flex:1;max-width:240px"><button class="sec" data-plact="slugsave">Save URL</button></div>';
+return h + '</div>';
+}
 function plManageHtml(lg, me){
   var isC = lg.commissioner === user.id, setup = lg.status === "setup", h = "";
   var link = location.origin + location.pathname + "?join=" + lg.invite_code;
   h += '<div class="pl-note">Invite friends with this code: <span class="pl-code">' + esc(lg.invite_code) + '</span> &nbsp; or send them this link:<br><span class="pl-code" style="display:inline-block;margin-top:6px;word-break:break-all">' + esc(link) + '</span></div>';
-  h += '<h2>Teams (' + PL.teams.length + ' of ' + lg.max_teams + ')</h2><table><thead><tr><th>Team</th><th>Manager</th><th></th></tr></thead><tbody>';
+  h += plLeagueUrlHtml(lg, isC);
+h += '<h2>Teams (' + PL.teams.length + ' of ' + lg.max_teams + ')</h2><table><thead><tr><th>Team</th><th>Manager</th><th></th></tr></thead><tbody>';
   PL.teams.forEach(function(t){
     h += '<tr><td>' + esc(t.name) + '</td><td>' + esc(PL.names[t.user_id] || "") + (t.user_id === lg.commissioner ? ' <span class="why">(commissioner)</span>' : "") + '</td><td>' +
       (isC && setup && t.user_id !== lg.commissioner ? '<button class="sec" data-plremove="' + esc(t.id) + '">Remove</button>' : "") + '</td></tr>';
@@ -1572,7 +1581,10 @@ async function plAct(a, el){
     var s2 = v("plsStart"); if (!s2 || new Date(s2 + "T00:00:00Z").getUTCDay() !== 1){ plMsg("Week 1 must start on a Monday."); return plRender(); }
     await plDo(function(){ return SB.rpc("update_pleague", { p_league: lg.id, p_name: v("plsName"), p_max: +v("plsMax"), p_mode: v("plsMode"), p_start: s2, p_weeks: +v("plsWeeks") }); }, "Settings saved.");
     await plLoadLeagues(); await plLoadLeague();
-  } else if (a === "sched"){
+  } else if (a === "slugsave"){
+await plDo(function(){ return SB.rpc("set_pleague_slug", { p_league: lg.id, p_slug: v("plSlug") }); }, "League URL saved.");
+await plLoadLeagues();
+} else if (a === "sched"){
     el.parentNode.innerHTML = '<span class="why">Close the league and draw the schedule?</span><button data-plact="schedyes">Yes, set it</button><button class="sec" data-plact="cancel">Cancel</button>'; return;
   } else if (a === "schedyes"){
     await plDo(function(){ return SB.rpc("generate_pleague_schedule", { p_league: lg.id }); }, "Schedule set. See the Matchups tab.");
@@ -1605,7 +1617,8 @@ $("plView").addEventListener("click", async function(e){
   else if (d.plact === "lglogopick"){ var ll = $("plLgLogo"); if (ll) ll.click(); }
   else if (d.plact === "logopick"){ var tl = $("plLogo"); if (tl) tl.click(); }
   else if (d.plact === "coverpick"){ var tc = $("plCover"); if (tc) tc.click(); }
-  else if (d.pltsub){ PL.tsub = d.pltsub; plRender(); }
+  else if (d.plact === "copyurl"){ var cl = plLg(); if (cl && cl.slug){ var cu = location.origin + "/fantasy/" + cl.slug; try { await navigator.clipboard.writeText(cu); t.textContent = "Copied"; } catch (e) { t.textContent = "Press Ctrl+C to copy"; } } }
+else if (d.pltsub){ PL.tsub = d.pltsub; plRender(); }
 else if (d.plact === "chatsend"){ await plChatSend(); }
 else if (d.plact === "chatdel"){ await plChatDel(+d.chid); }
 else if (d.plact === "cancel"){ plRender(); }
