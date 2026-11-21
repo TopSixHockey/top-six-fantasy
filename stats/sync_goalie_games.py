@@ -76,13 +76,24 @@ def skater_games(league, season_id, feed_id, our_id):
         out[gid] = {
             "player_id": our_id, "game_id": gid, "played_on": day,
             "g": int(U.to_num(r.get("goals")) or 0), "a": int(U.to_num(r.get("assists")) or 0),
-            "pm": int(pmv) if pmv is not None else None, "pim": int(U.to_num(r.get("penalty_minutes")) or 0),
-            "shots": int(shots) if shots is not None else None,
+            "pim": int(U.to_num(r.get("penalty_minutes")) or 0),
         }
+        # leave pm / shots out when the log has none, so a value filled in from the game summary is not wiped
+        if pmv is not None:
+            out[gid]["pm"] = int(pmv)
+        if shots is not None:
+            out[gid]["shots"] = int(shots)
     return list(out.values())
 
 
 def upsert(table, rows):
+    groups = collections.defaultdict(list)
+    for r in rows:
+        groups[tuple(sorted(r))].append(r)   # rows with different columns go in separate requests
+    for grp in groups.values():
+        _upsert(table, grp)
+
+def _upsert(table, rows):
     for i in range(0, len(rows), 500):
         batch = rows[i:i + 500]
         req = urllib.request.Request(
@@ -99,6 +110,56 @@ def upsert(table, rows):
             print("  database said:", e.read().decode("utf-8", "replace")[:800])
             sys.exit(1)
 
+
+def summary_rows(league, gid, wanted):
+    """One game's box score from the game centre feed: shots and +/- for every skater (WHL/QMJHL logs lack them)."""
+    d = U.ht(league, feed="gc", tab="gamesummary", game_id=gid, lang_code="en")
+    g = (d.get("GC") or {}).get("Gamesummary") or {}
+    day = (g.get("meta") or {}).get("date_played") or str(g.get("game_date_iso_8601") or "")[:10]
+    out = []
+    for side in ("home_team_lineup", "visitor_team_lineup"):
+        for p in (g.get(side) or {}).get("players") or []:
+            pid = wanted.get(str(p.get("player_id")))
+            if not pid or not day:
+                continue
+            shots = U.to_num(p.get("shots_on"))
+            if shots is None:
+                shots = U.to_num(p.get("shots"))
+            pmv = U.to_num(p.get("plusminus"))
+            row = {"player_id": pid, "game_id": gid, "played_on": day,
+                   "g": int(U.to_num(p.get("goals")) or 0), "a": int(U.to_num(p.get("assists")) or 0),
+                   "pim": int(U.to_num(p.get("pim")) or 0)}
+            if shots is not None:
+                row["shots"] = int(shots)
+            if pmv is not None:
+                row["pm"] = int(pmv)
+            out.append(row)
+    return out
+
+def fill_gaps(matched, dry):
+    """WHL logs have no shots and QMJHL logs no +/-: fill them in from each game's box score."""
+    req = urllib.request.Request(sb_base() + "/rest/v1/rpc/game_gaps", data=b"{}",
+                                 headers=U.sb_headers({}), method="POST")
+    with urllib.request.urlopen(req, timeout=60) as r:
+        gaps = json.loads(r.read().decode())
+    fid_of = {pid: v[2] for pid, v in matched.items()}
+    games = collections.defaultdict(dict)   # (league, game) -> {feed player id: our player id}
+    for x in gaps:
+        if x["pid"] in fid_of:
+            games[(x["lg"], str(x["gid"]))][fid_of[x["pid"]]] = x["pid"]
+    print("%d skater rows need shots or +/- from %d game box scores" % (len(gaps), len(games)))
+    rows, failed = [], 0
+    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as ex:
+        futs = {ex.submit(summary_rows, lg, gid, w): (lg, gid) for (lg, gid), w in games.items()}
+        for f in concurrent.futures.as_completed(futs):
+            try:
+                rows.extend(f.result())
+            except Exception as e:
+                failed += 1
+                print("  box score failed for %s: %s" % (futs[f], e))
+    print("box scores gave %d skater rows (%d failed)" % (len(rows), failed))
+    if rows and not dry:
+        upsert("skater_games", rows)
 
 def refresh_g900():
     req = urllib.request.Request(sb_base() + "/rest/v1/rpc/refresh_goalie_g900", data=b"{}",
@@ -158,11 +219,13 @@ def main(dry):
         sys.exit(1)
     if dry:
         print("dry run: nothing written")
+        fill_gaps(matched, True)
         return
     if g_rows:
         upsert("goalie_games", g_rows)
     if s_rows:
         upsert("skater_games", s_rows)
+    fill_gaps(matched, False)
     refresh_g900()
     print("done")
 
