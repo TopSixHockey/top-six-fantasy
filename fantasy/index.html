@@ -393,6 +393,7 @@ td.pos{color:var(--ok)}td.neg{color:var(--bad)}td.pts{color:#ff9f43}td.fp{font-w
   <section class="card">
     <h2 id="lbTitle">Leaderboard</h2>
     <div class="pills" id="lbLeagues"><button class="pill" data-lbl="OHL">OHL</button><button class="pill" data-lbl="WHL">WHL</button><button class="pill" data-lbl="QMJHL">QMJHL</button></div>
+    <div class="why" id="lbHalf" style="display:none;margin:0 0 10px;font-weight:600"></div>
     <div class="row" style="margin-bottom:10px;align-items:center">
       <button id="lbSeason">Season</button><button class="sec" id="lbMonth">Month</button>
       <select id="lbMonthSel" class="hide" style="background:var(--panel2);color:var(--tx);border:1px solid var(--line);border-radius:8px;padding:5px 8px;font:inherit"></select>
@@ -716,6 +717,7 @@ var lbMode = "season", lbLeague = "OHL", lbPicked = false;
 function lbStyle(){
   document.querySelectorAll("#lbLeagues .pill").forEach(function(b){ b.classList.toggle("on", b.dataset.lbl === lbLeague); });
   $("lbTitle").textContent = "Leaderboard · " + lbLeague;
+  var hf = $("lbHalf"); if (hf){ var cc = CONTESTS[lbLeague]; hf.textContent = cc ? "The 2nd half of the season " + (notStarted(lbLeague) ? "starts" : "started") + " " + startTxt(lbLeague) + "." : ""; hf.style.display = cc ? "" : "none"; }
 }
 function monthOptions(){
   var out = [], d = new Date(), y = d.getFullYear(), m = d.getMonth();
