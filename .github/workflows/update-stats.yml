@@ -17,7 +17,7 @@ on:
         description: "discover = print what the league feed returns (writes nothing); update-dry = fetch and match but don't write; update = write to the database"
         default: "discover"
         type: choice
-        options: [discover, discover-game, update-dry, update]
+        options: [discover, discover-game, update-dry, update, goalie-games]
 
 jobs:
   stats:
@@ -40,6 +40,13 @@ jobs:
         if: steps.gate.outputs.go == 'yes'
         with:
           python-version: "3.12"
+      - name: Save goalie game logs
+        if: steps.gate.outputs.go == 'yes' && (github.event_name == 'schedule' || github.event.inputs.mode == 'update' || github.event.inputs.mode == 'goalie-games')
+        continue-on-error: true
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: python stats/sync_goalie_games.py
       - name: Run
         if: steps.gate.outputs.go == 'yes'
         env:
@@ -51,5 +58,6 @@ jobs:
             discover)   python stats/update_stats.py discover ;;
             discover-game) python stats/update_stats.py discover-game ;;
             update-dry) python stats/update_stats.py update --dry ;;
+            goalie-games) echo "Goalie game logs were saved in the previous step" ;;
             *)          python stats/update_stats.py update ;;
           esac
