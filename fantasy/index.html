@@ -385,8 +385,7 @@ td.pos{color:var(--ok)}td.neg{color:var(--bad)}td.pts{color:#ff9f43}td.fp{font-w
     <h2 id="luTitle">My lineup</h2>
     <div id="luPills"></div>
     <div class="why" style="margin-bottom:10px">Just for fun: drag a player onto another spot to swap them (or tap one, then tap another). It doesn't affect scoring.</div>
-    <div class="row"><button class="sec" id="luReset">Reset lineup</button></div>
-    <div class="lu" id="lu"></div>
+        <div class="lu" id="lu"></div>
   </section>
 </main>
 
@@ -1012,11 +1011,6 @@ $("lu").addEventListener("drop", function(e){
   e.preventDefault(); var from = dragSlot; dragSlot = null; luSwap(from, +el.dataset.slot);
 });
 $("lu").addEventListener("dragend", function(){ dragSlot = null; renderLineup(); });
-$("luReset").addEventListener("click", function(){
-  if (!entry) return;
-  try { localStorage.removeItem(lineupKey()); } catch (e) {}
-  delete lineups[lineupKey()]; selSlot = null; renderLineup();
-});
 
 /* ---- Private head-to-head leagues (phase 1: setup, schedule, matchups, standings) ---- */
 var PL = { leagues: [], cur: null, sub: "matchups", week: 1, tf: "all", teams: [], mu: [], scores: {}, trans: [], names: {}, mode: "list", msg: "", good: false };
