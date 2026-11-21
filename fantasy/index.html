@@ -1113,6 +1113,7 @@ function plRender(){
   else h += plLeagueHtml();
   box.innerHTML = h;
   plSyncTimers(); if ($("drBar")) plDraftUpdate(true);
+  plNoticeShow();
   if ($("faList")){ plFaList(); if ($("faPos")){ $("faPos").value = PL.fpos; $("faAge").value = PL.fage; $("faTag").value = PL.ftag; } }
 }
 function plOpts(vals, sel){ return vals.map(function(v){ return '<option value="' + v + '"' + (String(v) === String(sel) ? " selected" : "") + '>' + v + '</option>'; }).join(""); }
@@ -1856,6 +1857,25 @@ async function plLoadRoster(){
   if (lg.status === "active") await SB.rpc("waiver_tick", { p_league: lg.id });
   var rs = await Promise.all([ SB.from("proster").select("*").eq("league_id", lg.id), SB.from("pwaiver_players").select("*").eq("league_id", lg.id), SB.from("pwaiver_claims").select("*").eq("league_id", lg.id).order("created_at", { ascending: false }), SB.from("ptrades").select("*").eq("league_id", lg.id).order("created_at", { ascending: false }), SB.from("ptrade_votes").select("*") ]);
   PL.roster = rs[0].data || []; PL.waivers = rs[1].data || []; PL.claims = rs[2].data || []; PL.trades = rs[3].data || []; PL.votes = {}; (rs[4].data || []).forEach(function(v){ PL.votes[v.trade_id] = v.approve; });
+  try { var nr = await SB.from("pnotices").select("*").eq("kind", "nhl_return").gt("until", new Date().toISOString()); PL.notices = nr.data || []; } catch (e) { PL.notices = []; }
+}
+function plSeenN(){ try { return JSON.parse(localStorage.getItem("tsf_seen_notices") || "[]"); } catch (e) { return []; } }
+function plNoticeClose(go){
+  var m = $("plNhlModal"); if (m) { try { var s = plSeenN(); (PL.noticeIds || []).forEach(function(i){ if (s.indexOf(i) < 0) s.push(i); }); localStorage.setItem("tsf_seen_notices", JSON.stringify(s.slice(-50))); } catch (e) {} m.remove(); }
+  if (go) { PL.sub = "players"; plRender(); }
+}
+function plNoticeShow(){
+  var lg = plLg(), old = $("plNhlModal");
+  if (!lg || PL.sub !== "myteam" || PL.teamView || lg.status !== "active" || !PL.notices) { if (old) old.remove(); return; }
+  if (old) return;
+  var wm = plWaiverMap(), seen = plSeenN(), items = [];
+  PL.notices.forEach(function(n){ var w = wm[n.player_id], p = BYID[n.player_id]; if (n.chl_league === lg.chl_league && w && p && seen.indexOf(n.id) < 0) items.push({ n: n, w: w, p: p }); });
+  if (!items.length) return;
+  PL.noticeIds = items.map(function(x){ return x.n.id; });
+  var h = '<div id="plNhlModal" style="position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px"><div style="background:var(--panel);border:1px solid var(--line);border-radius:14px;max-width:440px;width:100%;padding:22px;color:var(--tx)"><h2 style="margin:0 0 10px">Returned from NHL</h2>';
+  items.forEach(function(x){ h += '<p style="margin:0 0 10px"><b>' + esc(x.p.name) + '</b> (' + esc(x.p.team) + ' &middot; ' + esc(x.p.pos) + ') has been returned from his NHL team. He is on waivers until <b>' + esc(plWhenShort(x.w.until)) + '</b>. Place a waiver claim from the Players tab; the highest waiver priority wins.</p>'; });
+  h += '<div style="display:flex;gap:10px;margin-top:14px"><button class="pill on" onclick="plNoticeClose(true)">Go to Players</button><button class="pill" onclick="plNoticeClose(false)">Dismiss</button></div></div></div>';
+  document.body.insertAdjacentHTML("beforeend", h);
 }
 function plOwned(){ var m = {}; PL.roster.forEach(function(r){ if (r.to_week == null) m[r.player_id] = r.team_id; }); return m; }
 function plMyHold(me){ return PL.roster.filter(function(r){ return me && r.team_id === me.id && r.to_week == null; }); }
