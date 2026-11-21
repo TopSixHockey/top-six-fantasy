@@ -1147,7 +1147,7 @@ function plLeagueHtml(){
   if (PL.teamView && plTeam(PL.teamView)) return h + plTeamPageHtml(lg, plTeam(PL.teamView));
   if (PL.sub === "standings") return h + plStandingsHtml(lg);
   if (PL.sub === "trans") return h + plTransHtml(lg);
-  if (PL.sub === "myteam") return h + (me ? plCover(me, 1) + plTeamInfo(lg, me) : "") + plMyTeamHtml(lg, me);
+  if (PL.sub === "myteam") return h + (me ? plCover(me, 1) + plTeamInfo(lg, me) : "") + plTradeActivityHtml(lg, me, null) + plMyTeamHtml(lg, me);
   if (PL.sub === "players") return h + plPlayersHtml(lg, me);
   if (PL.sub === "trades") return h + plTradesHtml(lg, me);
   if (PL.sub === "draft") return h + plDraftHtml(lg, me);
@@ -1511,7 +1511,7 @@ function plTeamRosterHtml(lg, t){
 }
 function plTeamPageHtml(lg, t){
   var me = plMine(), canTrade = me && t.id !== me.id && lg.status === "active";
-return '<div class="md-bar"><button class="sec md-back" data-plteamback="1">&lsaquo; Back</button></div>' + plCover(t) + (canTrade ? '<div style="display:flex;align-items:center;gap:12px"><div style="flex:1;min-width:0">' + plTeamInfo(lg, t) + '</div><button data-pltrpropose="' + esc(t.id) + '" style="flex:none;margin-bottom:8px">Propose trade</button></div>' : plTeamInfo(lg, t)) + (canTrade && PL.trOpen === t.id ? plTradeFormHtml(lg, me, t) : "") + plTeamRosterHtml(lg, t);
+return '<div class="md-bar"><button class="sec md-back" data-plteamback="1">&lsaquo; Back</button></div>' + plCover(t) + (canTrade ? '<div style="display:flex;align-items:center;gap:12px"><div style="flex:1;min-width:0">' + plTeamInfo(lg, t) + '</div><button data-pltrpropose="' + esc(t.id) + '" style="flex:none;margin-bottom:8px">Propose trade</button></div>' : plTeamInfo(lg, t)) + (canTrade && PL.trOpen === t.id ? plTradeFormHtml(lg, me, t) : "") + plTradeActivityHtml(lg, me, t) + plTeamRosterHtml(lg, t);
 }
 async function plUploadCover(inp){
   var f = inp.files && inp.files[0], me = plMine(); if (!f || !me) return;
@@ -2124,12 +2124,9 @@ if (PL.tr.to){
 h += '<div style="margin-top:8px"><button class="sec" data-pltrclose="1">Cancel</button></div>';
 return h;
 }
-function plTradesHtml(lg, me){
-if (!PL.trades.length) return '<div class="pl-note">No trades yet. To propose one, open a team\'s page (tap a team in Standings or Matchups) and tap Propose trade.</div>';
-  if (lg.status !== "active") return '<div class="pl-note">Trades open once the draft is finished.</div>';
-  if (!me) return '<div class="pl-note">Only managers in this league can trade.</div>';
-  var h = "";
-  var inc = plIncoming(me), out = PL.trades.filter(function(t){ return t.status === "pending" && t.from_team === me.id; });
+function plTradeBlocks(lg, me, f){
+var h = "";
+var inc = plIncoming(me).filter(f), out = PL.trades.filter(function(t){ return t.status === "pending" && t.from_team === me.id && f(t); });
   if (inc.length){
     h += '<h2>Offers to you</h2><table><thead><tr><th>From</th><th>You give</th><th>You get</th><th></th></tr></thead><tbody>';
     inc.forEach(function(t){
@@ -2143,7 +2140,7 @@ if (!PL.trades.length) return '<div class="pl-note">No trades yet. To propose on
     out.forEach(function(t){ h += '<tr><td>' + plTeamName(t.to_team) + '</td><td>' + plTradeNames(t.give) + plTradeDrops(t.from_drop, "You") + '</td><td>' + plTradeNames(t.get) + '</td><td><button class="sec" data-pltrcancel="' + esc(t.id) + '">Cancel</button></td></tr>'; });
     h += '</tbody></table>';
   }
-  var rev = PL.trades.filter(function(t){ return t.status === "review" || t.status === "voting"; });
+  var rev = PL.trades.filter(function(t){ return (t.status === "review" || t.status === "voting") && f(t); });
   if (rev.length){
     h += '<h2 style="margin-top:18px">Trades waiting for approval</h2><table><thead><tr><th>Teams</th><th>Moving</th><th>Status</th><th></th></tr></thead><tbody>';
     rev.forEach(function(t){
@@ -2158,7 +2155,28 @@ if (!PL.trades.length) return '<div class="pl-note">No trades yet. To propose on
     });
     h += '</tbody></table>';
   }
-  var done = PL.trades.filter(function(t){ return ["pending", "review", "voting"].indexOf(t.status) < 0; }).slice(0, 12);
+  return h;
+}
+function plTradeActivityHtml(lg, me, t){
+if (lg.status !== "active") return "";
+var mine = !t || (me && t.id === me.id), h = "";
+if (me) h += plTradeBlocks(lg, me, function(x){ return mine || x.from_team === t.id || x.to_team === t.id; });
+var cut = Date.now() - 3 * 864e5;
+var rec = PL.trades.filter(function(x){ return x.status === "accepted" && new Date(x.resolved_at || x.created_at).getTime() >= cut; });
+if (rec.length){
+h += '<h2 style="margin-top:18px">Recent trades <span class="why">last 3 days, whole league</span></h2><table><thead><tr><th>Date</th><th>Teams</th><th>Moved</th></tr></thead><tbody>';
+rec.forEach(function(x){ h += '<tr><td>' + esc(String(x.resolved_at || x.created_at).slice(0, 10)) + '</td><td>' + plTeamName(x.from_team) + ' &harr; ' + plTeamName(x.to_team) + '</td><td>' + plTeamName(x.from_team) + ' sent:<br>' + plTradeNames(x.give) + '<div style="margin-top:6px">' + plTeamName(x.to_team) + ' sent:<br>' + plTradeNames(x.get) + '</div></td></tr>'; });
+h += '</tbody></table>';
+}
+return h ? '<div style="margin:10px 0 16px">' + h + '</div>' : "";
+}
+function plTradesHtml(lg, me){
+if (!PL.trades.length) return '<div class="pl-note">No trades yet. To propose one, open a team\'s page (tap a team in Standings or Matchups) and tap Propose trade.</div>';
+  if (lg.status !== "active") return '<div class="pl-note">Trades open once the draft is finished.</div>';
+  if (!me) return '<div class="pl-note">Only managers in this league can trade.</div>';
+  var h = "";
+  h += plTradeBlocks(lg, me, function(){ return true; });
+var done = PL.trades.filter(function(t){ return ["pending", "review", "voting"].indexOf(t.status) < 0; }).slice(0, 12);
   if (done.length){
     var lab = { accepted: "Done", declined: "Declined", cancelled: "Cancelled", failed: "Failed", vetoed: "Vetoed" };
     h += '<h2 style="margin-top:18px">Trade history</h2><table><thead><tr><th>Date</th><th>Teams</th><th>Moved</th><th>Result</th></tr></thead><tbody>';
