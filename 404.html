@@ -1,0 +1,12 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Top Six Hockey</title><meta name="robots" content="noindex"></head>
+<body>
+<script>
+(function(){
+var p = location.pathname.split("/").filter(Boolean);
+if (p[0] === "fantasy" && p[1]) location.replace("/fantasy/" + location.search + "#pl/" + encodeURIComponent(p[1]) + (p[2] ? "/" + encodeURIComponent(p[2]) : ""));
+else location.replace("/");
+})();
+</script>
+<noscript><a href="/">Top Six Hockey</a></noscript>
+</body></html>
