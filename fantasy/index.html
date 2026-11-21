@@ -1303,7 +1303,7 @@ function plTransHtml(lg){
   var tabs = [["all","All Transactions"],["add","Added Players"],["drop","Dropped Players"],["trade","Trades"],["waiver","Waiver Offers"]];
   var h = '<div class="pl-sub">' + tabs.map(function(t){ return '<button class="pill' + (PL.tf === t[0] ? " on" : "") + '" data-pltf="' + t[0] + '">' + t[1] + '</button>'; }).join("") + '</div>';
   if (PL.tf === "waiver") return h + plClaimsHtml();
-  var rows = PL.trans.filter(function(x){ return x.kind !== "draft" && (PL.tf === "all" || x.kind === PL.tf); });
+  var rows = PL.trans.filter(function(x){ return x.kind !== "draft" && x.kind !== "ir_in" && x.kind !== "ir_out" && (PL.tf === "all" || x.kind === PL.tf); });
   if (!rows.length) return h + '<div class="pl-empty">There are no transactions to display.</div>';
   var kinds = { add: "Added", drop: "Dropped", draft: "Drafted", trade: "Trade", waiver: "Waiver", ir_in: "Injured reserve", ir_out: "Off injured reserve" };
   h += '<table><thead><tr><th>Date</th><th>Team</th><th>Move</th><th>Player</th></tr></thead><tbody>';
