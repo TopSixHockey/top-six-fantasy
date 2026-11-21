@@ -1242,7 +1242,7 @@ function render(k) {
   var bg = document.getElementById("bgimg"), want = BGS[k] || "rink.jpg"; if (bg && bg.getAttribute("src") !== want) bg.setAttribute("src", want);
   var c = C[k], d = L[k], out = document.getElementById("out");
   if (d) {
-    document.getElementById("game").innerHTML = d.game;
+    document.getElementById("game").innerHTML = String(d.game).replace(/^Tonight:/, "Today:");
 scStart(k, d);
     document.getElementById("note").textContent = d.note + " Updated " + d.updated + ".";
     out.innerHTML = section("Forwards", ["LW", "C", "RW"], d.F, c) + section("Defence", ["LD", "RD"], d.D, c) + section("Goalies", ["Starter", "Backup"], [d.G], c) + scratches(d.S, c);
