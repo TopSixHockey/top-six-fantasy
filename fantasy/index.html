@@ -1134,6 +1134,7 @@ function plRender(){
   else h += plLeagueHtml();
   box.innerHTML = h;
   plSyncTimers(); plChatSync(); if ($("drBar")) plDraftUpdate(true);
+if (PL.sub === "draft" && PL.mode === "list" && !PL.teamView && plLg() && PL.draftEnteredFor !== plLg().id){ PL.draftEnteredFor = plLg().id; setTimeout(plEnterDraft, 0); }
   plNoticeShow();
   if ($("faList")){ plFaList(); if ($("faPos")){ $("faPos").value = PL.fpos; $("faAge").value = PL.fage; $("faTag").value = PL.ftag; if ($("faShow")) $("faShow").value = PL.fshow; if ($("faPer")) $("faPer").value = PL.fper; } }
 }
