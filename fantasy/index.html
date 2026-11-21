@@ -1917,7 +1917,7 @@ function plMyTeamHtml(lg, me){
 }
 function plPlayersHtml(lg, me){
   if (lg.status !== "active") return '<div class="pl-note">Free agents open once the draft is finished.</div>';
-  var h = '<div class="pl-note">' + esc(plEffTxt(lg)) + plMoveInfo(lg, me) + ' Your roster stays at 12 forwards, 6 defence and 2 goalies (players on injured reserve do not count)' + (lg.use_quotas ? ', and the age, import and NHL-draft quotas still apply' : "") + ', so an add needs a drop at the same position unless you have an open spot.</div>';
+  var h = '<div class="pl-note">' + esc(plEffTxt(lg)) + '</div>';
   h += '<div id="faAdd">' + plAddPanel(lg, me) + '</div>';
   h += '<div class="dr-filters"><input type="search" id="faQ" placeholder="Search player or team" value="' + esc(PL.fq) + '">' +
     '<select id="faShow"><option value="">Free agents</option><option value="all">All players</option><option value="own">Rostered</option></select>' +
