@@ -12,6 +12,7 @@ import json
 import os
 import re
 import sys
+import unicodedata
 import urllib.parse
 import urllib.request
 
@@ -52,6 +53,39 @@ def injured_from_cards():
     return teams
 
 
+def norm(s):
+    s = unicodedata.normalize("NFD", str(s or "")).encode("ascii", "ignore").decode().lower()
+    return " ".join(re.sub(r"[^a-z ]", " ", s).split())
+
+
+def injured_from_report(names):
+    """Players on the weekly OHL / WHL injury report (the INJ object in index.html), matched to player ids."""
+    out = set()
+    try:
+        html = open(os.path.join(ROOT, "index.html"), encoding="utf-8").read()
+        a = html.index("var INJ = ") + len("var INJ = ")
+        text = html[a:html.index("\n", a)].strip().rstrip(";")
+        report = json.loads(text)
+    except (ValueError, OSError):
+        return out
+    for league in report.values():
+        for key, entries in (league.get("t") or {}).items():
+            prefix = key + "-"
+            cands = [(pid, norm(nm)) for pid, nm in names.items() if pid.startswith(prefix)]
+            for e in entries:
+                if len(e) > 5 and e[5] and (prefix + str(e[5])) in names:
+                    out.add(prefix + str(e[5]))
+                    continue
+                full = norm(str(e[0]) + " " + str(e[1]))
+                hit = [pid for pid, nm in cands if nm == full]
+                if not hit:
+                    last, first = full.split(" ")[-1], full[:1]
+                    hit = [pid for pid, nm in cands if nm.split(" ")[-1:] == [last] and nm[:1] == first]
+                if len(hit) == 1:
+                    out.add(hit[0])
+    return out
+
+
 def main():
     if not URL or not KEY:
         sys.exit("SUPABASE_URL / SUPABASE_SERVICE_KEY are not set")
@@ -63,13 +97,16 @@ def main():
         for r in rows:
             ids.add("%s-%s" % (key, r[0]))
     known = set()
+    names = {}
     offset = 0
     while True:
-        page = rest("GET", "players?select=id&order=id&limit=1000&offset=%d" % offset)
+        page = rest("GET", "players?select=id,name&order=id&limit=1000&offset=%d" % offset)
         known.update(p["id"] for p in page)
+        names.update((p["id"], p.get("name") or "") for p in page)
         if len(page) < 1000:
             break
         offset += 1000
+    ids |= injured_from_report(names)
     missing = sorted(ids - known)
     ids &= known
     current = set(r["player_id"] for r in rest("GET", "pinjuries?select=player_id&limit=5000"))
