@@ -1869,6 +1869,20 @@ function plDraftList(lg, me, my){
   h += '</tbody></table>' + (more ? '<div style="padding:8px;text-align:center"><button class="sec" data-pldmore="1">Show more</button></div>' : "");
   box.innerHTML = h;
 }
+function plDraftViewBar(){
+return '<div class="row" style="margin-bottom:8px;gap:6px"><button class="pill' + (PL.dv === "team" ? "" : " on") + '" data-pldv="pick">By pick</button><button class="pill' + (PL.dv === "team" ? " on" : "") + '" data-pldv="team">By team</button></div>';
+}
+function plDraftTeamHtml(lg, me){
+var nt = plNT(), tid = PL.dtm && plTeam(PL.dtm) ? PL.dtm : (me ? me.id : (PL.teams[0] || {}).id);
+var h = '<select id="drTm" style="margin-bottom:8px;max-width:100%">' + PL.teams.map(function(t){ return '<option value="' + esc(t.id) + '"' + (t.id === tid ? " selected" : "") + '>' + esc(t.name) + '</option>'; }).join("") + '</select><div class="dr-res">';
+var mine = PL.picks.filter(function(k){ return k.team_id === tid; }).sort(function(a, b){ return a.pick_no - b.pick_no; });
+if (!mine.length) h += '<div class="why">No picks yet.</div>';
+mine.forEach(function(k){
+var p = k.player_id ? BYID[k.player_id] : null, rd = Math.floor(k.pick_no / nt) + 1;
+h += '<div><i>Round ' + rd + '</i><b>#' + (k.pick_no + 1) + '</b> overall &middot; ' + (p ? '<span class="nmh" data-pid="' + esc(p.id) + '">' + esc(p.name) + '</span> <span class="dr-sub">' + esc(p.pos) + ' &middot; ' + esc(p.team) + (k.auto ? " &middot; auto" : "") + '</span>' : '<span class="why">skipped (no eligible player left)</span>') + '</div>';
+});
+return h + '</div>';
+}
 function plDraftSide(lg, me){
   var box = $("drSide"), h = "";
   if (PL.ds === "team"){
@@ -1882,7 +1896,8 @@ function plDraftSide(lg, me){
       h += '<div class="why">Ages: ' + [[2010,"16","min 1"],[2009,"17","min 4"],[2008,"18",""],[2007,"19",""],[2006,"20","min 1, max 2"]].map(function(a){ return a[1] + ': ' + (c.age[a[0]] || 0) + (a[2] ? ' (' + a[2] + ')' : ""); }).join(" &middot; ") + '<br>Imports ' + c.imp + ' (min 1, max 3) &middot; NHL-drafted ' + c.dr + '/5</div>';
     }
   } else {
-    h = '<div class="dr-res">';
+    if (PL.dv === "team"){ box.innerHTML = plDraftViewBar() + plDraftTeamHtml(lg, me); return; }
+h = plDraftViewBar() + '<div class="dr-res">';
     if (!PL.picks.length) h += '<div class="why">No picks yet.</div>';
     PL.picks.slice().reverse().forEach(function(k){
       var t = plTeam(k.team_id), p = k.player_id ? BYID[k.player_id] : null;
@@ -1956,7 +1971,8 @@ $("plView").addEventListener("click", async function(e){
   if (d.plsub === "draft"){ setTimeout(plEnterDraft, 0); return; }
   if (d.pldr){ await plDraftAct(d.pldr, t, d); return; }
   if (d.pldt){ PL.dt = d.pldt; PL.dshown = 60; plDraftUpdate(true); return; }
-  if (d.plds){ PL.ds = d.plds; plDraftUpdate(true); return; }
+  if (d.pldv){ PL.dv = d.pldv; plDraftUpdate(true); return; }
+if (d.plds){ PL.ds = d.plds; plDraftUpdate(true); return; }
   if (d.pldsort){ PL.dsort = d.pldsort; PL.dshown = 60; plDraftUpdate(true); return; }
   if (d.pldmore){ PL.dshown += 60; plDraftUpdate(true); return; }
   if (d.pldraft){
@@ -1981,6 +1997,7 @@ $("plView").addEventListener("input", function(e){
   if (id === "drQ"){ PL.dq = e.target.value; PL.dshown = 60; plDraftUpdate(true); }
   else if (id === "drPos"){ PL.dpos = e.target.value; PL.dshown = 60; if (PL.dpos === "G" && PL.dsort !== "name" && !{ gp:1, wins:1, so:1, svp:1, gaa:1, fp:1 }[PL.dsort]) PL.dsort = "fp"; plDraftUpdate(true); }
   else if (id === "drAge"){ PL.dage = e.target.value; PL.dshown = 60; plDraftUpdate(true); }
+else if (id === "drTm"){ PL.dtm = e.target.value; plDraftUpdate(true); }
 });
 
 /* ---- Private leagues: My team and free agents (add / drop) ---- */
