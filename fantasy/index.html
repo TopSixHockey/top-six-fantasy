@@ -271,6 +271,8 @@ td.pos{color:var(--ok)}td.neg{color:var(--bad)}td.pts{color:#ff9f43}td.fp{font-w
 .dr-scroll table{margin:0}
 .dr-scroll td,.dr-scroll th{white-space:nowrap}
 .dr-scroll th[data-pldsort]{cursor:pointer}
+.dr-scroll th[data-plfsort]{cursor:pointer;user-select:none}
+.dr-scroll th[data-plfsort]:hover{color:var(--tx)}
 .dr-scroll td.pn{white-space:normal;min-width:150px}
 .dr-sub{font-size:11px;color:var(--mute)}
 .ir-x{color:#ff5a5a;font-weight:700}
@@ -1111,7 +1113,7 @@ function plRender(){
   box.innerHTML = h;
   plSyncTimers(); if ($("drBar")) plDraftUpdate(true);
   plNoticeShow();
-  if ($("faList")){ plFaList(); if ($("faPos")){ $("faPos").value = PL.fpos; $("faAge").value = PL.fage; $("faTag").value = PL.ftag; } }
+  if ($("faList")){ plFaList(); if ($("faPos")){ $("faPos").value = PL.fpos; $("faAge").value = PL.fage; $("faTag").value = PL.ftag; if ($("faShow")) $("faShow").value = PL.fshow; } }
 }
 function plOpts(vals, sel){ return vals.map(function(v){ return '<option value="' + v + '"' + (String(v) === String(sel) ? " selected" : "") + '>' + v + '</option>'; }).join(""); }
 function plCreateHtml(){
@@ -1845,7 +1847,7 @@ $("plView").addEventListener("input", function(e){
 });
 
 /* ---- Private leagues: My team and free agents (add / drop) ---- */
-PL.roster = []; PL.fq = ""; PL.fpos = ""; PL.fage = ""; PL.ftag = ""; PL.fsort = "fp"; PL.fshown = 60; PL.addPid = null; PL.dropPid = null;
+PL.roster = []; PL.fq = ""; PL.fpos = ""; PL.fage = ""; PL.ftag = ""; PL.fshow = ""; PL.fsort = "fp"; PL.fshown = 60; PL.addPid = null; PL.dropPid = null;
 var AGELBL = { 2010: 16, 2009: 17, 2008: 18, 2007: 19, 2006: 20 };
 function plEff(lg){ var t = plDay(plToday()); return t < plDay(lg.start_date) ? 1 : Math.floor((t - plDay(lg.start_date)) / 7) + 2; }
 function plEffTxt(lg){ var e = plEff(lg); return e > lg.weeks ? "The season is over." : "Moves take effect Monday " + plWeekStart(lg, e) + " (Week " + e + "). A dropped player keeps scoring for you until then, and an added player starts scoring then."; }
@@ -1918,9 +1920,10 @@ function plPlayersHtml(lg, me){
   var h = '<div class="pl-note">' + esc(plEffTxt(lg)) + plMoveInfo(lg, me) + ' Your roster stays at 12 forwards, 6 defence and 2 goalies (players on injured reserve do not count)' + (lg.use_quotas ? ', and the age, import and NHL-draft quotas still apply' : "") + ', so an add needs a drop at the same position unless you have an open spot.</div>';
   h += '<div id="faAdd">' + plAddPanel(lg, me) + '</div>';
   h += '<div class="dr-filters"><input type="search" id="faQ" placeholder="Search player or team" value="' + esc(PL.fq) + '">' +
+    '<select id="faShow"><option value="">Free agents</option><option value="all">All players</option><option value="own">Rostered</option></select>' +
     '<select id="faPos"><option value="">All positions</option><option value="F">Forwards</option><option value="D">Defence</option><option value="G">Goalies</option></select>' +
     '<select id="faAge"><option value="">All ages</option><option value="2010">16</option><option value="2009">17</option><option value="2008">18</option><option value="2007">19</option><option value="2006">20</option></select>' +
-    '<select id="faTag"><option value="">All players</option><option value="imp">Imports</option><option value="dr">NHL drafted</option></select></div>' +
+    '<select id="faTag"><option value="">All types</option><option value="imp">Imports</option><option value="dr">NHL drafted</option></select></div>' +
     '<div class="dr-scroll" id="faList"></div>';
   return h;
 }
@@ -1938,7 +1941,8 @@ function plFaList(){
   var owned = plOwned(), wv = plWaiverMap(), capped = plCapped(lg, me), s = PL.fq.trim().toLowerCase(), rk = {}, rn = 0;
   POOL.forEach(function(p){ if (p.lgn === lg.chl_league) rk[p.id] = ++rn; });
   var rows = POOL.filter(function(p){
-    if (p.lgn !== lg.chl_league || owned[p.id]) return false;
+    if (p.lgn !== lg.chl_league) return false;
+    if (PL.fshow === "own" ? !owned[p.id] : (PL.fshow !== "all" && owned[p.id])) return false;
     if (PL.fpos && p.g !== PL.fpos) return false;
     if (PL.fage && String(p.ay) !== PL.fage) return false;
     if (PL.ftag === "imp" && !p.imp) return false;
@@ -1948,13 +1952,13 @@ function plFaList(){
   });
   var key = PL.fsort;
   rows = rows.slice().sort(function(a, b){ var x = key === "name" ? a.name : statVal(a, key), y = key === "name" ? b.name : statVal(b, key); if (key === "name") return x.localeCompare(y); if (x == null && y == null) return 0; if (x == null) return 1; if (y == null) return -1; return (key === "gaa" ? x - y : y - x) || (b.fp - a.fp); });
-  var cols = PL.fpos === "G" ? COLS_G : [["gp","GP"],["g","G"],["a","A"],["pts","P"],["pm","+/-"],["fp","FPts"]];
-  var h = '<table><thead><tr><th>Rk</th><th data-plfsort="name">Player</th>' + cols.map(function(c){ return '<th data-plfsort="' + c[0] + '">' + c[1] + (PL.fsort === c[0] ? " &#9660;" : "") + '</th>'; }).join("") + '<th></th></tr></thead><tbody>';
+  var cols = PL.fpos === "G" ? COLS_G : [["gp","GP"],["g","G"],["a","A"],["pts","P"],["pm","+/-"],["shots","SOG"],["pim","PIM"],["fp","FPts"]];
+  var h = '<table><thead><tr><th>Rk</th><th data-plfsort="name">Player</th>' + cols.map(function(c){ return '<th data-plfsort="' + c[0] + '">' + c[1] + (PL.fsort === c[0] ? " &#9660;" : "") + '</th>'; }).join("") + '<th>' + (PL.fshow ? "Owner" : "") + '</th></tr></thead><tbody>';
   rows.slice(0, PL.fshown).forEach(function(p){
     var extra = p.g === "G" && PL.fpos !== "G" ? '<div class="dr-sub">W ' + num(p.s.wins) + ' &middot; SV% ' + (p.s.svp != null ? fmtStat("svp", p.s.svp) : "-") + ' &middot; GAA ' + (p.s.gaa != null ? fmtStat("gaa", p.s.gaa) : "-") + '</div>' : "";
-    h += '<tr><td class="why">' + rk[p.id] + '</td><td class="pn">' + plPlayerCell(p, lg) + extra + (wv[p.id] ? '<div class="dr-sub">On waivers until ' + esc(plWhenShort(wv[p.id].until)) + '</div>' : "") + '</td>' + cols.map(function(c){ return '<td' + (c[0] === "pts" ? ' class="pts"' : '') + '>' + fmtStat(c[0], statVal(p, c[0])) + '</td>'; }).join("") + '<td>' + plAddBtn(p, wv, capped) + '</td></tr>';
+    h += '<tr><td class="why">' + rk[p.id] + '</td><td class="pn">' + plPlayerCell(p, lg) + extra + (wv[p.id] ? '<div class="dr-sub">On waivers until ' + esc(plWhenShort(wv[p.id].until)) + '</div>' : "") + '</td>' + cols.map(function(c){ return '<td' + (c[0] === "pts" ? ' class="pts"' : '') + '>' + fmtStat(c[0], statVal(p, c[0])) + '</td>'; }).join("") + '<td>' + (owned[p.id] ? '<span class="why">' + plTeamName(owned[p.id]) + '</span>' : plAddBtn(p, wv, capped)) + '</td></tr>';
   });
-  if (!rows.length) h += '<tr><td colspan="' + (cols.length + 3) + '" class="pl-empty">No free agents match.</td></tr>';
+  if (!rows.length) h += '<tr><td colspan="' + (cols.length + 3) + '" class="pl-empty">No players match.</td></tr>';
   h += '</tbody></table>' + (rows.length > PL.fshown ? '<div style="padding:8px;text-align:center"><button class="sec" data-plfmore="1">Show more</button></div>' : "");
   box.innerHTML = h;
 }
@@ -1989,6 +1993,7 @@ $("plView").addEventListener("input", function(e){
   if (id === "faQ"){ PL.fq = e.target.value; PL.fshown = 60; plFaList(); }
   else if (id === "faPos"){ PL.fpos = e.target.value; PL.fshown = 60; if (PL.fpos === "G" && PL.fsort !== "name" && !{ gp:1, wins:1, so:1, svp:1, gaa:1, fp:1 }[PL.fsort]) PL.fsort = "fp"; plFaList(); }
   else if (id === "faAge"){ PL.fage = e.target.value; PL.fshown = 60; plFaList(); }
+  else if (id === "faShow"){ PL.fshow = e.target.value; PL.fshown = 60; plFaList(); }
   else if (id === "faTag"){ PL.ftag = e.target.value; PL.fshown = 60; plFaList(); }
 });
 
