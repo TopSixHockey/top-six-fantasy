@@ -1,6 +1,6 @@
 {
- "inj:ohl": 1795313527.773598,
- "inj:whl": 1795313527.773598,
+ "inj:ohl": 1795326174.740693,
+ "inj:whl": 1795326174.740693,
  "ohl:29211:away": {
   "done": true,
   "flipped": true
@@ -380,11 +380,11 @@
  },
  "whl:1023331:away": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "whl:1023331:home": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "whl:1023332:away": {
   "done": true,
