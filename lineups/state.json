@@ -93,6 +93,14 @@
   "done": true,
   "flipped": true
  },
+ "ohl:29224:away": {
+  "done": true,
+  "flipped": false
+ },
+ "ohl:29224:home": {
+  "done": true,
+  "flipped": false
+ },
  "ohl:29225:away": {
   "done": true,
   "flipped": false
@@ -103,11 +111,11 @@
  },
  "ohl:29226:away": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "ohl:29226:home": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "ohl:29227:away": {
   "done": true,
@@ -160,11 +168,11 @@
  },
  "qmjhl:32789:away": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "qmjhl:32789:home": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "qmjhl:32854:home": {
   "done": true,
@@ -314,6 +322,14 @@
   "done": true,
   "flipped": true
  },
+ "whl:1023325:away": {
+  "done": true,
+  "flipped": false
+ },
+ "whl:1023325:home": {
+  "done": true,
+  "flipped": false
+ },
  "whl:1023326:away": {
   "done": true,
   "flipped": false
@@ -327,6 +343,14 @@
   "flipped": false
  },
  "whl:1023327:home": {
+  "done": true,
+  "flipped": false
+ },
+ "whl:1023328:away": {
+  "done": true,
+  "flipped": false
+ },
+ "whl:1023328:home": {
   "done": true,
   "flipped": false
  },
