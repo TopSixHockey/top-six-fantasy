@@ -1191,7 +1191,7 @@ async function histLoad(lg, nm, num, team) {
   var ck = lg + "|" + nm + "|" + num; if (HIST[ck]) return HIST[ck];
   var base = "https://lscluster.hockeytech.com/feed/index.php?feed=modulekit&key=f1aa699db3d81487&lang=en&fmt=json&client_code=" + lg;
   var q = nm.split(" "), last = q[q.length - 1], want = injNrm(nm), pid = null;
-  var terms = [nm, last];
+  var terms = [nm, last].map(function (t) { return t.replace(/['\u2019`.]/g, " ").replace(/\s+/g, " ").trim(); });
   for (var i = 0; i < terms.length && !pid; i++) {
     var s = await histFetch(base + "&view=searchplayers&search_term=" + encodeURIComponent(terms[i]));
     var arr = (s.SiteKit && s.SiteKit.Searchplayers) || [];
