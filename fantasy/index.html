@@ -1435,12 +1435,45 @@ function cutBase(src, bg, tol){
     if (d[j + 3] < 16){ dd[p] = 0; continue; }
     dd[p] = Math.sqrt((d[j] - bg[0]) * (d[j] - bg[0]) + (d[j + 1] - bg[1]) * (d[j + 1] - bg[1]) + (d[j + 2] - bg[2]) * (d[j + 2] - bg[2]));
   }
-  function seed(s){ if (!rem[s] && dd[s] <= tol){ rem[s] = 1; q[qe++] = s; } }
+  /* only wide background areas count: thin channels (like a stick's white edge) are ignored, so white inside the logo survives */
+  var rr = Math.max(2, Math.round(w * 0.015)), cand = new Uint8Array(n), ds = new Uint16Array(n), dp = new Uint8Array(n), nx, ny, ddx, ddy, np;
+  for (p = 0; p < n; p++){ cand[p] = dd[p] <= tol ? 1 : 0; ds[p] = cand[p] ? 60000 : 0; }
+  for (y = 0; y < h; y++) for (x = 0; x < w; x++){
+    p = y * w + x; if (!ds[p]) continue; v = ds[p];
+    if (x > 0 && ds[p - 1] + 1 < v) v = ds[p - 1] + 1;
+    if (y > 0){
+      if (ds[p - w] + 1 < v) v = ds[p - w] + 1;
+      if (x > 0 && ds[p - w - 1] + 1 < v) v = ds[p - w - 1] + 1;
+      if (x < w - 1 && ds[p - w + 1] + 1 < v) v = ds[p - w + 1] + 1;
+    }
+    ds[p] = v;
+  }
+  for (y = h - 1; y >= 0; y--) for (x = w - 1; x >= 0; x--){
+    p = y * w + x; if (!ds[p]) continue; v = ds[p];
+    if (x < w - 1 && ds[p + 1] + 1 < v) v = ds[p + 1] + 1;
+    if (y < h - 1){
+      if (ds[p + w] + 1 < v) v = ds[p + w] + 1;
+      if (x < w - 1 && ds[p + w + 1] + 1 < v) v = ds[p + w + 1] + 1;
+      if (x > 0 && ds[p + w - 1] + 1 < v) v = ds[p + w - 1] + 1;
+    }
+    ds[p] = v;
+  }
+  function seed(s){ if (!rem[s] && cand[s] && ds[s] > rr){ rem[s] = 1; q[qe++] = s; } }
   for (x = 0; x < w; x++){ seed(x); seed((h - 1) * w + x); }
   for (y = 0; y < h; y++){ seed(y * w); seed(y * w + w - 1); }
   while (qs < qe){
     p = q[qs++]; x = p % w; y = (p / w) | 0;
     if (x > 0) seed(p - 1); if (x < w - 1) seed(p + 1); if (y > 0) seed(p - w); if (y < h - 1) seed(p + w);
+  }
+  qs = 0;
+  while (qs < qe){
+    p = q[qs++]; if (dp[p] >= rr) continue;
+    x = p % w; y = (p / w) | 0;
+    for (ddy = -1; ddy <= 1; ddy++) for (ddx = -1; ddx <= 1; ddx++){
+      nx = x + ddx; ny = y + ddy; if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+      np = ny * w + nx;
+      if (cand[np] && !rem[np]){ rem[np] = 1; dp[np] = dp[p] + 1; q[qe++] = np; }
+    }
   }
   for (p = 0; p < n; p++){
     j = p * 4;
