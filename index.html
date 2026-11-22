@@ -1203,7 +1203,7 @@ async function histLoad(lg, nm, num, team) {
   if (!pid) return { none: 1 };
   var p = await histFetch(base + "&view=player&category=seasonstats&player_id=" + pid);
   var P = (p.SiteKit && p.SiteKit.Player) || {}, cur = String(p.SiteKit && p.SiteKit.Parameters && p.SiteKit.Parameters.season_id);
-  function prep(a) { return (a || []).filter(function (r) { return String(r.season_id) !== cur; }).sort(function (a, b) { return String(b.max_start_date || "").localeCompare(String(a.max_start_date || "")) || (+b.season_id - +a.season_id); }); }
+  function prep(a) { return (a || []).filter(function (r) { return String(r.season_id) !== cur && r.team_name && !/^total$/i.test(String(r.season_name || "")); }).sort(function (a, b) { return String(b.max_start_date || "").localeCompare(String(a.max_start_date || "")) || (+b.season_id - +a.season_id); }); }
   return (HIST[ck] = { reg: prep(P.regular), po: prep(P.playoff) });
 }
 function histTable(rows, g, po) {
