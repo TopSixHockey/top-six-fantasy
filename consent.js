@@ -82,7 +82,7 @@
     var v = read();
     if (v === 'granted') { enable(); reopen.style.display = 'block'; }
     else if (v === 'denied') { disable(); reopen.style.display = 'block'; }
-    else { box.style.display = 'block'; }
+    else { disable(); box.style.display = 'block'; }
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();
