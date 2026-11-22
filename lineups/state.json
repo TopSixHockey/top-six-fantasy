@@ -125,7 +125,7 @@
   "done": true,
   "flipped": false
  },
- "players_full": "2026-11-21T17:17:03.053969-05:00",
+ "players_full": "2026-11-21T22:02:22.667688-05:00",
  "qmjhl:32662:away": {
   "done": true,
   "flipped": true
@@ -340,19 +340,19 @@
  },
  "whl:1023326:away": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "whl:1023326:home": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "whl:1023327:away": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "whl:1023327:home": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "whl:1023328:away": {
   "done": true,
@@ -364,11 +364,11 @@
  },
  "whl:1023329:away": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "whl:1023329:home": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "whl:1023330:away": {
   "done": true,
