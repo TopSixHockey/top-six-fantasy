@@ -231,6 +231,15 @@ td.pos{color:var(--ok)}td.neg{color:var(--bad)}td.pts{color:#ff9f43}td.fp{font-w
 .crop-stage.round::after{content:"";position:absolute;inset:0;border-radius:50%;box-shadow:0 0 0 999px rgba(11,29,58,.62);outline:2px solid rgba(255,255,255,.7);outline-offset:-2px;pointer-events:none}
 .crop-zoom{display:flex;gap:8px;align-items:center;width:100%;max-width:360px}
 .crop-zoom input{flex:1}
+.crop-cut{display:flex;flex-direction:column;gap:8px;width:100%;max-width:360px;font-size:14px}
+.crop-cut label{display:flex;gap:8px;align-items:center}
+.crop-cut .cut-opts{display:flex;flex-direction:column;gap:8px}
+.crop-cut input[type=range]{flex:1}
+.crop-cut input[type=checkbox]{width:auto;margin:0;flex:none}
+.cut-sw{display:inline-block;width:20px;height:20px;border-radius:4px;border:1px solid rgba(255,255,255,.5)}
+.crop-stage.chk{background-color:#e9edf3;background-image:linear-gradient(45deg,#c9d1dc 25%,transparent 25%,transparent 75%,#c9d1dc 75%),linear-gradient(45deg,#c9d1dc 25%,transparent 25%,transparent 75%,#c9d1dc 75%);background-size:16px 16px;background-position:0 0,8px 8px}
+.mu-av.nb{background:transparent!important;border-color:transparent!important;border-radius:0;overflow:visible}
+.mu-av.nb img{object-fit:contain}
 .lgcv{aspect-ratio:1200/300;margin:6px 0 14px}
 .lgcv-btns{position:absolute;right:10px;bottom:10px;display:flex;gap:6px;z-index:2;opacity:0;pointer-events:none;transition:opacity .15s}
 .lgcv:hover .lgcv-btns,.lgcv-btns:focus-within{opacity:1;pointer-events:auto}
@@ -1233,7 +1242,7 @@ function plAvatar(t, nolink){
   var nm = t ? t.name : "?", s = t ? t.id : nm, hue = 0, i, lk = t && !nolink ? ' data-plteam="' + esc(t.id) + '"' : "";
   var ini = nm.replace(/[^A-Za-z0-9 ]/g, "").split(/\s+/).filter(Boolean).slice(0, 2).map(function(x){ return x.charAt(0); }).join("").toUpperCase() || "?";
   for (i = 0; i < s.length; i++) hue = (hue * 31 + s.charCodeAt(i)) % 360;
-  if (t && t.logo_url) return '<span class="mu-av"' + lk + ' style="background:#1b2430"><img src="' + esc(t.logo_url) + '" alt=""></span>';
+  if (t && t.logo_url) return '<span class="mu-av' + (t.logo_url.indexOf("-cut.png") > 0 ? " nb" : "") + '"' + lk + ' style="background:#1b2430"><img src="' + esc(t.logo_url) + '" alt=""></span>';
   return '<span class="mu-av"' + lk + ' style="background:hsl(' + hue + ',50%,36%)">' + esc(ini) + '</span>';
 }
 function plIso(d){ return new Date(d * 864e5).toISOString().slice(0, 10); }
@@ -1398,6 +1407,74 @@ async function plDo(fn, okMsg){
   try { var r = await fn(); if (r && r.error) throw r.error; if (okMsg) plMsg(okMsg, true); return r; }
   catch (e){ plMsg((e && e.message) || String(e)); return null; }
 }
+/* ---- Logo background removal ---- */
+var CUT_UI = '<div class="crop-cut"><label><input type="checkbox" data-k="cut"> Remove background</label><div class="cut-opts" style="display:none"><label>Sensitivity <input type="range" data-k="tol" min="8" max="120" step="1" value="40"></label><label><input type="checkbox" data-k="ol"> White outline</label><label>Colour removed <i class="cut-sw"></i></label></div><small class="note cut-hint" style="display:none">Tap the background to choose a different colour to remove. Zoom out with the slider to leave room for the outline.</small></div>';
+function cutGuess(d, w, h){
+  var cnt = {}, sum = {}, best = "", bc = 0, x, y;
+  function add(px){
+    var i = px * 4, k;
+    if (d[i + 3] < 16) return;
+    k = (d[i] >> 4) + "," + (d[i + 1] >> 4) + "," + (d[i + 2] >> 4);
+    if (!cnt[k]){ cnt[k] = 0; sum[k] = [0, 0, 0]; }
+    cnt[k]++; sum[k][0] += d[i]; sum[k][1] += d[i + 1]; sum[k][2] += d[i + 2];
+    if (cnt[k] > bc){ bc = cnt[k]; best = k; }
+  }
+  for (x = 0; x < w; x++){ add(x); add((h - 1) * w + x); }
+  for (y = 0; y < h; y++){ add(y * w); add(y * w + w - 1); }
+  if (!bc) return [255, 255, 255];
+  return [Math.round(sum[best][0] / bc), Math.round(sum[best][1] / bc), Math.round(sum[best][2] / bc)];
+}
+/* removes only the background that touches the edge, so white inside the logo stays */
+function cutBase(src, bg, tol){
+  var w = src.width, h = src.height, id = src.getContext("2d").getImageData(0, 0, w, h), d = id.data, n = w * h;
+  var rem = new Uint8Array(n), q = new Int32Array(n), dd = new Float32Array(n), qs = 0, qe = 0, p, x, y, j, c, a, v, nr;
+  var er = 0, eg = 0, eb = 0, ew = 0;
+  bg = bg || cutGuess(d, w, h);
+  for (p = 0; p < n; p++){
+    j = p * 4;
+    if (d[j + 3] < 16){ dd[p] = 0; continue; }
+    dd[p] = Math.sqrt((d[j] - bg[0]) * (d[j] - bg[0]) + (d[j + 1] - bg[1]) * (d[j + 1] - bg[1]) + (d[j + 2] - bg[2]) * (d[j + 2] - bg[2]));
+  }
+  function seed(s){ if (!rem[s] && dd[s] <= tol){ rem[s] = 1; q[qe++] = s; } }
+  for (x = 0; x < w; x++){ seed(x); seed((h - 1) * w + x); }
+  for (y = 0; y < h; y++){ seed(y * w); seed(y * w + w - 1); }
+  while (qs < qe){
+    p = q[qs++]; x = p % w; y = (p / w) | 0;
+    if (x > 0) seed(p - 1); if (x < w - 1) seed(p + 1); if (y > 0) seed(p - w); if (y < h - 1) seed(p + w);
+  }
+  for (p = 0; p < n; p++){
+    j = p * 4;
+    if (rem[p]){ d[j + 3] = 0; continue; }
+    x = p % w; y = (p / w) | 0;
+    nr = (x > 0 && rem[p - 1]) || (x < w - 1 && rem[p + 1]) || (y > 0 && rem[p - w]) || (y < h - 1 && rem[p + w]);
+    if (!nr) continue;
+    if (dd[p] < tol * 2){
+      a = (dd[p] - tol) / tol; if (a < 0) a = 0; if (a > 1) a = 1;
+      if (a > 0.15){
+        for (c = 0; c < 3; c++){ v = (d[j + c] - (1 - a) * bg[c]) / a; d[j + c] = v < 0 ? 0 : v > 255 ? 255 : v; }
+      }
+      d[j + 3] = Math.round(d[j + 3] * a);
+    }
+    if (d[j + 3] > 0){ a = d[j + 3] / 255; er += d[j] * a; eg += d[j + 1] * a; eb += d[j + 2] * a; ew += a; }
+  }
+  var out = document.createElement("canvas"); out.width = w; out.height = h; out.getContext("2d").putImageData(id, 0, 0);
+  var need = false;
+  if (ew > 20){
+    er /= ew; eg /= ew; eb /= ew;
+    var lum = 0.299 * er + 0.587 * eg + 0.114 * eb;
+    need = lum < 120 || (eb > er + 25 && eb > eg && lum < 160);
+  }
+  return { c: out, need: need, bg: bg };
+}
+function cutOutline(c){
+  var w = c.width, h = c.height, r = Math.max(2, Math.round(w * 0.022)), s = document.createElement("canvas"), o = document.createElement("canvas"), sg, og, k, a, ring;
+  s.width = o.width = w; s.height = o.height = h;
+  sg = s.getContext("2d"); sg.drawImage(c, 0, 0); sg.globalCompositeOperation = "source-in"; sg.fillStyle = "#ffffff"; sg.fillRect(0, 0, w, h);
+  og = o.getContext("2d");
+  for (ring = 1; ring <= 2; ring++) for (k = 0; k < 24; k++){ a = k * Math.PI / 12; og.drawImage(s, Math.cos(a) * r * ring / 2, Math.sin(a) * r * ring / 2); }
+  og.drawImage(c, 0, 0);
+  return o;
+}
 function plCrop(f, o){
   return new Promise(function(done){
     var url = URL.createObjectURL(f), img = new Image();
@@ -1406,15 +1483,46 @@ function plCrop(f, o){
       var W = Math.min(o.w > o.h ? 720 : 320, window.innerWidth - 72), H = Math.round(W * o.h / o.w);
       var iw = img.width, ih = img.height, base = Math.max(W / iw, H / ih), z = 1, ox = (W - iw * base) / 2, oy = (H - ih * base) / 2;
       var bk = document.createElement("div"); bk.className = "crop-bk";
-      bk.innerHTML = '<div class="crop-box"><h2>' + o.title + '</h2><div class="crop-stage' + (o.round ? " round" : "") + '" style="width:' + W + 'px;height:' + H + 'px"><canvas width="' + W + '" height="' + H + '"></canvas></div><div class="crop-zoom"><span>&minus;</span><input type="range" min="1" max="4" step="0.01" value="1" aria-label="Zoom"><span>+</span></div><small class="note">Drag the photo to move it. Use the slider or mouse wheel to zoom.</small><div class="row"><button data-c="ok">Save</button><button class="sec" data-c="reset">Reset</button><button class="sec" data-c="no">Cancel</button></div></div>';
+      bk.innerHTML = '<div class="crop-box"><h2>' + o.title + '</h2><div class="crop-stage' + (o.round ? " round" : "") + '" style="width:' + W + 'px;height:' + H + 'px"><canvas width="' + W + '" height="' + H + '"></canvas></div><div class="crop-zoom"><span>&minus;</span><input type="range" min="1" max="4" step="0.01" value="1" aria-label="Zoom"><span>+</span></div>' + (o.cut ? CUT_UI : "") + '<small class="note">Drag the photo to move it. Use the slider or mouse wheel to zoom.</small><div class="row"><button data-c="ok">Save</button><button class="sec" data-c="reset">Reset</button><button class="sec" data-c="no">Cancel</button></div></div>';
       document.body.appendChild(bk);
       var st = bk.querySelector(".crop-stage"), cv = bk.querySelector("canvas"), g = cv.getContext("2d"), rg = bk.querySelector("input");
+      var cutOn = false, olOn = false, olTouched = false, bgPick = null, tmp = null, zmin = 1, sp = { x: 0, y: 0 };
+      var cutEl = bk.querySelector('[data-k="cut"]'), opts = bk.querySelector(".cut-opts"), tolEl = bk.querySelector('[data-k="tol"]'), olEl = bk.querySelector('[data-k="ol"]'), swEl = bk.querySelector(".cut-sw"), hintEl = bk.querySelector(".cut-hint");
+      function compose(src){
+        var cb = cutBase(src, bgPick, +tolEl.value);
+        if (!olTouched){ olOn = cb.need; olEl.checked = olOn; }
+        if (swEl) swEl.style.background = "rgb(" + cb.bg.join(",") + ")";
+        return olOn ? cutOutline(cb.c) : cb.c;
+      }
       function draw(){
-        var s = base * z; ox = Math.min(0, Math.max(W - iw * s, ox)); oy = Math.min(0, Math.max(H - ih * s, oy));
-        g.clearRect(0, 0, W, H); g.drawImage(img, ox, oy, iw * s, ih * s);
+        var s = base * z, lo, hi;
+        lo = Math.min(0, W - iw * s); hi = Math.max(0, W - iw * s); ox = Math.min(hi, Math.max(lo, ox));
+        lo = Math.min(0, H - ih * s); hi = Math.max(0, H - ih * s); oy = Math.min(hi, Math.max(lo, oy));
+        g.clearRect(0, 0, W, H);
+        if (cutOn){
+          if (!tmp){ tmp = document.createElement("canvas"); tmp.width = W; tmp.height = H; }
+          var tg = tmp.getContext("2d"); tg.clearRect(0, 0, W, H); tg.drawImage(img, ox, oy, iw * s, ih * s);
+          g.drawImage(compose(tmp), 0, 0);
+        } else g.drawImage(img, ox, oy, iw * s, ih * s);
+      }
+      if (cutEl){
+        cutEl.addEventListener("change", function(){
+          cutOn = cutEl.checked; opts.style.display = cutOn ? "" : "none"; hintEl.style.display = cutOn ? "" : "none";
+          st.classList.toggle("chk", cutOn); zmin = cutOn ? 0.5 : 1; rg.min = zmin;
+          if (!cutOn && z < 1){ z = 1; rg.value = 1; }
+          draw();
+        });
+        tolEl.addEventListener("input", draw);
+        olEl.addEventListener("change", function(){ olTouched = true; olOn = olEl.checked; draw(); });
+      }
+      function pickAt(e){
+        if (!tmp) return;
+        var r = st.getBoundingClientRect(), x = Math.max(0, Math.min(W - 1, Math.round(e.clientX - r.left))), y = Math.max(0, Math.min(H - 1, Math.round(e.clientY - r.top)));
+        var d = tmp.getContext("2d").getImageData(x, y, 1, 1).data;
+        if (d[3] > 16){ bgPick = [d[0], d[1], d[2]]; draw(); }
       }
       function zoom(nz, px, py){
-        nz = Math.min(4, Math.max(1, nz)); var s0 = base * z, s1 = base * nz;
+        nz = Math.min(4, Math.max(zmin, nz)); var s0 = base * z, s1 = base * nz;
         ox = px - (px - ox) * s1 / s0; oy = py - (py - oy) * s1 / s0; z = nz; rg.value = z; draw();
       }
       function end(res){ document.removeEventListener("keydown", key); URL.revokeObjectURL(url); bk.remove(); done(res); }
@@ -1423,7 +1531,7 @@ function plCrop(f, o){
       var ptr = {}, pd = 0;
       function cnt(){ return Object.keys(ptr).length; }
       function dist(){ var a = Object.keys(ptr).map(function(k){ return ptr[k]; }); return Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y); }
-      st.addEventListener("pointerdown", function(e){ st.setPointerCapture(e.pointerId); ptr[e.pointerId] = { x: e.clientX, y: e.clientY }; if (cnt() === 2) pd = dist(); st.style.cursor = "grabbing"; });
+      st.addEventListener("pointerdown", function(e){ st.setPointerCapture(e.pointerId); ptr[e.pointerId] = { x: e.clientX, y: e.clientY }; sp = { x: e.clientX, y: e.clientY }; if (cnt() === 2) pd = dist(); st.style.cursor = "grabbing"; });
       st.addEventListener("pointermove", function(e){
         var p = ptr[e.pointerId]; if (!p) return;
         if (cnt() === 2){
@@ -1431,7 +1539,7 @@ function plCrop(f, o){
         }
         ox += e.clientX - p.x; oy += e.clientY - p.y; p.x = e.clientX; p.y = e.clientY; draw();
       });
-      function up(e){ delete ptr[e.pointerId]; pd = 0; st.style.cursor = ""; }
+      function up(e){ if (cutOn && e.type === "pointerup" && cnt() === 1 && ptr[e.pointerId] && Math.hypot(e.clientX - sp.x, e.clientY - sp.y) < 5) pickAt(e); delete ptr[e.pointerId]; pd = 0; st.style.cursor = ""; }
       st.addEventListener("pointerup", up); st.addEventListener("pointercancel", up);
       st.addEventListener("wheel", function(e){
         e.preventDefault(); var r = st.getBoundingClientRect();
@@ -1441,12 +1549,12 @@ function plCrop(f, o){
       bk.addEventListener("click", function(e){
         var c = e.target.getAttribute && e.target.getAttribute("data-c");
         if (e.target === bk || c === "no") return end(null);
-        if (c === "reset"){ z = 1; rg.value = 1; ox = (W - iw * base) / 2; oy = (H - ih * base) / 2; draw(); }
+        if (c === "reset"){ bgPick = null; olTouched = false; z = 1; rg.value = 1; ox = (W - iw * base) / 2; oy = (H - ih * base) / 2; draw(); }
         if (c === "ok"){
           var k = o.w / W, s = base * z * k, out = document.createElement("canvas"); out.width = o.w; out.height = o.h;
-          var og = out.getContext("2d"); og.fillStyle = "#ffffff"; og.fillRect(0, 0, o.w, o.h);
+          var og = out.getContext("2d"); if (!cutOn){ og.fillStyle = "#ffffff"; og.fillRect(0, 0, o.w, o.h); }
           og.drawImage(img, ox * k, oy * k, iw * s, ih * s);
-          out.toBlob(function(b){ end(b); }, o.type, o.q);
+          if (cutOn){ o.cutUsed = true; compose(out).toBlob(function(b){ end(b); }, "image/png"); } else out.toBlob(function(b){ end(b); }, o.type, o.q);
         }
       });
       draw();
@@ -1461,9 +1569,11 @@ async function plUploadLogo(inp){
   if (f.size > 15e6){ plMsg("That photo is too large. Pick one under 15 MB."); return; }
   try {
     var type = f.type === "image/png" ? "image/png" : "image/jpeg";
-    var blob = await plCrop(f, { w: 256, h: 256, round: 1, title: "Position your team logo", type: type, q: 0.88 });
+    var opt = { w: 256, h: 256, round: 1, title: "Position your team logo", type: type, q: 0.88, cut: 1 };
+    var blob = await plCrop(f, opt);
     inp.value = ""; if (!blob) return;
-    var path = user.id + "/" + me.id + "-" + Date.now() + (type === "image/png" ? ".png" : ".jpg");
+    if (opt.cutUsed) type = "image/png";
+    var path = user.id + "/" + me.id + "-" + Date.now() + (opt.cutUsed ? "-cut.png" : type === "image/png" ? ".png" : ".jpg");
     var up = await SB.storage.from("team-logos").upload(path, blob, { contentType: type, upsert: false });
     if (up.error) throw up.error;
     var pub = SB.storage.from("team-logos").getPublicUrl(path).data.publicUrl;
