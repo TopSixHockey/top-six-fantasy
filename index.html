@@ -1156,7 +1156,89 @@ function popHtml(k, n, nm) {
     '<div class="pr"><i>From</i><span>' + d.home + flagImg(d.home) + '</span></div>' +
     (d.od ? '<div class="pr"><i>' + d.od[0] + '</i>' + d.od[1] + '</div>' : '') +
     (d.nhl === "Undrafted" ? '' : '<div class="pr"><i class="tp">NHL Draft</i><span>' + d.nhl.replace("Top Prospect", '<b class="tp">Top Prospect</b>') + '</span></div>') +
-    (function () { var q = String(nm).split(" "), e = injFor(k, [n, q.slice(0, -1).join(" "), q[q.length - 1]]); return e ? '<div class="pr"><i>Injury</i><span style="color:#ff7b7b;font-weight:700">' + injEsc(e[3]) + ' · ' + injEsc(e[4]) + '</span></div>' : ''; })() + '<div class="pt">2026-27 regular season</div>' + st;
+    (function () { var q = String(nm).split(" "), e = injFor(k, [n, q.slice(0, -1).join(" "), q[q.length - 1]]); return e ? '<div class="pr"><i>Injury</i><span style="color:#ff7b7b;font-weight:700">' + injEsc(e[3]) + ' · ' + injEsc(e[4]) + '</span></div>' : ''; })() + '<div class="pt">2026-27 regular season</div>' + st + '<div class="pmore">' + (window.matchMedia && window.matchMedia("(hover: hover)").matches ? "Click" : "Tap again") + ' for past seasons</div>';
+}
+
+/* ---- past seasons pop-up (click a player) ---- */
+(function () {
+  var st = document.createElement("style");
+  st.textContent = "#pop .pmore{margin-top:8px;text-align:center;font-size:.68rem;font-weight:700;color:rgba(255,255,255,.85);background:rgba(255,255,255,.16);border-radius:6px;padding:4px 0}" +
+    "#hist{position:fixed;inset:0;z-index:200;background:rgba(5,10,20,.6);display:flex;align-items:center;justify-content:center;padding:14px}" +
+    "#hist .hb{position:relative;width:100%;max-width:640px;max-height:84vh;overflow:auto;color:#fff;border-radius:14px;padding:14px 16px 16px;border:1px solid rgba(255,255,255,.35);box-shadow:0 14px 38px rgba(0,0,0,.55);font-size:.82rem;line-height:1.35}" +
+    "#hist .hx{position:absolute;top:8px;right:10px;background:rgba(255,255,255,.16);color:#fff;border:0;border-radius:99px;width:28px;height:28px;font-size:1.05rem;line-height:1;cursor:pointer}" +
+    "#hist .hh{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;margin:0 34px 6px 0;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,.3)}" +
+    "#hist .hn{font-weight:800;font-size:1rem}#hist .hm{color:rgba(255,255,255,.75);font-weight:600}" +
+    "#hist .ht{margin:10px 0 4px;font-size:.68rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:rgba(255,255,255,.7)}" +
+    "#hist table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}" +
+    "#hist th{font-size:.62rem;color:rgba(255,255,255,.7);font-weight:700;text-align:center;padding:3px 4px;background:rgba(255,255,255,.1)}" +
+    "#hist td{text-align:center;padding:5px 4px;border-top:1px solid rgba(255,255,255,.14);font-weight:700}" +
+    "#hist th:first-child,#hist td:first-child,#hist th:nth-child(2),#hist td:nth-child(2){text-align:left}" +
+    "#hist td:nth-child(2){font-weight:500;color:rgba(255,255,255,.85)}" +
+    "#hist .hs{padding:14px 0;text-align:center;color:rgba(255,255,255,.8)}" +
+    "#hist .tw{overflow-x:auto}";
+  document.head.appendChild(st);
+})();
+var HIST = {};
+function histYear(r, po) {
+  var m = /(\d{4})(?:\s*-\s*(\d{2}))?/.exec(r.season_name || "");
+  if (!m) return r.shortname || r.season_name || "";
+  if (m[2]) return m[1] + "-" + m[2];
+  if (po) { var y = +m[1]; return (y - 1) + "-" + String(y).slice(2); }
+  return m[1];
+}
+function histFetch(url) { return scJsonp(url).catch(function () { return scJsonp(url); }); }
+async function histLoad(lg, nm, num, team) {
+  var ck = lg + "|" + nm + "|" + num; if (HIST[ck]) return HIST[ck];
+  var base = "https://lscluster.hockeytech.com/feed/index.php?feed=modulekit&key=f1aa699db3d81487&lang=en&fmt=json&client_code=" + lg;
+  var q = nm.split(" "), last = q[q.length - 1], want = injNrm(nm), pid = null;
+  var terms = [nm, last];
+  for (var i = 0; i < terms.length && !pid; i++) {
+    var s = await histFetch(base + "&view=searchplayers&search_term=" + encodeURIComponent(terms[i]));
+    var arr = (s.SiteKit && s.SiteKit.Searchplayers) || [];
+    var hit = arr.filter(function (x) { return injNrm(x.first_name + " " + x.last_name) === want; });
+    if (hit.length > 1) { var h2 = hit.filter(function (x) { return String(x.jersey_number) === String(num); }); if (h2.length) hit = h2; }
+    if (!hit.length) hit = arr.filter(function (x) { return String(x.jersey_number) === String(num) && injNrm(x.last_name) === injNrm(last) && injNrm(x.last_team_name || "") === injNrm(team); });
+    if (hit.length) pid = hit[0].player_id;
+  }
+  if (!pid) return { none: 1 };
+  var p = await histFetch(base + "&view=player&category=seasonstats&player_id=" + pid);
+  var P = (p.SiteKit && p.SiteKit.Player) || {}, cur = String(p.SiteKit && p.SiteKit.Parameters && p.SiteKit.Parameters.season_id);
+  function prep(a) { return (a || []).filter(function (r) { return String(r.season_id) !== cur; }).sort(function (a, b) { return String(b.max_start_date || "").localeCompare(String(a.max_start_date || "")) || (+b.season_id - +a.season_id); }); }
+  return (HIST[ck] = { reg: prep(P.regular), po: prep(P.playoff) });
+}
+function histTable(rows, g, po) {
+  var lab = g ? ["GP", "GAA", "SV%", "W", "L", "OTL", "SO"] : ["GP", "G", "A", "PTS", "+/-", "PIM"];
+  function sv(v) { v = parseFloat(v); return isFinite(v) ? v.toFixed(3).replace(/^0/, "") : "-"; }
+  function gaa(v) { v = parseFloat(v); return isFinite(v) ? v.toFixed(2) : "-"; }
+  function pm(v) { return +v > 0 ? "+" + v : v; }
+  var h = '<div class="tw"><table><thead><tr><th>Season</th><th>Team</th>' + lab.map(function (l) { return "<th>" + l + "</th>"; }).join("") + "</tr></thead><tbody>";
+  rows.forEach(function (r) {
+    var c = g ? [r.games_played, gaa(r.goals_against_average), sv(r.savepct), r.wins, r.losses, r.ot_losses, r.shutouts] : [r.games_played, r.goals, r.assists, r.points, pm(r.plus_minus), r.penalty_minutes];
+    h += "<tr><td>" + injEsc(histYear(r, po)) + "</td><td>" + injEsc(r.team_name || "") + "</td>" + c.map(function (x) { return "<td>" + injEsc(x == null ? "-" : x) + "</td>"; }).join("") + "</tr>";
+  });
+  return h + "</tbody></table></div>";
+}
+var histBox = null;
+function closeHist() { if (histBox) { histBox.remove(); histBox = null; } document.removeEventListener("keydown", histKey); }
+function histKey(e) { if (e.key === "Escape") closeHist(); }
+async function openHist(el) {
+  var k = curKey, n = el.getAttribute("data-n"), nm = el.getAttribute("data-nm"), d = PL[k] && PL[k][n]; if (!d) return;
+  hidePop(); closeHist();
+  var lg = leagueOf(k), g = d.pos === "G";
+  histBox = document.createElement("div"); histBox.id = "hist";
+  histBox.innerHTML = '<div class="hb" style="background:' + ((C[k] && C[k][1]) || "#232f5a") + '"><button class="hx" aria-label="Close">&times;</button><div class="hh"><span class="hn">' + injEsc(nm) + '</span><span class="hm">#' + injEsc(n) + " &middot; " + injEsc(d.pos) + '</span></div><div class="hc"><div class="hs">Loading past seasons&hellip;</div></div></div>';
+  document.body.appendChild(histBox);
+  var box = histBox;
+  box.addEventListener("click", function (e) { if (e.target === box || (e.target.classList && e.target.classList.contains("hx"))) closeHist(); });
+  document.addEventListener("keydown", histKey);
+  var hc = box.querySelector(".hc"), html;
+  try {
+    var r = await histLoad(SCLG[lg], nm, n, C[k] && C[k][0]);
+    if (r.none) html = '<div class="hs">No ' + lg + ' stats found for this player.</div>';
+    else if (!r.reg.length && !r.po.length) html = '<div class="hs">No previous ' + lg + ' seasons yet.</div>';
+    else html = (r.reg.length ? '<div class="ht">' + lg + " regular season</div>" + histTable(r.reg, g, 0) : "") + (r.po.length ? '<div class="ht">' + lg + " playoffs</div>" + histTable(r.po, g, 1) : "");
+  } catch (e) { html = '<div class="hs">Couldn’t load past seasons. Please try again.</div>'; }
+  if (histBox === box) hc.innerHTML = html;
 }
 var pop = document.createElement("div"); pop.id = "pop"; document.body.appendChild(pop);
 var popFor = null;
@@ -1175,8 +1257,9 @@ function showPop(el) {
   if (canHover) {
     out.addEventListener("mouseover", function (e) { var t = target(e); if (t) { if (popFor !== t) showPop(t); } else hidePop(); });
     out.addEventListener("mouseleave", hidePop);
+    out.addEventListener("click", function (e) { var t = target(e); if (t) openHist(t); });
   } else {
-    out.addEventListener("click", function (e) { var t = target(e); if (t && popFor !== t) showPop(t); else hidePop(); });
+    out.addEventListener("click", function (e) { var t = target(e); if (t && popFor !== t) showPop(t); else if (t) openHist(t); else hidePop(); });
   }
   window.addEventListener("scroll", hidePop, { passive: true });
 })();
