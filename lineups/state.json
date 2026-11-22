@@ -137,6 +137,14 @@
   "done": true,
   "flipped": true
  },
+ "ohl:29230:away": {
+  "done": true,
+  "flipped": false
+ },
+ "ohl:29230:home": {
+  "done": true,
+  "flipped": false
+ },
  "ohl:29231:away": {
   "done": true,
   "flipped": true
@@ -144,6 +152,14 @@
  "ohl:29231:home": {
   "done": true,
   "flipped": true
+ },
+ "ohl:29232:away": {
+  "done": true,
+  "flipped": false
+ },
+ "ohl:29232:home": {
+  "done": true,
+  "flipped": false
  },
  "ohl:29233:home": {
   "done": true,
@@ -232,11 +248,11 @@
  },
  "qmjhl:32920:away": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "qmjhl:32920:home": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "qmjhl:32973:away": {
   "done": true,
@@ -300,11 +316,11 @@
  },
  "qmjhl:33145:away": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "qmjhl:33145:home": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "qmjhl:33211:away": {
   "done": true,
@@ -468,17 +484,25 @@
  },
  "whl:1023333:away": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "whl:1023333:home": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "whl:1023334:away": {
   "done": true,
   "flipped": false
  },
  "whl:1023334:home": {
+  "done": true,
+  "flipped": false
+ },
+ "whl:1023335:away": {
+  "done": true,
+  "flipped": false
+ },
+ "whl:1023335:home": {
   "done": true,
   "flipped": false
  }
