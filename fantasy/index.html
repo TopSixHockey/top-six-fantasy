@@ -19,6 +19,12 @@ header a.back:hover{color:inherit}
 .tabs{display:flex;gap:6px;padding:12px 22px 0}
 .tab{background:var(--panel2);color:var(--mute);border:1px solid var(--line);border-bottom:0;border-radius:8px 8px 0 0;padding:7px 14px;cursor:pointer;font-weight:600}
 .tab.on{background:var(--panel);color:var(--tx)}
+.mtabs{display:flex;gap:8px;padding:14px 22px 0}
+.mtab{background:var(--panel2);color:var(--mute);border:1px solid var(--line);border-bottom:0;border-radius:10px 10px 0 0;padding:11px 26px;cursor:pointer;font-weight:700;font-size:16px}
+.mtab.on{background:var(--panel);color:var(--tx)}
+.subtabs{padding:12px 22px 0}
+.subtabs .tab{border-bottom:1px solid var(--line);border-radius:999px;padding:6px 16px;font-size:14px}
+.subtabs .tab.on{background:var(--panel);color:var(--tx);border-color:var(--mute)}
 main{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(320px,1fr);gap:16px;padding:16px 22px;align-items:start}
 @media(max-width:980px){main{grid-template-columns:1fr}}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
@@ -330,11 +336,15 @@ td.pos{color:var(--ok)}td.neg{color:var(--bad)}td.pts{color:#ff9f43}td.fp{font-w
   <a class="back hide" id="profLink" href="../#profile">Profile</a>
   <button class="sec hide" id="signout">Sign out</button>
 </header>
-<div class="tabs">
+<div class="mtabs">
+  <div class="mtab on" data-main="pub">Public leagues</div>
+  <div class="mtab" data-main="pl">Private leagues</div>
+</div>
+<div class="tabs subtabs" id="subTabs">
   <div class="tab on" data-tab="build">Build my team</div>
   <div class="tab" data-tab="lineup">My lineup</div>
   <div class="tab" data-tab="lb">Leaderboard</div>
-  <div class="tab" data-tab="pl">Private leagues</div>
+  <div class="tab" data-tab="pl" style="display:none">Private leagues</div>
 </div>
 
 <main id="buildView">
@@ -2448,6 +2458,28 @@ navRestore();
     var id = session && session.user ? session.user.id : null;
     if (ev === "INITIAL_SESSION" || ev === "SIGNED_OUT" || (ev === "SIGNED_IN" && id !== lastId)){ lastId = id; setTimeout(function(){ applySession(session); }, 0); }
   });
+})();
+</script>
+<script>
+(function(){
+  var last="build";
+  function sync(){
+    var on=document.querySelector(".tab.on"),tab=on&&on.dataset?on.dataset.tab:"build",pl=tab==="pl";
+    if(!pl)last=tab;
+    document.querySelectorAll(".mtab").forEach(function(m){m.classList.toggle("on",(m.dataset.main==="pl")===pl);});
+    var s=document.getElementById("subTabs");if(s)s.classList.toggle("hide",pl);
+  }
+  document.addEventListener("click",function(e){
+    var m=e.target.closest&&e.target.closest(".mtab");
+    if(m){
+      if(m.classList.contains("on"))return;
+      var tb=document.querySelector('.tab[data-tab="'+(m.dataset.main==="pl"?"pl":last)+'"]');
+      if(tb)tb.click();
+      return;
+    }
+    if(e.target.closest&&e.target.closest(".tab"))sync();
+  });
+  sync();
 })();
 </script>
 </body>
