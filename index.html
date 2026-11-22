@@ -1565,7 +1565,7 @@ function fillTeams(lg, pick) {
   });
   sel.value = (pick && C[pick] && leagueOf(pick) === lg) ? pick : sel.options[0].value;
 }
-var start = "sudbury";
+var start = "barrie";
 try { var saved = localStorage.getItem("ohlTeam"); if (saved && C[saved]) start = saved; } catch (e) {}
 lsel.value = leagueOf(start);
 fillTeams(lsel.value, start);
