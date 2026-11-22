@@ -202,6 +202,22 @@
   "done": true,
   "flipped": true
  },
+ "qmjhl:32790:away": {
+  "done": true,
+  "flipped": false
+ },
+ "qmjhl:32790:home": {
+  "done": true,
+  "flipped": false
+ },
+ "qmjhl:32820:away": {
+  "done": true,
+  "flipped": false
+ },
+ "qmjhl:32820:home": {
+  "done": true,
+  "flipped": false
+ },
  "qmjhl:32854:home": {
   "done": true,
   "flipped": true
