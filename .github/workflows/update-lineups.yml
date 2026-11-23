@@ -77,6 +77,7 @@ jobs:
           if [ -z "$X_TEST_TEAM" ] && ! grep -q '"id"' lineups/x_queue.json 2>/dev/null; then echo "Nothing to post to X"; exit 0; fi
           [ -f /usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf ] || (sudo apt-get update -qq && sudo apt-get install -y -qq fonts-dejavu-core)
           python -c "import PIL" 2>/dev/null || pip install --quiet pillow
+          python -c "import playwright" 2>/dev/null || pip install --quiet playwright
           if [ -n "$X_TEST_TEAM" ]; then python lineups/post_to_x.py --test "$X_TEST_TEAM"; exit $?; fi
           python lineups/post_to_x.py
           git config user.name "Top Six Hockey bot"
