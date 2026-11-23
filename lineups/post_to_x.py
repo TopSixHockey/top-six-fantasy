@@ -56,9 +56,9 @@ def mix(a, b, t): return tuple(int(round(a[i] * (1 - t) + b[i] * t)) for i in ra
 
 def load_colors(src):
     """team key -> [name, body, yoke, stripe1, stripe2, number, outline] from the C table in index.html."""
-    i = src.index("var C = {"); j = src.index("\n};", i)
+    # the page keeps the OHL colours and the WHL/QMJHL colours in separate blocks, so read the whole file
     out = {}
-    for m in re.finditer(r'^ ([a-z_]+):\["([^"]+)"((?:,"#[0-9a-fA-F]{3,8}")+)\]', src[i:j], re.M):
+    for m in re.finditer(r'^ ([a-z_]+):\["([^"]+)"((?:,"#[0-9a-fA-F]{3,8}")+)\]', src, re.M):
         out[m.group(1)] = [m.group(2)] + re.findall(r"#[0-9a-fA-F]{3,8}", m.group(3))
     return out
 
