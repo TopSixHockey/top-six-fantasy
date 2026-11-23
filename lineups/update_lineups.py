@@ -18,6 +18,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 INDEX = os.path.join(ROOT, "index.html")
 SCHED = os.path.join(ROOT, "lineups", "schedule.json")
 STATE = os.path.join(ROOT, "lineups", "state.json")
+XQUEUE = os.path.join(ROOT, "lineups", "x_queue.json")   # lineups waiting to be posted to X (see post_to_x.py)
 KEY = "f1aa699db3d81487"
 FEED = "https://lscluster.hockeytech.com/feed/index.php"
 UA = {"User-Agent": "Mozilla/5.0 (TopSixHockey lineup bot)"}
@@ -386,6 +387,7 @@ def main():
     state = json.load(open(STATE)) if os.path.exists(STATE) else {}
     src = open(INDEX, encoding="utf-8").read()
     sched_out, changed, cache = {}, False, {}
+    new_posts = []
     src, ch0 = refresh_injuries(src, state, now)
     changed = changed or ch0
     for lg, cfg in LEAGUES.items():
@@ -459,6 +461,18 @@ def main():
                 src = update_cap(src, key, caps)
                 state[sk] = {"done": True, "flipped": final}; changed = True
                 print("updated", key, gid)
+                if not final:    # a lineup for a game still to be played -> queue it for the X account
+                    new_posts.append({"id": sk, "lg": lg, "key": key, "team": tname.replace(", ", " "), "opp": opp,
+                                      "vsat": vsat, "start": start.astimezone(ET).isoformat(),
+                                      "entry": ent, "queued": now.isoformat()})
+    if new_posts:
+        try:
+            q = json.load(open(XQUEUE)) if os.path.exists(XQUEUE) else []
+        except Exception:
+            q = []
+        have = {x.get("id") for x in q}
+        q += [x for x in new_posts if x["id"] not in have]
+        json.dump(q, open(XQUEUE, "w"), ensure_ascii=False, indent=1)
     json.dump(sched_out, open(SCHED, "w"), indent=1, sort_keys=True)
     json.dump(state, open(STATE, "w"), indent=1, sort_keys=True)
     if changed: open(INDEX, "w", encoding="utf-8").write(src)
