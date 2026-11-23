@@ -139,11 +139,11 @@
  },
  "ohl:29230:away": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "ohl:29230:home": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "ohl:29231:away": {
   "done": true,
