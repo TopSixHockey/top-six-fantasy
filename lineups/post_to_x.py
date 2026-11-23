@@ -14,6 +14,7 @@ Nothing is posted unless the repository variable X_POSTING is "true" and the fou
 Other modes:
   python lineups/post_to_x.py --preview OUTDIR [team_key ...]   draw cards to PNG files, post nothing
   python lineups/post_to_x.py --test team_key                    post ONE real test card for that team
+  python lineups/post_to_x.py --backfill 2026-11-22              one-time catch-up: post every team with a lineup for that date
 """
 import base64, datetime, hashlib, hmac, json, os, re, sys, time
 import urllib.error, urllib.parse, urllib.request, uuid
@@ -230,11 +231,14 @@ def render_card(item, colors, caps=None, path=None):
     return buf.getvalue()
 
 def caption(item):
-    when = datetime.datetime.fromisoformat(item["start"]).astimezone(ET)
-    tm = when.strftime("%I:%M %p").lstrip("0")
     tag = TAG.get(item["lg"], item["lg"].upper())
-    return "\U0001F3D2 %s lines %s %s\n%s ET · %s %d\n\n#%s #CHL" % (
-        item["team"], item["vsat"], item["opp"], tm, when.strftime("%b"), when.day, tag)
+    if item.get("date_only"):                      # catch-up posts: the date, no puck-drop time
+        d = datetime.date.fromisoformat(item["date_only"])
+        when_line = "%s %d" % (d.strftime("%b"), d.day)
+    else:
+        when = datetime.datetime.fromisoformat(item["start"]).astimezone(ET)
+        when_line = "%s ET · %s %d" % (when.strftime("%I:%M %p").lstrip("0"), when.strftime("%b"), when.day)
+    return "\U0001F3D2 %s lines %s %s\n%s\n\n#%s #CHL" % (item["team"], item["vsat"], item["opp"], when_line, tag)
 
 
 # ----------------------------------------------------------------------------- X API (OAuth 1.0a)
@@ -358,6 +362,43 @@ def test_post(key):
     print(out, info)
     return 0 if out == "ok" else 1
 
+def backfill(date_iso):
+    """One-time catch-up: post every team whose saved lineup is for a game on this date, even if it is already over."""
+    creds = creds_from_env()
+    if os.environ.get("X_POSTING", "").lower() != "true" or not creds:
+        print("X posting is OFF (needs the X_POSTING variable = true and the four X secrets)."); return 1
+    d = datetime.date.fromisoformat(date_iso)
+    want = "%s %d, %d" % (d.strftime("%b"), d.day, d.year)          # e.g. "Nov 22, 2026"
+    src = open(INDEX, encoding="utf-8").read()
+    colors, caps = load_colors(src), load_caps(src)
+    posted = load(POSTED, [])
+    shooter = open_shooter()
+    n = 0
+    try:
+        for key in colors:
+            ent = load_entry(src, key)
+            if not ent or want not in ent["game"]: continue
+            pid = "bf:%s:%s" % (date_iso, key)
+            if pid in posted: continue
+            m = re.search(r"<b>(vs|at) (.*?)</b>", ent["game"])
+            opp = re.sub(r"\s*\((OHL|WHL|QMJHL)\)", "", m.group(2) if m else "TBD").strip(" -–")
+            lg = "whl" if key.startswith("whl_") else ("qmjhl" if key.startswith("qmjhl_") else "ohl")
+            item = {"id": pid, "lg": lg, "key": key, "team": colors.get(key, [key])[0], "opp": opp,
+                    "vsat": m.group(1) if m else "vs", "date_only": date_iso}
+            out, info = post_item(item, colors, caps.get(key), creds, shooter=shooter)
+            print(item["team"], "->", out, info)
+            if out in ("ok", "dup"):
+                posted.append(pid); n += 1
+                save(POSTED, posted[-500:])
+            elif out == "limit":
+                print("X rate limit reached - run it again in a few minutes to finish the rest"); break
+            time.sleep(PAUSE_S)
+    finally:
+        close_shooter(shooter)
+        save(POSTED, posted[-500:])
+    print("catch-up posted", n)
+    return 0
+
 def run_queue():
     queue = load(QUEUE, [])
     if not queue: return 0
@@ -403,4 +444,5 @@ if __name__ == "__main__":
     a = sys.argv[1:]
     if a[:1] == ["--preview"]: preview(a[1], a[2:])
     elif a[:1] == ["--test"]: sys.exit(test_post(a[1]))
+    elif a[:1] == ["--backfill"]: sys.exit(backfill(a[1]))
     else: sys.exit(run_queue())
