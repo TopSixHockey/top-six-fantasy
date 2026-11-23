@@ -13,26 +13,25 @@ HIDE = "#tsh-cc,#tsh-reopen,#pop,#hist{display:none!important}"
 # (what, first heading, heading that ends the group; None = end of the lineup)
 GROUPS = [("forwards", "Forwards", "Defence"), ("defence", "Defence", "Goalies"), ("goalies", "Goalies", None)]
 
-JS_RECTS = """
-(key) => {
-  render(key);
+JS_RECT = """
+([a, b]) => {
   const out = document.getElementById('out');
   const kids = [...out.children];
-  const secs = kids.filter(e => e.classList.contains('sec'));
-  const at = t => secs.find(e => e.textContent.trim().toLowerCase() === t.toLowerCase());
-  const docY = e => e.getBoundingClientRect().top + window.scrollY;
-  const outBottom = out.getBoundingClientRect().bottom + window.scrollY;
-  const res = {};
-  for (const [name, a, b] of %s) {
-    const s = at(a); if (!s) { res[name] = null; continue; }
-    const e = b ? at(b) : null;
-    res[name] = {top: docY(s) - 6, bottom: (e ? docY(e) - 12 : outBottom - 10)};
+  const find = t => kids.find(e => e.classList.contains('sec') && e.textContent.trim().toLowerCase() === t.toLowerCase());
+  const s = find(a); if (!s) return null;
+  const e = b ? find(b) : null;
+  const i0 = kids.indexOf(s), i1 = e ? kids.indexOf(e) : kids.length;
+  let bottom = 0;                                   // lowest point of anything drawn in this group (names included)
+  for (const el of kids.slice(i0, i1)) {
+    bottom = Math.max(bottom, el.getBoundingClientRect().bottom);
+    for (const d of el.querySelectorAll('*')) bottom = Math.max(bottom, d.getBoundingClientRect().bottom);
   }
+  const cap = e ? e.getBoundingClientRect().top - 6 : out.getBoundingClientRect().bottom;
   const rk = document.querySelector('.rink').getBoundingClientRect();
-  res.x = rk.left + 3; res.w = rk.width - 6;
-  return res;
+  return {top: s.getBoundingClientRect().top - 6, bottom: Math.min(bottom + 10, cap),
+          x: rk.left + 3, w: rk.width - 6, y: window.scrollY};
 }
-""" % str([list(g) for g in GROUPS]).replace("None", "null")
+"""
 
 
 class _Quiet(http.server.SimpleHTTPRequestHandler):
@@ -65,25 +64,23 @@ class Shooter:
 
     def shots(self, key):
         p = self.page
-        r = p.evaluate(JS_RECTS, key)
+        p.set_viewport_size({"width": VIEW_W, "height": VIEW_H})
+        p.evaluate("(k)=>render(k)", key)
         p.evaluate("document.fonts.ready.then(()=>1)")
         p.wait_for_function("(()=>{const b=document.getElementById('bgimg');return !b||b.complete})()")
-        p.wait_for_timeout(700)
+        p.wait_for_timeout(1500)                    # let fonts, jerseys and the layout settle before measuring
         out = []
-        for name, _a, _b in GROUPS:
-            g = r.get(name)
-            if not g: continue
-            h = max(60, g["bottom"] - g["top"])
-            if h > VIEW_H - 24:                     # unusually long panel: grow the window for it
-                p.set_viewport_size({"width": VIEW_W, "height": int(h) + 24})
-                p.wait_for_timeout(300)
-                r = p.evaluate(JS_RECTS, key)
-                g = r[name]; h = g["bottom"] - g["top"]
-            p.evaluate("(y)=>window.scrollTo(0,y)", max(0, g["top"] - 8))
-            p.wait_for_timeout(250)
-            top = p.evaluate("(y)=>y-window.scrollY", g["top"])
-            clip = {"x": max(0, r["x"]), "y": max(0, top), "width": min(r["w"], VIEW_W), "height": h}
+        for name, a, b in GROUPS:
+            r = p.evaluate(JS_RECT, [a, b])
+            if not r: continue
+            vh = max(VIEW_H, int(r["bottom"] - r["top"]) + 40)   # window tall enough for the whole panel
+            p.set_viewport_size({"width": VIEW_W, "height": vh})
+            p.wait_for_timeout(400)
+            r = p.evaluate(JS_RECT, [a, b])
+            p.evaluate("(y)=>window.scrollTo(0,y)", max(0, r["y"] + r["top"] - 8))
+            p.wait_for_timeout(500)
+            r = p.evaluate(JS_RECT, [a, b])          # measure again now that it is scrolled into place
+            y0 = max(0, r["top"])
+            clip = {"x": max(0, r["x"]), "y": y0, "width": min(r["w"], VIEW_W), "height": min(r["bottom"] - y0, vh - y0)}
             out.append((name, p.screenshot(type="jpeg", quality=88, clip=clip)))
-            if p.viewport_size["height"] != VIEW_H:
-                p.set_viewport_size({"width": VIEW_W, "height": VIEW_H}); p.wait_for_timeout(200)
         return out
