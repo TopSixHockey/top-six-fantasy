@@ -3,8 +3,9 @@
 
 update_lineups.py appends an item to lineups/x_queue.json every time it saves a new lineup for a game
 that has not finished. This script (run by the same workflow, right after the lineups are committed):
-  1. draws a 1200x675 lineup card for each queued team (Pillow),
-  2. uploads it and posts it with a short caption (X API v2, OAuth 1.0a user keys),
+  1. photographs the lineups page for each queued team (lineups/shots.py: forwards, defence, goalies+scratches;
+     falls back to a 1200x675 card drawn with Pillow if headless Chrome is not available),
+  2. uploads the pictures and posts them with a short caption (X API v2, OAuth 1.0a user keys),
   3. removes it from the queue and remembers its id in lineups/x_posted.json so it is never posted twice.
 
 Nothing is posted unless the repository variable X_POSTING is "true" and the four X secrets exist
@@ -265,18 +266,47 @@ def api(method, url, body, creds):
     except Exception as e:
         return 0, {"error": str(e)}
 
-def post_item(item, colors, caps, creds, prefix=""):
-    """-> (outcome, detail). outcome: ok | dup | retry | limit | fatal"""
-    png = render_card(item, colors, caps)
+def _upload(data, mime, creds):
+    """-> (media_id, None) or (None, (outcome, detail))"""
     st, j = api("POST", API + "/media/upload",
-                {"media": base64.b64encode(png).decode(), "media_category": "tweet_image", "media_type": "image/png"}, creds)
+                {"media": base64.b64encode(data).decode(), "media_category": "tweet_image", "media_type": mime}, creds)
     if st not in (200, 201):
-        return classify(st, j, "media upload")
+        return None, classify(st, j, "media upload")
     d = j.get("data") or {}
     mid = d.get("id") or d.get("media_id_string") or j.get("media_id_string") or d.get("media_key")
     if not mid:
-        return "fatal", "media upload gave no id: %s" % json.dumps(j)[:300]
-    st, j = api("POST", API + "/tweets", {"text": prefix + caption(item), "media": {"media_ids": [str(mid)]}}, creds)
+        return None, ("fatal", "media upload gave no id: %s" % json.dumps(j)[:300])
+    return str(mid), None
+
+def open_shooter():
+    """Headless Chrome that photographs the real lineups page (lineups/shots.py). None if it cannot start."""
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import shots
+        return shots.Shooter().__enter__()
+    except Exception as e:
+        print("screenshots unavailable, posting the drawn card instead:", e)
+        return None
+
+def close_shooter(shooter):
+    if shooter:
+        try: shooter.__exit__(None, None, None)
+        except Exception: pass
+
+def post_item(item, colors, caps, creds, prefix="", shooter=None):
+    """-> (outcome, detail). outcome: ok | dup | retry | limit | fatal.  Pictures: forwards, defence, goalies+scratches."""
+    images = []
+    if shooter:
+        try: images = [(b, "image/jpeg") for _n, b in shooter.shots(item["key"])]
+        except Exception as e: print("screenshots failed for", item["team"], "-", e)
+    if not images:
+        images = [(render_card(item, colors, caps), "image/png")]
+    ids = []
+    for data, mime in images:
+        mid, err = _upload(data, mime, creds)
+        if err: return err
+        ids.append(mid)
+    st, j = api("POST", API + "/tweets", {"text": prefix + caption(item), "media": {"media_ids": ids}}, creds)
     if st in (200, 201):
         return "ok", (j.get("data") or {}).get("id", "")
     return classify(st, j, "create post")
@@ -322,7 +352,9 @@ def test_post(key):
     colors, caps = load_colors(src), load_caps(src)
     it = item_from_index(src, key, colors)
     if not it: print("no lineup for", key); return 1
-    out, info = post_item(it, colors, caps.get(key), creds, prefix="TEST (please ignore) – ")
+    shooter = open_shooter()
+    out, info = post_item(it, colors, caps.get(key), creds, prefix="TEST (please ignore) – ", shooter=shooter)
+    close_shooter(shooter)
     print(out, info)
     return 0 if out == "ok" else 1
 
@@ -346,9 +378,10 @@ def run_queue():
     src = open(INDEX, encoding="utf-8").read()
     colors, caps = load_colors(src), load_caps(src)
     left, n = [], 0
+    shooter = open_shooter()
     for it in todo:
         if n >= MAX_PER_RUN: left.append(it); continue
-        out, info = post_item(it, colors, caps.get(it["key"]), creds)
+        out, info = post_item(it, colors, caps.get(it["key"]), creds, shooter=shooter)
         print(it["team"], "->", out, info)
         n += 1
         if out in ("ok", "dup"):
@@ -361,6 +394,7 @@ def run_queue():
             elif out == "retry" or it["tries"] < MAX_TRIES: left.append(it)
             if out == "fatal": left += [x for x in todo[todo.index(it) + 1:] if x not in left]; break
         time.sleep(PAUSE_S)
+    close_shooter(shooter)
     save(QUEUE, left)
     save(POSTED, posted[-500:])
     return 0
