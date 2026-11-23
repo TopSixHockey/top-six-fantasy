@@ -230,15 +230,24 @@ def render_card(item, colors, caps=None, path=None):
         with open(path, "wb") as f: f.write(buf.getvalue())
     return buf.getvalue()
 
+TAGS_FILE = os.path.join(ROOT, "lineups", "team_hashtags.json")   # team key -> hashtag (without #); blank = none
+
+def team_tag(key):
+    try: tag = str(load(TAGS_FILE, {}).get(key, "") or "")
+    except Exception: tag = ""
+    tag = re.sub(r"[^0-9A-Za-z_À-ſ]", "", tag)
+    return "#" + tag if tag else ""
+
 def caption(item):
     tag = TAG.get(item["lg"], item["lg"].upper())
+    tags = " ".join(["#" + tag, "#CHL"] + [x for x in [team_tag(item.get("key", ""))] if x])
     if item.get("date_only"):                      # catch-up posts: the date, no puck-drop time
         d = datetime.date.fromisoformat(item["date_only"])
         when_line = "%s %d" % (d.strftime("%b"), d.day)
     else:
         when = datetime.datetime.fromisoformat(item["start"]).astimezone(ET)
         when_line = "%s ET · %s %d" % (when.strftime("%I:%M %p").lstrip("0"), when.strftime("%b"), when.day)
-    return "\U0001F3D2 %s lines %s %s\n%s\n\n#%s #CHL" % (item["team"], item["vsat"], item["opp"], when_line, tag)
+    return "\U0001F3D2 %s lines %s %s\n%s\n\n%s" % (item["team"], item["vsat"], item["opp"], when_line, tags)
 
 
 # ----------------------------------------------------------------------------- X API (OAuth 1.0a)
