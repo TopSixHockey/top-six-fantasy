@@ -9,5 +9,22 @@
  "bf:2026-11-22:oshawa",
  "bf:2026-11-22:ottawa",
  "bf:2026-11-22:peterborough",
- "bf:2026-11-22:sarnia"
+ "bf:2026-11-22:sarnia",
+ "bf:2026-11-22:whl_calgary",
+ "bf:2026-11-22:whl_kamloops",
+ "bf:2026-11-22:whl_medhat",
+ "bf:2026-11-22:whl_saskatoon",
+ "bf:2026-11-22:whl_swift",
+ "bf:2026-11-22:whl_vancouver",
+ "bf:2026-11-22:qmjhl_chicoutimi",
+ "bf:2026-11-22:qmjhl_drummondville",
+ "bf:2026-11-22:qmjhl_gatineau",
+ "bf:2026-11-22:qmjhl_halifax",
+ "bf:2026-11-22:qmjhl_moncton",
+ "bf:2026-11-22:qmjhl_newfoundland",
+ "bf:2026-11-22:qmjhl_quebec",
+ "bf:2026-11-22:qmjhl_rimouski",
+ "bf:2026-11-22:qmjhl_rouyn",
+ "bf:2026-11-22:qmjhl_sherbrooke",
+ "bf:2026-11-22:qmjhl_victoriaville"
 ]
