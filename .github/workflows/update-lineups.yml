@@ -19,6 +19,10 @@ on:
         description: "Post ONE real test lineup card to X for this team key (for example barrie, whl_brandon, qmjhl_baiecomeau). Leave empty for a normal run."
         default: ""
         type: string
+      x_backfill_date:
+        description: "ONE-TIME catch-up: post a lineup for every team with a game on this date (YYYY-MM-DD), even if it is already over. Leave empty for a normal run."
+        default: ""
+        type: string
 
 permissions:
   contents: write
@@ -73,13 +77,14 @@ jobs:
           X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
           X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
           X_TEST_TEAM: ${{ github.event.inputs.x_test_team }}
+          X_BACKFILL: ${{ github.event.inputs.x_backfill_date }}
         run: |
-          if [ -z "$X_TEST_TEAM" ] && ! grep -q '"id"' lineups/x_queue.json 2>/dev/null; then echo "Nothing to post to X"; exit 0; fi
+          if [ -z "$X_TEST_TEAM" ] && [ -z "$X_BACKFILL" ] && ! grep -q '"id"' lineups/x_queue.json 2>/dev/null; then echo "Nothing to post to X"; exit 0; fi
           [ -f /usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf ] || (sudo apt-get update -qq && sudo apt-get install -y -qq fonts-dejavu-core)
           python -c "import PIL" 2>/dev/null || pip install --quiet pillow
           python -c "import playwright" 2>/dev/null || pip install --quiet playwright
           if [ -n "$X_TEST_TEAM" ]; then python lineups/post_to_x.py --test "$X_TEST_TEAM"; exit $?; fi
-          python lineups/post_to_x.py
+          if [ -n "$X_BACKFILL" ]; then python lineups/post_to_x.py --backfill "$X_BACKFILL"; else python lineups/post_to_x.py; fi
           git config user.name "Top Six Hockey bot"
           git config user.email "actions@users.noreply.github.com"
           git add lineups/x_queue.json lineups/x_posted.json
