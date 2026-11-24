@@ -59,6 +59,9 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
         run: python stats/sync_injuries.py
+      - name: Add NCAA commitments to player pop-ups
+        continue-on-error: true   # reads lineups/ncaa_commitments.json; never stop the lineup updates
+        run: python lineups/update_ncaa.py
       - name: Refresh crawlable lineup text
         continue-on-error: true   # SEO text for search engines; never stop the lineup updates
         run: python lineups/seo_static.py
