@@ -221,10 +221,12 @@ def parse_qmjhl(text):
         scratch = [int(x) for x in re.findall(r"#(\d+)\s+\D", tail)]
         sick = {int(m.group(1)) for m in re.finditer(r"#(\d+)\s+[^#(]*?\(\s*B\s*/\s*I\s*\)", tail)}
         lined = {n for row in F + D for n in row if n is not None}
-        gk = [n for n in order if players[n][2] == "G"]
+        # a goalie listed under Scratches is not dressed: leave him out of the goalies and show him as a scratch
+        scr = set(scratch)
+        gk = [n for n in order if players[n][2] == "G" and n not in scr]
         keep = [n for n in order if n in lined or n in gk]
         S = [[n, players[n][0], players[n][1]] + (["I"] if n in sick else []) for n in dict.fromkeys(scratch)
-             if n in players and n not in keep and players[n][2] != "G"]
+             if n in players and n not in keep]
         card = {"players": {n: tuple(players[n]) for n in keep}, "order": keep, "F": F, "D": D, "scratch": S}
         out[name] = card
     return out
