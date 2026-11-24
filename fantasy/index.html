@@ -440,7 +440,7 @@ td.pos{color:var(--ok)}td.neg{color:var(--bad)}td.pts{color:#ff9f43}td.fp{font-w
     <div class="banner lock" id="lbTest" style="display:none;margin-bottom:8px"></div>
     <div class="why" id="lbStaff" style="display:none;margin-bottom:8px"></div>
     <div class="why" id="lbNote" style="margin-bottom:8px">Points earned since each team was locked. Only locked teams appear.</div>
-    <table><thead><tr><th>#</th><th>Team</th><th>Manager</th><th>Points</th></tr></thead><tbody id="lb"></tbody></table>
+    <table><thead><tr><th>#</th><th>Team</th><th>Manager</th><th>Locked</th><th>Points</th></tr></thead><tbody id="lb"></tbody></table>
     <div id="lbPlayers" class="hide" style="margin-top:22px">
       <h2>Top players of the month</h2>
       <div class="why" style="margin-bottom:8px">Fantasy points from every player in the pool, whether or not they are on a team.</div>
@@ -783,7 +783,7 @@ function lbSetMode(mode){
 }
 function lbRows(rows){
   return rows.length ? rows.map(function(x, i){
-    return '<tr class="lbr" data-eid="' + esc(x.entry_id) + '" data-team="' + esc(x.team_name) + '" data-mgr="' + esc(x.display_name) + '" data-pts="' + num(x.points).toFixed(1) + '" title="Tap to view this lineup"><td>' + (i + 1) + '</td><td>' + esc(x.team_name) + ' <span class="why">\u203A</span></td><td>' + esc(x.display_name) + '</td><td>' + num(x.points).toFixed(1) + '</td></tr>';
+    return '<tr class="lbr" data-eid="' + esc(x.entry_id) + '" data-team="' + esc(x.team_name) + '" data-mgr="' + esc(x.display_name) + '" data-pts="' + num(x.points).toFixed(1) + '" title="Tap to view this lineup"><td>' + (i + 1) + '</td><td>' + esc(x.team_name) + ' <span class="why">\u203A</span></td><td>' + esc(x.display_name) + '</td><td class="why">' + esc(x.locked_txt || "") + '</td><td>' + num(x.points).toFixed(1) + '</td></tr>';
   }).join("") : '<tr><td colspan="4" class="why">No locked ' + lbLeague + ' teams yet. Be the first!</td></tr>';
 }
 async function loadLeaderboard(){
@@ -818,6 +818,16 @@ async function loadLeaderboard(){
   if (r.error){ $("lb").innerHTML = '<tr><td colspan="4" class="why">' + esc(r.error.message) + '</td></tr>'; return; }
   var rows = r.data.slice().sort(function(a,b){ return num(b.points) - num(a.points); });
   var sf = $("lbStaff"); if (sf){ var hasStaff = rows.some(function(x){ return /^(Staff Pick|Example Team):/.test(x.team_name || ""); }); sf.style.display = hasStaff ? "" : "none"; if (hasStaff) sf.textContent = "Staff Pick and Example teams are built by Top Six Hockey to show what a strong roster looks like. Join in and try to beat them."; }
+  try {      // show the real date each team was locked
+    var lids = rows.map(function(x){ return x.entry_id; }).filter(Boolean);
+    if (lids.length){
+      var lr = await SB.from("entries").select("id,locked_at").in("id", lids);
+      if (!lr.error){
+        var lm = {}; lr.data.forEach(function(e){ lm[e.id] = e.locked_at; });
+        rows.forEach(function(x){ var d = lm[x.entry_id]; x.locked_txt = d ? new Date(d).toLocaleDateString("en-CA", { month: "short", day: "numeric", year: "numeric" }) : ""; });
+      }
+    }
+  } catch (e) {}
   $("lb").innerHTML = lbRows(rows);
 }
 
