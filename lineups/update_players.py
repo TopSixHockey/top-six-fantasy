@@ -175,11 +175,13 @@ def nhl_line(p):
         if d.get("draft_type") == "NHL":
             code = str(d.get("draft_team") or "")
             team = NHL.get(code.upper(), code if len(code) >= 6 else "")
-            # Only show a real draft pick: year, round, pick and team must all be known.
+            # Only show a real draft pick: year, round and pick must all be known.
             # Anything else (amateur tryouts, free-agent signings, blank rounds) is left out.
+            # If the team is unknown the line is shown without it (a hand-added team is kept, see below).
             ok = lambda x: str(x or "").strip().isdigit() and int(str(x).strip()) > 0
-            if ok(d.get("draft_year")) and ok(d.get("draft_round")) and ok(d.get("draft_rank")) and team:
-                return "%s · Round %s, #%s · %s" % (d.get("draft_year"), d.get("draft_round"), d.get("draft_rank"), team)
+            if ok(d.get("draft_year")) and ok(d.get("draft_round")) and ok(d.get("draft_rank")):
+                line = "%s · Round %s, #%s" % (d.get("draft_year"), d.get("draft_round"), d.get("draft_rank"))
+                return line + " · " + team if team else line
     return None
 
 
@@ -328,7 +330,7 @@ def main():
                         e["st"] = st
                         refreshed += 1
                     nh = nhl_line(p)
-                    if nh and e.get("nhl") != nh:
+                    if nh and e.get("nhl") != nh and not str(e.get("nhl") or "").startswith(nh + " · "):
                         e["nhl"] = nh
     print("added %d, stats refreshed for %d, unmatched %d" % (added, refreshed, failed))
     if dry:
