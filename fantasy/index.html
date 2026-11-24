@@ -438,7 +438,6 @@ td.pos{color:var(--ok)}td.neg{color:var(--bad)}td.pts{color:#ff9f43}td.fp{font-w
       <select id="lbMonthSel" class="hide" style="background:var(--panel2);color:var(--tx);border:1px solid var(--line);border-radius:8px;padding:5px 8px;font:inherit"></select>
     </div>
     <div class="banner lock" id="lbTest" style="display:none;margin-bottom:8px"></div>
-    <div class="why" id="lbStaff" style="display:none;margin-bottom:8px"></div>
     <div class="why" id="lbNote" style="margin-bottom:8px">Points earned since each team was locked. Only locked teams appear.</div>
     <table><thead><tr><th>#</th><th>Team</th><th>Manager</th><th>Locked</th><th>Points</th></tr></thead><tbody id="lb"></tbody></table>
     <div id="lbPlayers" class="hide" style="margin-top:22px">
@@ -817,7 +816,6 @@ async function loadLeaderboard(){
   }
   if (r.error){ $("lb").innerHTML = '<tr><td colspan="4" class="why">' + esc(r.error.message) + '</td></tr>'; return; }
   var rows = r.data.slice().sort(function(a,b){ return num(b.points) - num(a.points); });
-  var sf = $("lbStaff"); if (sf){ var hasStaff = rows.some(function(x){ return /^(Staff Pick|Example Team):/.test(x.team_name || ""); }); sf.style.display = hasStaff ? "" : "none"; if (hasStaff) sf.textContent = "Staff Pick and Example teams are built by Top Six Hockey to show what a strong roster looks like. Join in and try to beat them."; }
   try {      // show the real date each team was locked
     var lids = rows.map(function(x){ return x.entry_id; }).filter(Boolean);
     if (lids.length){
