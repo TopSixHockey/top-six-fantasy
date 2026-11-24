@@ -1,15 +1,21 @@
 #!/usr/bin/env python3
-"""Tell the site owner about new accounts and new message-board posts.
+"""Tell the site owner about new activity on the site.
 
-Runs from .github/workflows/notify-activity.yml every 15 minutes. It asks the database for the
-current accounts and the latest board posts, compares them with the ids it already reported
-(lineups/notify_state.json) and, if anything is new, writes a short message that the workflow
-turns into a GitHub issue (GitHub then emails / pushes it to the repository owner).
+Runs from .github/workflows/notify-activity.yml every 15 minutes. It reads the database for
+  - new accounts,
+  - new message-board posts,
+  - new public teams (free game entries),
+  - new private leagues,
+compares them with the ids it already reported (lineups/notify_state.json) and, if anything is
+new, writes a short message that the workflow turns into a GitHub issue (GitHub then e-mails and
+pushes it to the repository owner).
 
-The first run only records what already exists, so you are not flooded with old activity.
-No e-mail addresses are ever put in the message (the repository is public).
+The first time a kind of activity is seen it is only recorded, so you are not flooded with old rows.
+The repository is public, so no e-mail addresses and no private-league names go into the message.
 """
 import json, os, urllib.request, urllib.error
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 STATE = os.path.join(ROOT, "lineups", "notify_state.json")
@@ -37,13 +43,22 @@ def accounts():
     return out
 
 
-def posts():
+def table(name):
+    """All rows of a table (newest first when it has created_at); None if it cannot be read."""
     for order in ("&order=created_at.desc", ""):
         try:
-            return call("/rest/v1/lineup_posts?select=*" + order + "&limit=200") or []
+            return call("/rest/v1/%s?select=*%s&limit=1000" % (name, order)) or []
         except urllib.error.HTTPError as e:
-            print("posts query failed:", e.code, "(order: %s)" % (order or "none"))
-    return []
+            print("%s query failed: %s (order: %s)" % (name, e.code, order or "none"))
+    return None
+
+
+def when(r):
+    s = str(r.get("created_at") or "")
+    try:
+        return datetime.fromisoformat(s.replace("Z", "+00:00")).astimezone(ZoneInfo("America/Toronto")).strftime("%b %d, %I:%M %p ET")
+    except Exception:
+        return s[:16] or "?"
 
 
 def team_name(key):
@@ -54,37 +69,62 @@ def team_name(key):
     return "%s OHL" % key.replace("_", " ").title()
 
 
+def plural(n, word):
+    return "%d %s%s" % (n, word, "" if n == 1 else "s")
+
+
 def main():
     if not URL or not KEY:
         print("SUPABASE_URL / SUPABASE_SERVICE_KEY are not set; nothing to do")
         return
-    st = json.load(open(STATE)) if os.path.exists(STATE) else None
-    first = st is None
-    st = st or {"users": [], "posts": []}
-    us, ps = accounts(), posts()
-    print("accounts:", len(us), "| board posts read:", len(ps), "| first run:", first)
-    if ps:
-        print("post columns:", sorted(ps[0].keys()))
-    seen_u, seen_p = set(st["users"]), set(st["posts"])
-    new_u = [u for u in us if str(u.get("id")) not in seen_u]
-    new_p = [p for p in ps if str(p.get("id")) not in seen_p]
-    if not first and (new_u or new_p):
-        bits = []
-        if new_u:
-            bits.append("%d new account%s" % (len(new_u), "" if len(new_u) == 1 else "s"))
-        if new_p:
-            bits.append("%d new board post%s" % (len(new_p), "" if len(new_p) == 1 else "s"))
-        lines = []
-        if new_u:
-            lines.append("## New accounts")
-            for u in sorted(new_u, key=lambda x: str(x.get("created_at") or "")):
-                lines.append("- created %s UTC" % str(u.get("created_at") or "?")[:16].replace("T", " "))
+    st = json.load(open(STATE)) if os.path.exists(STATE) else {}
+    try:
+        acc = accounts()
+    except Exception as e:
+        print("accounts unavailable:", e)
+        acc = None
+    sources = {"users": acc, "posts": table("lineup_posts"), "entries": table("entries"), "leagues": table("pleagues")}
+    new, changed = {}, False
+    for k, rows in sources.items():
+        if rows is None:
+            print(k, "unavailable; skipped")
+            continue
+        fresh = k not in st
+        seen = set(st.get(k) or [])
+        n = [r for r in rows if str(r.get("id")) not in seen]
+        print("%s: %d rows | %d new%s" % (k, len(rows), len(n), " (first time: recorded silently)" if fresh else ""))
+        if rows and fresh:
+            print("  columns:", sorted(rows[0].keys()))
+        if not fresh:
+            new[k] = n
+        st[k] = (list(st.get(k) or []) + [str(r.get("id")) for r in n])[-KEEP:]
+        changed = changed or fresh or bool(n)
+    new = {k: v for k, v in new.items() if v}
+    if new:
+        bits, lines = [], []
+        by_time = lambda x: str(x.get("created_at") or "")
+        if new.get("users"):
+            n = new["users"]
+            bits.append(plural(len(n), "new account"))
+            lines += ["## New accounts"] + ["- created %s" % when(u) for u in sorted(n, key=by_time)]
+            lines += ["", "Total accounts now: %d" % len(sources["users"]), ""]
+        if new.get("entries"):
+            n = new["entries"]
+            bits.append(plural(len(n), "new public team"))
+            lines += ["## New public teams (free game)"]
+            for e in sorted(n, key=by_time):
+                lines.append("- **%s** (%s %s), created %s" % (str(e.get("team_name") or "unnamed")[:60], e.get("league") or "?", e.get("contest") or "", when(e)))
             lines.append("")
-            lines.append("Total accounts now: %d" % len(us))
-            lines.append("")
-        if new_p:
+        if new.get("leagues"):
+            n = new["leagues"]
+            bits.append(plural(len(n), "new private league"))
+            lines += ["## New private leagues"] + ["- created %s" % when(l) for l in sorted(n, key=by_time)]
+            lines += ["", "Private leagues now: %d (names are not shown here because this repository is public)" % len(sources["leagues"]), ""]
+        if new.get("posts"):
+            n = new["posts"]
+            bits.append(plural(len(n), "new board post"))
             lines.append("## New message-board posts")
-            for p in sorted(new_p, key=lambda x: str(x.get("created_at") or "")):
+            for p in sorted(n, key=by_time):
                 body = " ".join(str(p.get("body") or "").split())
                 if len(body) > 300:
                     body = body[:300] + "..."
@@ -93,13 +133,9 @@ def main():
         open(os.path.join(OUT, "notify_title.txt"), "w").write("Top Six Hockey: " + ", ".join(bits))
         open(os.path.join(OUT, "notify_body.md"), "w").write("\n".join(lines) + "\n")
         print("notification written:", ", ".join(bits))
-    elif new_u or new_p:
-        print("first run: recording %d accounts and %d posts without notifying" % (len(new_u), len(new_p)))
     else:
-        print("nothing new")
-    st["users"] = (st["users"] + [str(u.get("id")) for u in new_u])[-KEEP:]
-    st["posts"] = (st["posts"] + [str(p.get("id")) for p in new_p])[-KEEP:]
-    if first or new_u or new_p:
+        print("nothing new to report")
+    if changed:
         json.dump(st, open(STATE, "w"))
 
 
