@@ -50,7 +50,7 @@ def load():
         e = d["L"].get(key)
         if not e or not e.get("F") or lg_of(key) not in ENABLED: continue
         lg = lg_of(key)
-        sig = hashlib.sha1(json.dumps([e.get("F"), e.get("D"), e.get("G"), e.get("game")], sort_keys=True).encode()).hexdigest()[:10]
+        sig = hashlib.sha1(json.dumps([e.get("F"), e.get("D"), e.get("G"), e.get("game"), "layout2"], sort_keys=True).encode()).hexdigest()[:10]
         teams[key] = {"key": key, "name": c[0], "colors": c[1:], "lg": lg, "slug": "%s-%s" % (lg, slug(c[0])),
                       "game": re.sub(r"<[^>]+>", "", e.get("game", "")), "sig": sig}
     return teams
@@ -85,28 +85,26 @@ def _wrap(draw, text, font, width):
 
 def compose(t, forwards, defence):
     from PIL import Image, ImageDraw
-    W, H, M = 1200, 630, 28
-    bg = (11, 18, 32)
-    im = Image.new("RGB", (W, H), bg)
+    W, H, M, STRIP = 1200, 630, 24, 84
+    im = Image.new("RGB", (W, H), (11, 18, 32))
     fw = Image.open(io.BytesIO(forwards)).convert("RGB")
     df = Image.open(io.BytesIO(defence)).convert("RGB")
     gap = 24
-    s = min((H - 2 * M) / fw.height, (W - 2 * M - gap) / (fw.width + df.width))   # as big as fits
+    s = min((H - M - STRIP - M) / max(fw.height, df.height), (W - 2 * M - gap) / (fw.width + df.width))   # as big as fits
     fw = fw.resize((int(fw.width * s), int(fw.height * s)), Image.LANCZOS)
     df = df.resize((int(df.width * s), int(df.height * s)), Image.LANCZOS)
     x0 = (W - (fw.width + gap + df.width)) // 2
-    im.paste(fw, (x0, M)); xr = x0 + fw.width + gap
-    im.paste(df, (xr, M))
+    im.paste(fw, (x0, M)); im.paste(df, (x0 + fw.width + gap, M))
     d = ImageDraw.Draw(im)
-    y = M + df.height + 14
+    y = H - STRIP + 4
     col = t["colors"][0] if t["colors"] else "#f2b705"
-    d.rectangle([xr, y, xr + 6, H - M], fill=col if col.lower() not in ("#0b1220",) else "#f2b705")
-    f1, f2 = _font(30), _font(19)
-    lines = _wrap(d, t["name"], f1, df.width - 24)[:2]
-    for i, ln in enumerate(lines): d.text((xr + 18, y - 2 + i * 34), ln, font=f1, fill=(255, 255, 255))
-    gy = y - 2 + len(lines) * 34 + 2
-    d.text((xr + 18, gy), t["game"][:46], font=f2, fill=(170, 182, 200))
-    d.text((xr + 18, H - M - 22), "topsixhockey.ca", font=f2, fill=(120, 134, 156))
+    if col.lower() in ("#0b1220", "#000000", "#111111", "#111"): col = "#f2b705"
+    d.rectangle([x0, y, x0 + 6, H - M], fill=col)
+    f1, f2 = _font(32), _font(20)
+    d.text((x0 + 20, y - 4), t["name"], font=f1, fill=(255, 255, 255))
+    d.text((x0 + 20, y + 36), t["game"][:70], font=f2, fill=(170, 182, 200))
+    tw = d.textlength("topsixhockey.ca", font=f2)
+    d.text((W - x0 - tw, y + 36), "topsixhockey.ca", font=f2, fill=(120, 134, 156))
     out = io.BytesIO(); im.save(out, "JPEG", quality=84, optimize=True, progressive=True)
     return out.getvalue()
 
