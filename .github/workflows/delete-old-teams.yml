@@ -1,0 +1,18 @@
+name: delete-old-teams
+on:
+  push:
+    paths: ['.github/workflows/delete-old-teams.yml']
+  workflow_dispatch:
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete teams
+        env:
+          U: ${{ secrets.SUPABASE_URL }}
+          K: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: |
+          IDS="abf8468d-e25e-4ebf-80f3-8b5e506c76ca,b21ab1fa-3fed-4cd5-a37a-940499a945c3,f2011eef-9d19-44e7-b93d-01785fd724b9"
+          H=(-H "apikey: $K" -H "Authorization: Bearer $K" -H "Prefer: return=representation")
+          echo "players:"; curl -s -X DELETE "${H[@]}" "$U/rest/v1/entry_players?entry_id=in.($IDS)" | python3 -c "import sys,json;print(len(json.load(sys.stdin)))"
+          echo "entries:"; curl -s -X DELETE "${H[@]}" "$U/rest/v1/entries?id=in.($IDS)" | python3 -c "import sys,json;print([e['team_name'] for e in json.load(sys.stdin)])"
