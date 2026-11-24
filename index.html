@@ -1224,14 +1224,14 @@ async function histLoad(lg, nm, num, team, x) {
   var all = prep(P.regular), own = [], foreign = {};
   all.forEach(function (r) {
     var m = /\((OHL|WHL|QMJHL)\)/i.exec(r.team_name || "");
-    if (m || /^\s*-/.test(r.team_name || "")) { if (m && m[1].toLowerCase() !== String(lg).toLowerCase()) foreign[m[1].toLowerCase()] = 1; }
+    if (m || /^\s*-/.test(r.team_name || "")) { if (m && SCLG[m[1].toUpperCase()] !== lg) foreign[m[1].toUpperCase()] = 1; }
     else own.push(r);
   });
   if (!x) {
     for (var f in foreign) {
       try {
-        var o = await histLoad(f, nm, "", "", true);
-        if (o && o.reg) o.reg.forEach(function (r) { var c = {}; for (var k in r) c[k] = r[k]; c.team_name = (r.team_name || "") + " (" + f.toUpperCase() + ")"; own.push(c); });
+        var o = await histLoad(SCLG[f], nm, "", "", true);
+        if (o && o.reg) o.reg.forEach(function (r) { var c = {}; for (var k in r) c[k] = r[k]; c.team_name = (r.team_name || "") + " (" + f + ")"; own.push(c); });
       } catch (e) {}
     }
     own.sort(function (a, b) { var ya = histYear(a, 0), yb = histYear(b, 0); return yb < ya ? -1 : yb > ya ? 1 : (/\(/.test(a.team_name) ? 1 : 0) - (/\(/.test(b.team_name) ? 1 : 0); });
