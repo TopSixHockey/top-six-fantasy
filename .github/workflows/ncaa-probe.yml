@@ -1,0 +1,31 @@
+name: NCAA probe
+on:
+  workflow_dispatch:
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe Elite Prospects
+        run: |
+          python3 - <<'PY'
+          import re, urllib.request, urllib.error
+          UA = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36", "Accept": "text/html,application/xhtml+xml", "Accept-Language": "en-US,en;q=0.9"}
+          URLS = [
+            "https://www.eliteprospects.com/player/880884/brady-martin",
+            "https://www.eliteprospects.com/search/player?q=brady+martin",
+            "https://www.eliteprospects.com/league/ohl/2026-2027",
+            "https://www.eliteprospects.com/robots.txt",
+          ]
+          for u in URLS:
+              try:
+                  r = urllib.request.urlopen(urllib.request.Request(u, headers=UA), timeout=30)
+                  t = r.read().decode("utf-8", "replace")
+                  print("OK", r.status, u, len(t))
+                  for m in list(re.finditer(r"ommit", t))[:3]:
+                      print("   ...", re.sub(r"\s+", " ", t[max(0, m.start()-120):m.start()+160]))
+                  if "robots" in u: print(t[:1500])
+              except urllib.error.HTTPError as e:
+                  print("HTTP", e.code, u)
+              except Exception as e:
+                  print("ERR", u, e)
+          PY
