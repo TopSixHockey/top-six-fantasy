@@ -113,7 +113,7 @@ def main():
             bits.append(plural(len(n), "new public team"))
             lines += ["## New public teams (free game)"]
             for e in sorted(n, key=by_time):
-                lines.append("- **%s** (%s %s), created %s" % (str(e.get("team_name") or "unnamed")[:60], e.get("league") or "?", e.get("contest") or "", when(e)))
+                lines.append("- **%s** (%s %s)%s" % (str(e.get("team_name") or "unnamed")[:60], e.get("league") or "?", e.get("contest") or "", ", created " + when(e) if e.get("created_at") else ""))
             lines.append("")
         if new.get("leagues"):
             n = new["leagues"]
