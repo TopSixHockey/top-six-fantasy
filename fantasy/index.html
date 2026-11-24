@@ -437,6 +437,7 @@ td.pos{color:var(--ok)}td.neg{color:var(--bad)}td.pts{color:#ff9f43}td.fp{font-w
       <button id="lbSeason">Season</button><button class="sec" id="lbMonth">Month</button>
       <select id="lbMonthSel" class="hide" style="background:var(--panel2);color:var(--tx);border:1px solid var(--line);border-radius:8px;padding:5px 8px;font:inherit"></select>
     </div>
+    <div class="banner lock" id="lbTest" style="display:none;margin-bottom:8px"></div>
     <div class="why" id="lbNote" style="margin-bottom:8px">Points earned since each team was locked. Only locked teams appear.</div>
     <table><thead><tr><th>#</th><th>Team</th><th>Manager</th><th>Points</th></tr></thead><tbody id="lb"></tbody></table>
     <div id="lbPlayers" class="hide" style="margin-top:22px">
@@ -629,7 +630,7 @@ function renderRoster(){
   r.push('<div class="rule ' + (c.dr > RULES.maxDrafted ? "over" : "") + '"><span>NHL drafted (max ' + RULES.maxDrafted + ')</span><b>' + c.dr + '</b></div>');
   $("rules").innerHTML = r.join("");
   var cl = contestLine(entry.league);
-  $("contestBar").innerHTML = cl ? '<div class="banner lock">' + esc(cl) + '. ' + (notStarted(entry.league) ? 'Everyone starts at 0.0 on that date. ' : '') + 'Only points from the start date count, or from when you lock if that is later.</div>' : "";
+  $("contestBar").innerHTML = cl ? '<div class="banner lock">' + esc(cl) + '. ' + (notStarted(entry.league) ? 'Any points shown until then are just for testing and reset to 0.0 on that date. ' : '') + 'Only points from the start date count, or from when you lock if that is later.</div>' : "";
   var need = RULES.F + RULES.D + RULES.G, done = roster.length === need;
   $("banner").innerHTML = lk ? '<div class="banner lock">Team locked on ' + esc(new Date(entry.locked_at).toLocaleDateString()) + '. It can\'t be changed.</div>'
     : done ? '<div class="banner">Roster complete. Lock it in to enter the leaderboard.</div>'
@@ -786,6 +787,7 @@ function lbRows(rows){
 }
 async function loadLeaderboard(){
   lbStyle();
+  var lt = $("lbTest"); if (lt){ var ns = lbMode === "season" && notStarted(lbLeague); lt.style.display = ns ? "" : "none"; if (ns) lt.textContent = "Testing only: the points showing right now are just for testing. Everyone's points reset to 0.0 on " + startTxt(lbLeague) + (CONTESTS[lbLeague].tentative ? " (tentative)" : "") + ", the " + lbLeague + " trade deadline, when the real 2nd-half contest begins."; }
   $("lb").innerHTML = '<tr><td colspan="4" class="why">Loading…</td></tr>';
   var r;
   if (lbMode === "month"){
@@ -798,8 +800,19 @@ async function loadLeaderboard(){
       return '<tr><td>' + (i + 1) + '</td><td>' + esc(x.name) + '</td><td>' + esc(x.team) + ' <span class="tag">' + esc(x.league) + '</span></td><td>' + esc(x.pos_group) + '</td><td>' + num(x.points).toFixed(1) + '</td></tr>';
     }).join("") : '<tr><td colspan="5" class="why">Monthly tracking starts with the first daily snapshot. Check back after the next stats update.</td></tr>';
   } else {
-    $("lbNote").textContent = (CONTESTS[lbLeague] ? contestLine(lbLeague) + ". " + (notStarted(lbLeague) ? "Everyone is at 0.0 until then. " : "") : "") + "Points count from the start date, or from when a team was locked if that is later. Only locked " + lbLeague + " teams appear.";
+    $("lbNote").textContent = (CONTESTS[lbLeague] ? contestLine(lbLeague) + ". " + (notStarted(lbLeague) ? "Points shown until then are live test points. " : "") : "") + "Points count from the start date, or from when a team was locked if that is later. Only locked " + lbLeague + " teams appear.";
     r = await SB.from("leaderboard").select("*").eq("league", lbLeague).limit(200);
+    if (!r.error && notStarted(lbLeague) && r.data.length){      // before the start date, show live test points: current points minus each player's baseline at lock
+      try {
+        if (!POOL.length) await loadPool();
+        var ep = await SB.from("entry_players").select("entry_id,player_id,baseline_pts").in("entry_id", r.data.map(function(x){ return x.entry_id; }));
+        if (!ep.error){
+          var sums = {};
+          ep.data.forEach(function(e){ var p = BYID[e.player_id]; if (p) sums[e.entry_id] = (sums[e.entry_id] || 0) + (p.fp - num(e.baseline_pts)); });
+          r.data = r.data.map(function(x){ return Object.assign({}, x, { points: sums[x.entry_id] || 0 }); });
+        }
+      } catch (e) {}
+    }
   }
   if (r.error){ $("lb").innerHTML = '<tr><td colspan="4" class="why">' + esc(r.error.message) + '</td></tr>'; return; }
   var rows = r.data.slice().sort(function(a,b){ return num(b.points) - num(a.points); });
