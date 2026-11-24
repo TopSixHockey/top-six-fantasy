@@ -95,3 +95,21 @@ jobs:
           git commit -m "X posts"
           git pull --rebase origin main
           git push
+      - name: Refresh team share pages and previews
+        continue-on-error: true   # share pages are a bonus; never stop the lineup updates
+        run: |
+          [ -f /usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf ] || (sudo apt-get update -qq && sudo apt-get install -y -qq fonts-dejavu-core)
+          python -c "import PIL" 2>/dev/null || pip install --quiet pillow
+          if python lineups/og_cards.py --needs-images; then
+            python -c "import playwright" 2>/dev/null || pip install --quiet playwright
+            python lineups/og_cards.py --images
+          fi
+          python lineups/og_cards.py --pages
+          git config user.name "Top Six Hockey bot"
+          git config user.email "actions@users.noreply.github.com"
+          for d in og ohl whl qmjhl; do [ -e "$d" ] && git add "$d"; done
+          git add sitemap.xml
+          if git diff --cached --quiet; then echo "No changes"; exit 0; fi
+          git commit -m "Update team share pages"
+          git pull --rebase origin main
+          git push
