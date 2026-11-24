@@ -1203,8 +1203,8 @@ function histYear(r, po) {
   return m[1];
 }
 function histFetch(url) { return scJsonp(url).catch(function () { return scJsonp(url); }); }
-async function histLoad(lg, nm, num, team) {
-  var ck = lg + "|" + nm + "|" + num; if (HIST[ck]) return HIST[ck];
+async function histLoad(lg, nm, num, team, x) {
+  var ck = lg + "|" + nm + "|" + num + "|" + (x ? 1 : 0); if (HIST[ck]) return HIST[ck];
   var base = "https://lscluster.hockeytech.com/feed/index.php?feed=modulekit&key=f1aa699db3d81487&lang=en&fmt=json&client_code=" + lg;
   var q = nm.split(" "), last = q[q.length - 1], want = injNrm(nm), pid = null;
   var terms = [nm, last].map(function (t) { return t.replace(/['\u2019`.]/g, " ").replace(/\s+/g, " ").trim(); });
@@ -1212,6 +1212,7 @@ async function histLoad(lg, nm, num, team) {
     var s = await histFetch(base + "&view=searchplayers&search_term=" + encodeURIComponent(terms[i]));
     var arr = (s.SiteKit && s.SiteKit.Searchplayers) || [];
     var hit = arr.filter(function (x) { return injNrm(x.first_name + " " + x.last_name) === want; });
+    if (x) { if (hit.length === 1) pid = hit[0].player_id; continue; }
     if (hit.length > 1) { var h2 = hit.filter(function (x) { return String(x.jersey_number) === String(num); }); if (h2.length) hit = h2; }
     if (!hit.length) hit = arr.filter(function (x) { return String(x.jersey_number) === String(num) && injNrm(x.last_name) === injNrm(last) && injNrm(x.last_team_name || "") === injNrm(team); });
     if (hit.length) pid = hit[0].player_id;
@@ -1220,7 +1221,22 @@ async function histLoad(lg, nm, num, team) {
   var p = await histFetch(base + "&view=player&category=seasonstats&player_id=" + pid);
   var P = (p.SiteKit && p.SiteKit.Player) || {}, cur = String(p.SiteKit && p.SiteKit.Parameters && p.SiteKit.Parameters.season_id);
   function prep(a) { return (a || []).filter(function (r) { return r.team_name && !/^total$/i.test(String(r.season_name || "")); }).sort(function (a, b) { return String(b.max_start_date || "").localeCompare(String(a.max_start_date || "")) || (+b.season_id - +a.season_id); }); }
-  return (HIST[ck] = { reg: prep(P.regular) });
+  var all = prep(P.regular), own = [], foreign = {};
+  all.forEach(function (r) {
+    var m = /\((OHL|WHL|QMJHL)\)/i.exec(r.team_name || "");
+    if (m || /^\s*-/.test(r.team_name || "")) { if (m && m[1].toLowerCase() !== String(lg).toLowerCase()) foreign[m[1].toLowerCase()] = 1; }
+    else own.push(r);
+  });
+  if (!x) {
+    for (var f in foreign) {
+      try {
+        var o = await histLoad(f, nm, "", "", true);
+        if (o && o.reg) o.reg.forEach(function (r) { var c = {}; for (var k in r) c[k] = r[k]; c.team_name = (r.team_name || "") + " (" + f.toUpperCase() + ")"; own.push(c); });
+      } catch (e) {}
+    }
+    own.sort(function (a, b) { var ya = histYear(a, 0), yb = histYear(b, 0); return yb < ya ? -1 : yb > ya ? 1 : (/\(/.test(a.team_name) ? 1 : 0) - (/\(/.test(b.team_name) ? 1 : 0); });
+  }
+  return (HIST[ck] = { reg: own });
 }
 function histTable(rows, g, po) {
   var lab = g ? ["GP", "GAA", "SV%", "W", "L", "OTL", "SO"] : ["GP", "G", "A", "PTS", "+/-", "PIM"];
