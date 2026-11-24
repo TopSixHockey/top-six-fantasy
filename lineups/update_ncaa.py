@@ -80,8 +80,11 @@ def fetch_site():
         return None
     print("ncaa: page is %d characters, %d table rows" % (len(t), t.count("<tr")), "|", re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", t))[:160])
     out = []
-    for m in ROW.finditer(t):
-        _, nm, _, col, team, yr = [H.unescape(x).strip() for x in m.groups()]
+    for tr in re.findall(r"<tr[^>]*>(.*?)</tr>", t, re.S):
+        cells = [H.unescape(re.sub(r"<[^>]+>", "", c)).strip() for c in re.findall(r"<td[^>]*>(.*?)</td>", tr, re.S)]
+        if len(cells) != 6:
+            continue
+        _, nm, _, col, team, yr = cells
         tm = re.match(r"(.*)\((OHL|WHL|QMJHL)\)\s*$", team)
         if not tm or "," not in nm:
             continue
@@ -89,6 +92,9 @@ def fetch_site():
         sch = short_school(col)
         if sch:
             out.append({"name": first + " " + last, "school": sch, "year": yr, "team": tn(tm.group(1))})
+    if not out:
+        k = t.find("(OHL)")
+        print("ncaa: no rows parsed; raw page near the first OHL entry:", repr(t[max(0, k - 400):k + 120]))
     print("ncaa: read %d CHL commitments from the site" % len(out))
     return out if len(out) >= 100 else None   # a tiny result means the page changed; don't trust it
 
