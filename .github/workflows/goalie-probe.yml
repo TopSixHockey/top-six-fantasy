@@ -7,8 +7,5 @@ jobs:
       - name: Read game sheets
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils >/dev/null 2>&1
-          for u in lhjmq/32663/ROU@BAC_2026-11-20 lhjmq/33109/HAL@SHA_2026-11-21 lhjmq/32920/NFL@MON_2026-11-22 lhjmq/33015/QUE@RIM_2026-11-22; do
-            echo "=== $u"
-            curl -sL "https://cluster.leaguestat.com/game-lineups/$u.pdf" -o f.pdf
-            pdftotext -layout f.pdf - | grep -nE "^ *(GK|GB) |Partant|Substitut|^ *(VIS|LOC)|#[0-9]+ [A-Z]" | cut -c1-230
-          done
+          curl -sL "https://cluster.leaguestat.com/game-lineups/lhjmq/32920/NFL@MON_2026-11-22.pdf" -o f.pdf
+          pdftotext -layout f.pdf - | grep -nE "^ *(GK|GB) |\(B / I\)|\(RA / HS\)|Moncton|MONCTON" | tr -s ' ' | cut -c1-120 | sed 's/^/L /'
