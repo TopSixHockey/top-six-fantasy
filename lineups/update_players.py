@@ -174,8 +174,12 @@ def nhl_line(p):
     for d in p.get("draftinfo") or []:
         if d.get("draft_type") == "NHL":
             code = str(d.get("draft_team") or "")
-            return "%s · Round %s, #%s · %s" % (d.get("draft_year"), d.get("draft_round"), d.get("draft_rank"),
-                                                          NHL.get(code.upper(), code))
+            team = NHL.get(code.upper(), code if len(code) >= 6 else "")
+            # Only show a real draft pick: year, round, pick and team must all be known.
+            # Anything else (amateur tryouts, free-agent signings, blank rounds) is left out.
+            ok = lambda x: str(x or "").strip().isdigit() and int(str(x).strip()) > 0
+            if ok(d.get("draft_year")) and ok(d.get("draft_round")) and ok(d.get("draft_rank")) and team:
+                return "%s · Round %s, #%s · %s" % (d.get("draft_year"), d.get("draft_round"), d.get("draft_rank"), team)
     return None
 
 
