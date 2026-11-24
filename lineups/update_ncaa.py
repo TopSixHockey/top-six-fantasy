@@ -106,7 +106,17 @@ def main():
         hand = json.load(open(FILE, encoding="utf-8"))
     except Exception as e:
         print("ncaa: no hand list:", e)
-    site = fetch_site()
+    import datetime
+    state = json.load(open(U.STATE)) if os.path.exists(U.STATE) else {}
+    now = datetime.datetime.now(datetime.timezone.utc)
+    last = state.get("ncaa_fetched")
+    due = "--force" in sys.argv or not last or (now - datetime.datetime.fromisoformat(last)).total_seconds() > 20 * 3600
+    site = fetch_site() if due else None   # the commitments site is read about once a day
+    if not due:
+        print("ncaa: commitments site read recently; applying the hand list only")
+    elif site is not None and not dry:
+        state["ncaa_fetched"] = now.isoformat()
+        json.dump(state, open(U.STATE, "w"), indent=1, sort_keys=True)
     src = open(U.INDEX, encoding="utf-8").read()
     i = src.index("var PL = ") + len("var PL = ")
     PL, n = json.JSONDecoder().raw_decode(src[i:])
