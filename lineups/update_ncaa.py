@@ -78,6 +78,7 @@ def fetch_site():
     except Exception as e:
         print("ncaa: commitments site not readable, using the hand list only:", e)
         return None
+    print("ncaa: page is %d characters, %d table rows" % (len(t), t.count("<tr")), "|", re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", t))[:160])
     out = []
     for m in ROW.finditer(t):
         _, nm, _, col, team, yr = [H.unescape(x).strip() for x in m.groups()]
