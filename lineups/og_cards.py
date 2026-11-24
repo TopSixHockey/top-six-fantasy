@@ -16,7 +16,7 @@ INDEX = os.path.join(ROOT, "index.html")
 OGDIR = os.path.join(ROOT, "og")
 STATE = os.path.join(OGDIR, "state.json")
 SITE = "https://topsixhockey.ca"
-ENABLED = {"ohl"}                      # leagues that get share pages (more are switched on later)
+ENABLED = {"ohl", "whl", "qmjhl"}                      # leagues that get share pages (more are switched on later)
 LG_DIR = {"whl_": "whl", "qmjhl_": "qmjhl"}
 STATIC_PAGES = ["/", "/fantasy/", "/privacy.html"]
 
