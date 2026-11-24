@@ -1,0 +1,44 @@
+name: Notify new accounts and board posts
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: notify-activity
+  cancel-in-progress: false
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check for new accounts and board posts
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: python lineups/notify_activity.py
+      - name: Open a notification issue (GitHub e-mails and pushes it to you)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ -f "$RUNNER_TEMP/notify_title.txt" ]; then
+            gh issue create --title "$(cat "$RUNNER_TEMP/notify_title.txt")" --body-file "$RUNNER_TEMP/notify_body.md"
+          fi
+      - name: Remember what was already reported
+        run: |
+          git config user.name "Top Six Hockey bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add lineups/notify_state.json
+          if git diff --cached --quiet; then echo "No changes"; exit 0; fi
+          git commit -m "Update notification state"
+          git pull --rebase origin main
+          git push
