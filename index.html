@@ -1171,6 +1171,7 @@ function popHtml(k, n, nm) {
     '<div class="pr"><i>From</i><span>' + d.home + flagImg(d.home) + '</span></div>' +
     (d.od ? '<div class="pr"><i>' + d.od[0] + '</i>' + d.od[1] + '</div>' : '') +
     (d.nhl === "Undrafted" ? '' : '<div class="pr"><i class="tp">NHL Draft</i><span>' + d.nhl.replace("Top Prospect", '<b class="tp">Top Prospect</b>') + '</span></div>') +
+    (d.ncaa ? '<div class="pr"><i>NCAA</i><span>' + d.ncaa + '</span></div>' : '') +
     (function () { var q = String(nm).split(" "), e = injFor(k, [n, q.slice(0, -1).join(" "), q[q.length - 1]]); return e ? '<div class="pr"><i>Injury</i><span style="color:#ff7b7b;font-weight:700">' + injEsc(e[3]) + ' · ' + injEsc(e[4]) + '</span></div>' : ''; })() + '<div class="pt">2026-27 regular season</div>' + st + '<div class="pmore">' + (window.matchMedia && window.matchMedia("(hover: hover)").matches ? "Click" : "Tap again") + ' for past seasons</div>';
 }
 
