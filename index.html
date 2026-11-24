@@ -1666,6 +1666,7 @@ function fillTeams(lg, pick) {
 }
 var start = "barrie";
 try { var saved = localStorage.getItem("ohlTeam"); if (saved && C[saved]) start = saved; } catch (e) {}
+try { var qt = new URLSearchParams(location.search).get("team"); if (qt && C[qt]) start = qt; } catch (e) {}
 lsel.value = leagueOf(start);
 fillTeams(lsel.value, start);
 lsel.addEventListener("change", function () { fillTeams(lsel.value, null); try { localStorage.setItem("ohlTeam", sel.value); } catch (e) {} render(sel.value); });
