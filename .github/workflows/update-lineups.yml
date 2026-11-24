@@ -59,6 +59,9 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
         run: python stats/sync_injuries.py
+      - name: Refresh crawlable lineup text
+        continue-on-error: true   # SEO text for search engines; never stop the lineup updates
+        run: python lineups/seo_static.py
       - name: Commit changes
         run: |
           git config user.name "Top Six Hockey bot"
