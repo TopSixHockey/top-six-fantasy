@@ -93,7 +93,7 @@ def team_key(name, lg="ohl"):
     return None
 
 # ---------------------------------------------------------------- PDF parsing
-ROW = re.compile(r"^\s*\d+\s+(\d+)\s+(X\s+)?(G|LD|RD|LW|RW|C|D)\s+(.+?)\s*$")
+ROW = re.compile(r"^\s*\d+\s+(\d+)\s+(?:(X)\s+|\?\s+)?(G|LD|RD|LW|RW|C|D)\s+(.+?)\s*$")   # X = starter, ? = substitute player
 
 def parse_card(text):
     """-> dict(players={num:(first,last,pos,starter,mark)}, F=[[lw,c,rw]..], D=[[ld,rd]..])"""
