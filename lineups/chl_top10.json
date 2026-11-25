@@ -1,7 +1,16 @@
 {
   "asof": "2026-11-25",
-  "source": "CHL Top 10 weekly ranking (chl.ca)",
+  "source": "CHL Top 10 weekly ranking (chl.ca), Week 10",
   "ranks": {
-    "guelph": 1
+    "guelph": 1,
+    "qmjhl_valdor": 2,
+    "whl_spokane": 3,
+    "qmjhl_quebec": 4,
+    "qmjhl_saintjohn": 5,
+    "qmjhl_victoriaville": 6,
+    "whl_reddeer": 7,
+    "whl_victoria": 8,
+    "kitchener": 9,
+    "whl_medhat": 10
   }
 }
