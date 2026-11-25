@@ -4,7 +4,7 @@
 Each run:
   1. Reads the league schedule (HockeyTech feed) and saves tomorrow's puck-drop
      times to lineups/schedule.json so the next day's checks are anticipated.
-  2. For every game today whose start time has arrived (or is within 10 min),
+  2. For every game today whose start time is within 2 hours (LEAD_MIN),
      fetches each team's official lineup PDF. When it exists, rewrites that
      team's entry in index.html (L object) and its captains (CAP object).
   3. Flips "Tonight" to "Last game" once a game is final.
@@ -22,7 +22,7 @@ XQUEUE = os.path.join(ROOT, "lineups", "x_queue.json")   # lineups waiting to be
 KEY = "f1aa699db3d81487"
 FEED = "https://lscluster.hockeytech.com/feed/index.php"
 UA = {"User-Agent": "Mozilla/5.0 (TopSixHockey lineup bot)"}
-LEAD_MIN = 10      # start checking this many minutes before puck drop
+LEAD_MIN = 120     # start checking this many minutes before puck drop (cards are usually posted about 2 hours ahead)
 GIVE_UP_H = 6      # stop trying this many hours after puck drop
 
 LEAGUES = {
