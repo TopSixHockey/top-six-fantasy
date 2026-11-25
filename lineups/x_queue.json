@@ -543,5 +543,1093 @@
    ]
   },
   "queued": "2026-11-25T17:58:56.728423-05:00"
+ },
+ {
+  "id": "whl:1023341:home",
+  "lg": "whl",
+  "key": "whl_moosejaw",
+  "team": "Moose Jaw Warriors",
+  "opp": "Swift Current Broncos",
+  "vsat": "vs",
+  "start": "2026-11-25T20:00:00-05:00",
+  "local": "2026-11-25T19:00:00",
+  "zone": "America/Regina",
+  "entry": {
+   "F": [
+    [
+     [
+      39,
+      "Chase",
+      "Petersen"
+     ],
+     [
+      16,
+      "Noah",
+      "Degenstein"
+     ],
+     [
+      23,
+      "Carson",
+      "Smith"
+     ]
+    ],
+    [
+     [
+      34,
+      "Luke",
+      "Moroz"
+     ],
+     [
+      14,
+      "Prabh",
+      "Bhathal"
+     ],
+     [
+      19,
+      "Casey",
+      "Brown"
+     ]
+    ],
+    [
+     [
+      36,
+      "Gage",
+      "Nagel"
+     ],
+     [
+      38,
+      "Riley",
+      "Thorpe"
+     ],
+     [
+      22,
+      "Mathieu",
+      "Lajoie"
+     ]
+    ],
+    [
+     [
+      18,
+      "Carson",
+      "Deichert"
+     ],
+     [
+      26,
+      "Cash",
+      "Lanigan"
+     ],
+     [
+      46,
+      "Kash",
+      "Elke"
+     ]
+    ]
+   ],
+   "D": [
+    [
+     [
+      4,
+      "Nolan",
+      "Paquette"
+     ],
+     [
+      12,
+      "William",
+      "Degagne"
+     ]
+    ],
+    [
+     [
+      21,
+      "Griffin",
+      "Darby"
+     ],
+     [
+      8,
+      "Colt",
+      "Carter"
+     ]
+    ],
+    [
+     [
+      37,
+      "Jett",
+      "Prpich"
+     ],
+     [
+      3,
+      "Cohen",
+      "Williams"
+     ]
+    ]
+   ],
+   "G": [
+    [
+     41,
+     "Jordan",
+     "Switzer"
+    ],
+    [
+     1,
+     "Dylan",
+     "Mingo"
+    ]
+   ]
+  },
+  "queued": "2026-11-25T18:00:05.620524-05:00"
+ },
+ {
+  "id": "whl:1023341:away",
+  "lg": "whl",
+  "key": "whl_swift",
+  "team": "Swift Current Broncos",
+  "opp": "Moose Jaw Warriors",
+  "vsat": "at",
+  "start": "2026-11-25T20:00:00-05:00",
+  "local": "2026-11-25T19:00:00",
+  "zone": "America/Regina",
+  "entry": {
+   "F": [
+    [
+     [
+      12,
+      "Carter",
+      "Moen"
+     ],
+     [
+      34,
+      "Zach",
+      "Pantelakis"
+     ],
+     [
+      38,
+      "Clarke",
+      "Schaefer"
+     ]
+    ],
+    [
+     [
+      91,
+      "Stepan",
+      "Farushev"
+     ],
+     [
+      32,
+      "Sawyer",
+      "Dingman"
+     ],
+     [
+      25,
+      "Oliver",
+      "Torkki"
+     ]
+    ],
+    [
+     [
+      17,
+      "Parker",
+      "Rondeau"
+     ],
+     [
+      19,
+      "Trae",
+      "Wilke"
+     ],
+     [
+      18,
+      "Gavin",
+      "Harrison"
+     ]
+    ],
+    [
+     [
+      27,
+      "Brock",
+      "Burch"
+     ],
+     [
+      23,
+      "Luke",
+      "Huska"
+     ],
+     [
+      24,
+      "Jacob",
+      "Beaulieu"
+     ]
+    ]
+   ],
+   "D": [
+    [
+     [
+      28,
+      "Daxon",
+      "Yerex"
+     ],
+     [
+      2,
+      "Colton",
+      "Alain"
+     ]
+    ],
+    [
+     [
+      37,
+      "Hudson",
+      "Kowalchuk"
+     ],
+     [
+      77,
+      "Yuri",
+      "Vlasenko"
+     ]
+    ],
+    [
+     [
+      6,
+      "Hyde",
+      "Davidson"
+     ],
+     [
+      14,
+      "Kayd",
+      "Ruedig"
+     ]
+    ]
+   ],
+   "G": [
+    [
+     1,
+     "Cal",
+     "Conway"
+    ],
+    [
+     30,
+     "Archer",
+     "Cooke"
+    ]
+   ]
+  },
+  "queued": "2026-11-25T18:00:05.620524-05:00"
+ },
+ {
+  "id": "whl:1023337:home",
+  "lg": "whl",
+  "key": "whl_calgary",
+  "team": "Calgary Hitmen",
+  "opp": "Red Deer Rebels",
+  "vsat": "vs",
+  "start": "2026-11-25T20:00:00-05:00",
+  "local": "2026-11-25T19:00:00",
+  "zone": "America/Edmonton",
+  "entry": {
+   "F": [
+    [
+     [
+      9,
+      "Carter",
+      "Sanderson"
+     ],
+     [
+      25,
+      "Charlie",
+      "Kresl"
+     ],
+     [
+      11,
+      "Artem",
+      "Katsuro"
+     ]
+    ],
+    [
+     [
+      17,
+      "Landon",
+      "Amrhein"
+     ],
+     [
+      8,
+      "Andrei",
+      "Molgachev"
+     ],
+     [
+      15,
+      "Grady",
+      "Anaka"
+     ]
+    ],
+    [
+     [
+      21,
+      "Keaton",
+      "Jundt"
+     ],
+     [
+      26,
+      "Shaun",
+      "Hildebrandt"
+     ],
+     [
+      18,
+      "Blake",
+      "Vanek"
+     ]
+    ],
+    [
+     [
+      23,
+      "Antonio",
+      "Correia"
+     ],
+     [
+      29,
+      "Brennan",
+      "Brown"
+     ],
+     [
+      19,
+      "Rylan",
+      "Ng"
+     ]
+    ]
+   ],
+   "D": [
+    [
+     [
+      7,
+      "Hunter",
+      "Aura"
+     ],
+     [
+      5,
+      "Bode",
+      "Laylin"
+     ]
+    ],
+    [
+     [
+      4,
+      "Calder",
+      "Hamilton"
+     ],
+     [
+      12,
+      "Wyatt",
+      "Pisarczyk"
+     ]
+    ],
+    [
+     [
+      2,
+      "Maden",
+      "Simard"
+     ],
+     [
+      6,
+      "Jakob",
+      "Leander"
+     ]
+    ]
+   ],
+   "G": [
+    [
+     31,
+     "Eric",
+     "Tu"
+    ],
+    [
+     30,
+     "Aidan",
+     "Hesse"
+    ]
+   ]
+  },
+  "queued": "2026-11-25T18:00:05.620524-05:00"
+ },
+ {
+  "id": "whl:1023337:away",
+  "lg": "whl",
+  "key": "whl_reddeer",
+  "team": "Red Deer Rebels",
+  "opp": "Calgary Hitmen",
+  "vsat": "at",
+  "start": "2026-11-25T20:00:00-05:00",
+  "local": "2026-11-25T19:00:00",
+  "zone": "America/Edmonton",
+  "entry": {
+   "F": [
+    [
+     [
+      29,
+      "Keets",
+      "Fawcett"
+     ],
+     [
+      21,
+      "Beckett",
+      "Hamilton"
+     ],
+     [
+      11,
+      "Poul",
+      "Andersen"
+     ]
+    ],
+    [
+     [
+      19,
+      "Jake",
+      "Banicevic"
+     ],
+     [
+      9,
+      "Cameron",
+      "Kuzma"
+     ],
+     [
+      20,
+      "Patrick",
+      "Sopiarz"
+     ]
+    ],
+    [
+     [
+      8,
+      "Cole",
+      "Temple"
+     ],
+     [
+      14,
+      "Kalder",
+      "Varga"
+     ],
+     [
+      12,
+      "Chace",
+      "Turchak"
+     ]
+    ],
+    [
+     [
+      10,
+      "Grayden",
+      "Peterson"
+     ],
+     [
+      15,
+      "Owen",
+      "DeWitt"
+     ],
+     [
+      26,
+      "Cash",
+      "Arcand-Vandale"
+     ]
+    ]
+   ],
+   "D": [
+    [
+     [
+      7,
+      "Zeb",
+      "Lindgren"
+     ],
+     [
+      3,
+      "Jake",
+      "Missura"
+     ]
+    ],
+    [
+     [
+      24,
+      "Kaden",
+      "Meyer"
+     ],
+     [
+      2,
+      "Jiri",
+      "Kamas"
+     ]
+    ],
+    [
+     [
+      6,
+      "Noah",
+      "Chadi"
+     ],
+     [
+      28,
+      "Graeme",
+      "Pickering"
+     ]
+    ]
+   ],
+   "G": [
+    [
+     35,
+     "Matthew",
+     "Kondro"
+    ],
+    [
+     30,
+     "Nathan",
+     "Salisbury"
+    ]
+   ]
+  },
+  "queued": "2026-11-25T18:00:05.620524-05:00"
+ },
+ {
+  "id": "whl:1023340:home",
+  "lg": "whl",
+  "key": "whl_lethbridge",
+  "team": "Lethbridge Hurricanes",
+  "opp": "Brandon Wheat Kings",
+  "vsat": "vs",
+  "start": "2026-11-25T20:00:00-05:00",
+  "local": "2026-11-25T19:00:00",
+  "zone": "America/Edmonton",
+  "entry": {
+   "F": [
+    [
+     [
+      17,
+      "Kai",
+      "Anderson"
+     ],
+     [
+      29,
+      "Owen",
+      "Berge"
+     ],
+     [
+      16,
+      "Easton",
+      "Daneault"
+     ]
+    ],
+    [
+     [
+      22,
+      "Oliver",
+      "Vanha"
+     ],
+     [
+      21,
+      "Logan",
+      "Stuart"
+     ],
+     [
+      23,
+      "Dayne",
+      "Beuker"
+     ]
+    ],
+    [
+     [
+      19,
+      "Jake",
+      "Stuart"
+     ],
+     [
+      12,
+      "Tyden",
+      "Lafournaise"
+     ],
+     [
+      26,
+      "Oliver",
+      "Sichtar"
+     ]
+    ],
+    [
+     [
+      14,
+      "Jake",
+      "Evans"
+     ],
+     [
+      13,
+      "Enzo",
+      "DiDomenicantonio"
+     ],
+     [
+      18,
+      "Cohen",
+      "Pentney"
+     ]
+    ]
+   ],
+   "D": [
+    [
+     [
+      11,
+      "Kyle",
+      "Heger"
+     ],
+     [
+      20,
+      "Dominick",
+      "Byrtus"
+     ]
+    ],
+    [
+     [
+      4,
+      "Carsen",
+      "Adair"
+     ],
+     [
+      6,
+      "Vanek",
+      "Popil"
+     ]
+    ],
+    [
+     [
+      7,
+      "Reid",
+      "Soper"
+     ],
+     [
+      3,
+      "Will",
+      "Scott"
+     ]
+    ]
+   ],
+   "G": [
+    [
+     30,
+     "Dylan",
+     "McFadyen"
+    ],
+    [
+     31,
+     "Leif",
+     "Oaten"
+    ]
+   ]
+  },
+  "queued": "2026-11-25T18:00:05.620524-05:00"
+ },
+ {
+  "id": "whl:1023340:away",
+  "lg": "whl",
+  "key": "whl_brandon",
+  "team": "Brandon Wheat Kings",
+  "opp": "Lethbridge Hurricanes",
+  "vsat": "at",
+  "start": "2026-11-25T20:00:00-05:00",
+  "local": "2026-11-25T19:00:00",
+  "zone": "America/Edmonton",
+  "entry": {
+   "F": [
+    [
+     [
+      11,
+      "Chase",
+      "Surkan"
+     ],
+     [
+      13,
+      "Colin",
+      "Grubb"
+     ],
+     [
+      17,
+      "Joby",
+      "Baumuller"
+     ]
+    ],
+    [
+     [
+      89,
+      "Kris",
+      "Muissu"
+     ],
+     [
+      9,
+      "Jaxon",
+      "Jacobson"
+     ],
+     [
+      7,
+      "Brady",
+      "Turko"
+     ]
+    ],
+    [
+     [
+      22,
+      "Brett",
+      "Wilson"
+     ],
+     [
+      93,
+      "Levi",
+      "Ellingsen"
+     ],
+     [
+      91,
+      "Ryan",
+      "Boyce"
+     ]
+    ],
+    [
+     [
+      20,
+      "Hudson",
+      "Landmark"
+     ],
+     [
+      19,
+      "Cole",
+      "Hunter"
+     ],
+     [
+      23,
+      "Gunnar",
+      "Gleasman"
+     ]
+    ],
+    [
+     [
+      71,
+      "Ahmad",
+      "Fayad"
+     ],
+     null,
+     null
+    ]
+   ],
+   "D": [
+    [
+     [
+      12,
+      "Nigel",
+      "Boehm"
+     ],
+     [
+      6,
+      "Cameron",
+      "Allard"
+     ]
+    ],
+    [
+     [
+      2,
+      "Cole",
+      "Slobodian"
+     ],
+     [
+      10,
+      "Connor",
+      "Schmidt"
+     ]
+    ],
+    [
+     [
+      77,
+      "Easten",
+      "Turko"
+     ],
+     [
+      27,
+      "Ilari",
+      "Kapanen"
+     ]
+    ]
+   ],
+   "G": [
+    [
+     29,
+     "Ryley",
+     "Budd"
+    ],
+    [
+     30,
+     "Filip",
+     "Ruzicka"
+    ]
+   ]
+  },
+  "queued": "2026-11-25T18:00:05.620524-05:00"
+ },
+ {
+  "id": "whl:1023338:home",
+  "lg": "whl",
+  "key": "whl_edmonton",
+  "team": "Edmonton Oil Kings",
+  "opp": "Saskatoon Blades",
+  "vsat": "vs",
+  "start": "2026-11-25T20:00:00-05:00",
+  "local": "2026-11-25T19:00:00",
+  "zone": "America/Edmonton",
+  "entry": {
+   "F": [
+    [
+     [
+      21,
+      "Ty",
+      "Meunier"
+     ],
+     [
+      10,
+      "Kayden",
+      "Stroeder"
+     ],
+     [
+      14,
+      "Dylan",
+      "Dean"
+     ]
+    ],
+    [
+     [
+      23,
+      "Tyler",
+      "Potter"
+     ],
+     [
+      8,
+      "Aaron",
+      "Obobaifo"
+     ],
+     [
+      41,
+      "Luke",
+      "Melnik"
+     ]
+    ],
+    [
+     [
+      24,
+      "Olli",
+      "Wahlroos"
+     ],
+     [
+      22,
+      "KJ",
+      "Sauer"
+     ],
+     [
+      12,
+      "Kanjyu",
+      "Gojsic"
+     ]
+    ],
+    [
+     [
+      77,
+      "Ezekiel",
+      "Kaebel"
+     ],
+     [
+      20,
+      "Cage",
+      "Smith"
+     ],
+     [
+      32,
+      "Ryan",
+      "Gower"
+     ]
+    ]
+   ],
+   "D": [
+    [
+     [
+      5,
+      "Noa",
+      "Ta'amu"
+     ],
+     [
+      27,
+      "Josh",
+      "Lee"
+     ]
+    ],
+    [
+     [
+      4,
+      "Dylan",
+      "Ronald"
+     ],
+     [
+      43,
+      "Matthew",
+      "Hauser"
+     ]
+    ],
+    [
+     [
+      28,
+      "Matheas",
+      "Hejda"
+     ],
+     [
+      44,
+      "Kayson",
+      "Anderson"
+     ]
+    ]
+   ],
+   "G": [
+    [
+     31,
+     "Ethan",
+     "Simcoe"
+    ],
+    [
+     35,
+     "Elias",
+     "Mitrikas"
+    ]
+   ]
+  },
+  "queued": "2026-11-25T18:00:05.620524-05:00"
+ },
+ {
+  "id": "whl:1023338:away",
+  "lg": "whl",
+  "key": "whl_saskatoon",
+  "team": "Saskatoon Blades",
+  "opp": "Edmonton Oil Kings",
+  "vsat": "at",
+  "start": "2026-11-25T20:00:00-05:00",
+  "local": "2026-11-25T19:00:00",
+  "zone": "America/Edmonton",
+  "entry": {
+   "F": [
+    [
+     [
+      77,
+      "Kazden",
+      "Mathies"
+     ],
+     [
+      11,
+      "David",
+      "Lewandowski"
+     ],
+     [
+      66,
+      "Yegor",
+      "Gusev"
+     ]
+    ],
+    [
+     [
+      71,
+      "Ben",
+      "Bowtell"
+     ],
+     [
+      6,
+      "Hayden",
+      "Harsanyi"
+     ],
+     [
+      27,
+      "Hunter",
+      "Laing"
+     ]
+    ],
+    [
+     [
+      55,
+      "Konstantin",
+      "Hutzinger"
+     ],
+     [
+      25,
+      "Triston",
+      "Mitchell-McElhone"
+     ],
+     [
+      20,
+      "Cohen",
+      "Lewko"
+     ]
+    ],
+    [
+     [
+      67,
+      "Jaggar",
+      "John"
+     ],
+     [
+      28,
+      "Noah",
+      "Fowler"
+     ],
+     [
+      19,
+      "Trevin",
+      "Vargo"
+     ]
+    ]
+   ],
+   "D": [
+    [
+     [
+      4,
+      "Brayden",
+      "Klimpke"
+     ],
+     [
+      3,
+      "Jordan",
+      "Martin"
+     ]
+    ],
+    [
+     [
+      56,
+      "Tyrone",
+      "Sobry"
+     ],
+     [
+      37,
+      "Jack",
+      "Kachkowski"
+     ]
+    ],
+    [
+     [
+      57,
+      "Josh",
+      "Fluker"
+     ],
+     [
+      41,
+      "Jack",
+      "Lavallee"
+     ]
+    ],
+    [
+     [
+      43,
+      "Luke",
+      "Dumas"
+     ]
+    ]
+   ],
+   "G": [
+    [
+     81,
+     "Martin",
+     "Psohlavec"
+    ],
+    [
+     32,
+     "Koen",
+     "Cleaver"
+    ]
+   ]
+  },
+  "queued": "2026-11-25T18:00:05.620524-05:00"
  }
 ]
