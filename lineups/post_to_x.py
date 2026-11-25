@@ -21,6 +21,19 @@ import urllib.error, urllib.parse, urllib.request, uuid
 from zoneinfo import ZoneInfo
 
 ET = ZoneInfo("America/Toronto")
+# Label by the league's own zone name (the tz database abbreviations don't match what locals call their time).
+ZONE_LABEL = {"America/Toronto": "ET", "America/New_York": "ET", "America/Winnipeg": "CT", "America/Regina": "CT",
+              "America/Edmonton": "MT", "America/Vancouver": "PT", "America/Los_Angeles": "PT",
+              "America/Halifax": "AT", "America/St_Johns": "NT"}
+
+def local_when(item):
+    """(time, label) for puck drop in the arena's own time zone, e.g. 7:00 PM MT for a game in Alberta.
+    Uses the league's local wall-clock time saved with the queued post; older items and unknown zones stay on Eastern."""
+    lab = ZONE_LABEL.get(item.get("zone") or "")
+    if lab and item.get("local"):
+        try: return datetime.datetime.fromisoformat(item["local"]), lab
+        except Exception: pass
+    return datetime.datetime.fromisoformat(item["start"]).astimezone(ET), "ET"
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 INDEX = os.path.join(ROOT, "index.html")
 QUEUE = os.path.join(ROOT, "lineups", "x_queue.json")
@@ -144,9 +157,9 @@ def render_card(item, colors, caps=None, path=None):
     d.rectangle([0, 124, W, 132], fill=accent)
     title_f = _fit(d, item["team"], 840, 60, 34)
     d.text((40, 20), item["team"], font=title_f, fill=(255, 255, 255))
-    when = datetime.datetime.fromisoformat(item["start"]).astimezone(ET)
+    when, ab = local_when(item)
     tm = when.strftime("%I:%M %p").lstrip("0")
-    sub = "%s %s  ·  %s %d  ·  %s ET" % (item["vsat"], item["opp"], when.strftime("%a %b"), when.day, tm)
+    sub = "%s %s  ·  %s %d  ·  %s %s" % (item["vsat"], item["opp"], when.strftime("%a %b"), when.day, tm, ab)
     d.text((40, 84), sub, font=_fit(d, sub, 900, 28, 18), fill=(235, 240, 247))
     lg = TAG.get(item["lg"], item["lg"].upper())
     pf = _font(34)
@@ -245,8 +258,8 @@ def caption(item):
         d = datetime.date.fromisoformat(item["date_only"])
         when_line = "%s %d" % (d.strftime("%b"), d.day)
     else:
-        when = datetime.datetime.fromisoformat(item["start"]).astimezone(ET)
-        when_line = "%s ET · %s %d" % (when.strftime("%I:%M %p").lstrip("0"), when.strftime("%b"), when.day)
+        when, ab = local_when(item)
+        when_line = "%s %s · %s %d" % (when.strftime("%I:%M %p").lstrip("0"), ab, when.strftime("%b"), when.day)
     return "\U0001F3D2 %s lines %s %s\n%s\n\n%s" % (item["team"], item["vsat"], item["opp"], when_line, tags)
 
 
