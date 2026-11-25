@@ -128,9 +128,9 @@ footer{font-size:.74rem;color:var(--mute);text-align:center;padding:0 12px 20px}
 .pf-sec{margin-top:18px;padding-top:12px;border-top:1px solid var(--board)}
 .pf-fields{display:grid;gap:8px;margin-bottom:10px}
 .bd-def{filter:grayscale(1);box-shadow:0 0 0 1px rgba(255,255,255,.35)}
-.sels{flex-wrap:wrap}.shwrap{position:relative;flex:none}.sharebtn{font:inherit;font-size:.9rem;font-weight:600;display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:8px;border:1px solid var(--board);background:var(--pill);color:var(--ink);cursor:pointer}.sharebtn:hover{border-color:var(--ink)}.shmenu{position:absolute;top:calc(100% + 6px);left:0;z-index:60;min-width:180px;background:var(--bg);border:1px solid var(--board);border-radius:10px;padding:6px;box-shadow:0 8px 24px rgba(0,0,0,.35)}.shmenu[hidden]{display:none}.shmenu a,.shmenu button{display:block;width:100%;box-sizing:border-box;text-align:left;font:inherit;font-size:.92rem;color:var(--ink);background:none;border:0;border-radius:6px;padding:9px 10px;cursor:pointer;text-decoration:none}.shmenu a:hover,.shmenu button:hover{background:var(--ice)}#rankBadge{position:absolute;z-index:3;display:none;align-items:baseline;gap:7px;padding:6px 13px 6px 12px;border-radius:999px;background:rgba(11,18,25,.84);border:1px solid rgba(255,255,255,.2);box-shadow:0 2px 8px rgba(0,0,0,.45);pointer-events:none;white-space:nowrap}
+.sels{flex-wrap:wrap}.shwrap{position:relative;flex:none}.sharebtn{font:inherit;font-size:.9rem;font-weight:600;display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:8px;border:1px solid var(--board);background:var(--pill);color:var(--ink);cursor:pointer}.sharebtn:hover{border-color:var(--ink)}.shmenu{position:absolute;top:calc(100% + 6px);left:0;z-index:60;min-width:180px;background:var(--bg);border:1px solid var(--board);border-radius:10px;padding:6px;box-shadow:0 8px 24px rgba(0,0,0,.35)}.shmenu[hidden]{display:none}.shmenu a,.shmenu button{display:block;width:100%;box-sizing:border-box;text-align:left;font:inherit;font-size:.92rem;color:var(--ink);background:none;border:0;border-radius:6px;padding:9px 10px;cursor:pointer;text-decoration:none}.shmenu a:hover,.shmenu button:hover{background:var(--ice)}#rankBadge{position:absolute;z-index:3;display:none;align-items:center;gap:7px;padding:6px 13px 6px 12px;border-radius:999px;background:rgba(11,18,25,.84);border:1px solid rgba(255,255,255,.2);box-shadow:0 2px 8px rgba(0,0,0,.45);pointer-events:none;white-space:nowrap}
 #rankBadge .t{color:#fff;font-size:13px;font-weight:700;letter-spacing:.2px}
-#rankBadge .n{color:#ff9a1f;font-size:17px;font-weight:800;line-height:1}
+#rankBadge .n{color:#ff9a1f;font-size:17px;font-weight:800;line-height:1;position:relative;top:1px}
 @media(max-width:520px){#rankBadge{padding:5px 10px 5px 9px;gap:5px}#rankBadge .t{font-size:11px}#rankBadge .n{font-size:14px}}
 </style>
 </head>
@@ -1813,7 +1813,7 @@ render(sel.value);
     if (lg && lg.getBoundingClientRect().width) {
       var lr = lg.getBoundingClientRect();
       left = lr.right - rr.left + 10;
-      top = lr.top - rr.top + lr.height / 2 - b.offsetHeight / 2;
+      top = lr.top - rr.top + 6;
     }
     b.style.left = Math.max(0, left) + "px"; b.style.top = Math.max(0, top) + "px";
   }
