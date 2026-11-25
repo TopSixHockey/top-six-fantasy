@@ -1,106 +1,49 @@
 {
  "ohl": [
   {
-   "away": "Sudbury Wolves",
+   "away": "Ottawa 67's",
    "et": "19:00",
-   "home": "Brantford Bulldogs",
-   "id": "29235",
+   "home": "Barrie Colts",
+   "id": "29239",
    "time": "19:00"
   },
   {
-   "away": "London Knights",
-   "et": "19:00",
-   "home": "Erie Otters",
-   "id": "29236",
-   "time": "19:00"
-  },
-  {
-   "away": "Saginaw Spirit",
-   "et": "19:00",
-   "home": "Flint Firebirds",
-   "id": "29237",
-   "time": "19:00"
-  },
-  {
-   "away": "Kitchener Rangers",
+   "away": "Guelph Storm",
    "et": "19:05",
-   "home": "Windsor Spitfires",
-   "id": "29238",
+   "home": "Peterborough Petes",
+   "id": "29240",
    "time": "19:05"
   }
  ],
  "qmjhl": [
   {
-   "away": "Shawinigan, Cataractes",
-   "et": "19:00",
-   "home": "Drummondville, Voltigeurs",
-   "id": "32821",
+   "away": "Chicoutimi, Saguen\u00e9ens",
+   "et": "17:30",
+   "home": "Newfoundland, Regiment",
+   "id": "32952",
+   "time": "19:00"
+  },
+  {
+   "away": "Blainville-Boisbriand, Armada",
+   "et": "18:00",
+   "home": "Cape Breton, Eagles",
+   "id": "32723",
    "time": "19:00"
   },
   {
    "away": "Charlottetown, Islanders",
    "et": "19:00",
-   "home": "Sherbrooke, Ph\u0153nix",
-   "id": "33146",
+   "home": "Gatineau, Olympiques",
+   "id": "32855",
+   "time": "19:00"
+  },
+  {
+   "away": "Saint John, Sea Dogs",
+   "et": "19:00",
+   "home": "Val-d'Or, Foreurs",
+   "id": "33178",
    "time": "19:00"
   }
  ],
- "whl": [
-  {
-   "away": "Swift Current Broncos",
-   "et": "20:00",
-   "home": "Moose Jaw Warriors",
-   "id": "1023341",
-   "time": "19:00"
-  },
-  {
-   "away": "Red Deer Rebels",
-   "et": "20:00",
-   "home": "Calgary Hitmen",
-   "id": "1023337",
-   "time": "19:00"
-  },
-  {
-   "away": "Brandon Wheat Kings",
-   "et": "20:00",
-   "home": "Lethbridge Hurricanes",
-   "id": "1023340",
-   "time": "19:00"
-  },
-  {
-   "away": "Saskatoon Blades",
-   "et": "20:00",
-   "home": "Edmonton Oil Kings",
-   "id": "1023338",
-   "time": "19:00"
-  },
-  {
-   "away": "Regina Pats",
-   "et": "21:05",
-   "home": "Victoria Royals",
-   "id": "1023344",
-   "time": "19:05"
-  },
-  {
-   "away": "Tri-City Americans",
-   "et": "22:05",
-   "home": "Seattle Thunderbirds",
-   "id": "1023342",
-   "time": "19:05"
-  },
-  {
-   "away": "Kelowna Rockets",
-   "et": "22:05",
-   "home": "Spokane Chiefs",
-   "id": "1023343",
-   "time": "19:05"
-  },
-  {
-   "away": "Vancouver Giants",
-   "et": "22:05",
-   "home": "Everett Silvertips",
-   "id": "1023339",
-   "time": "19:05"
-  }
- ]
+ "whl": []
 }
