@@ -405,6 +405,31 @@ def test_post(key):
     print(out, info)
     return 0 if out == "ok" else 1
 
+def repost(spec):
+    """Reposts given teams with the normal caption (no TEST label). spec = "sudbury@19:00,guelph@19:05" (ET puck drop)."""
+    creds = creds_from_env()
+    if os.environ.get("X_POSTING", "").lower() != "true" or not creds:
+        print("X posting is OFF (needs the X_POSTING variable = true and the four X secrets)."); return 1
+    src = open(INDEX, encoding="utf-8").read()
+    colors, caps = load_colors(src), load_caps(src)
+    today = datetime.datetime.now(ET).date().isoformat()
+    shooter = open_shooter()
+    try:
+        for part in [p.strip() for p in spec.split(",") if p.strip()]:
+            key, _, hm = part.partition("@")
+            it = item_from_index(src, key, colors)
+            if not it: print("no lineup for", key); continue
+            if hm:
+                h, mi = hm.split(":")
+                it["start"] = datetime.datetime.now(ET).replace(hour=int(h), minute=int(mi), second=0, microsecond=0).isoformat()
+            it["id"] = "repost:%s:%s" % (today, key)
+            out, info = post_item(it, colors, caps.get(key), creds, shooter=shooter)
+            print(it["team"], "->", out, info)
+            time.sleep(PAUSE_S)
+    finally:
+        close_shooter(shooter)
+    return 0
+
 def backfill(date_iso):
     """One-time catch-up: post every team whose saved lineup is for a game on this date, even if it is already over."""
     creds = creds_from_env()
@@ -488,4 +513,5 @@ if __name__ == "__main__":
     if a[:1] == ["--preview"]: preview(a[1], a[2:])
     elif a[:1] == ["--test"]: sys.exit(test_post(a[1]))
     elif a[:1] == ["--backfill"]: sys.exit(backfill(a[1]))
+    elif a[:1] == ["--repost"]: sys.exit(repost(a[1]))
     else: sys.exit(run_queue())
