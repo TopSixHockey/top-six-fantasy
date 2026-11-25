@@ -50,7 +50,7 @@ def load():
         e = d["L"].get(key)
         if not e or not e.get("F") or lg_of(key) not in ENABLED: continue
         lg = lg_of(key)
-        sig = hashlib.sha1(json.dumps([e.get("F"), e.get("D"), e.get("G"), e.get("game"), "layout2"], sort_keys=True).encode()).hexdigest()[:10]
+        sig = hashlib.sha1(json.dumps([e.get("F"), e.get("D"), e.get("G"), e.get("game"), "layout3"], sort_keys=True).encode()).hexdigest()[:10]
         teams[key] = {"key": key, "name": c[0], "colors": c[1:], "lg": lg, "slug": "%s-%s" % (lg, slug(c[0])),
                       "game": re.sub(r"<[^>]+>", "", e.get("game", "")), "sig": sig}
     return teams
@@ -83,18 +83,29 @@ def _wrap(draw, text, font, width):
     if cur: lines.append(cur)
     return lines
 
-def compose(t, forwards, defence):
+def compose(t, forwards, defence, goalies=None):
     from PIL import Image, ImageDraw
     W, H, M, STRIP = 1200, 630, 24, 84
     im = Image.new("RGB", (W, H), (11, 18, 32))
     fw = Image.open(io.BytesIO(forwards)).convert("RGB")
     df = Image.open(io.BytesIO(defence)).convert("RGB")
+    gl = Image.open(io.BytesIO(goalies)).convert("RGB") if goalies else None
     gap = 24
-    s = min((H - M - STRIP - M) / max(fw.height, df.height), (W - 2 * M - gap) / (fw.width + df.width))   # as big as fits
-    fw = fw.resize((int(fw.width * s), int(fw.height * s)), Image.LANCZOS)
-    df = df.resize((int(df.width * s), int(df.height * s)), Image.LANCZOS)
+    avail_h = H - M - STRIP - M
+    if gl is None:
+        sl = sr = min(avail_h / max(fw.height, df.height), (W - 2 * M - gap) / (fw.width + df.width))   # as big as fits
+    else:                                              # left: forwards. right: defence with goalies + scratches under it
+        sl = avail_h / fw.height
+        sr = min(sl, avail_h / (df.height + 12 + gl.height))
+        k = min(1.0, (W - 2 * M - gap) / (fw.width * sl + df.width * sr))
+        sl *= k; sr *= k
+    fw = fw.resize((int(fw.width * sl), int(fw.height * sl)), Image.LANCZOS)
+    df = df.resize((int(df.width * sr), int(df.height * sr)), Image.LANCZOS)
     x0 = (W - (fw.width + gap + df.width)) // 2
     im.paste(fw, (x0, M)); im.paste(df, (x0 + fw.width + gap, M))
+    if gl is not None:
+        gl = gl.resize((int(gl.width * sr), int(gl.height * sr)), Image.LANCZOS)
+        im.paste(gl, (x0 + fw.width + gap, M + df.height + int(12 * sr)))
     d = ImageDraw.Draw(im)
     y = H - STRIP + 4
     col = t["colors"][0] if t["colors"] else "#f2b705"
@@ -120,7 +131,7 @@ def make_images(teams):
             try:
                 got = dict(sh.shots(t["key"]))
                 if "forwards" not in got or "defence" not in got: print("og: skipped", t["key"], "(panel missing)"); continue
-                open(img_path(t), "wb").write(compose(t, got["forwards"], got["defence"]))
+                open(img_path(t), "wb").write(compose(t, got["forwards"], got["defence"], got.get("goalies")))
                 st[t["key"]] = t["sig"]; n += 1; print("og: drew", t["slug"])
             except Exception as ex:
                 print("og: failed", t["key"], ex)
