@@ -1401,7 +1401,7 @@ var nameHtml = function (n, a, b) { return (fin && a > b ? '<span class="w">' + 
 var scoreHtml = nameHtml(mn, mg, og) + " – " + nameHtml(on, og, mg);
 var pill, clock = "";
 if (fin) { var ps = g.PeriodNameShort; pill = '<span class="st">Final' + (ps === "OT" || ps === "SO" ? "/" + ps : "") + "</span>"; }
-else if (g.GameStatus === "1") { pill = '<span class="st">Puck drop ' + esc2(g.ScheduledFormattedTime || "") + "</span>"; scoreHtml = esc2(mn) + " vs " + esc2(on); }
+else if (g.GameStatus === "1") { pill = '<span class="st">Puck drop ' + esc2(g.ScheduledFormattedTime || "") + esc2(({ "America/Toronto": " ET", "America/New_York": " ET", "America/Winnipeg": " CT", "America/Regina": " CT", "America/Edmonton": " MT", "America/Vancouver": " PT", "America/Los_Angeles": " PT", "America/Halifax": " AT", "America/St_Johns": " NT" })[g.Timezone] || "") + "</span>"; scoreHtml = esc2(mn) + " vs " + esc2(on); }
 else {
 var p = { 1: "1st", 2: "2nd", 3: "3rd", 4: "OT", 5: "SO" }[g.Period] || (g.PeriodNameShort || ""), c = String(g.GameClock || "").replace(/^0/, "");
 pill = '<span class="st live">Live</span>';
