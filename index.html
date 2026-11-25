@@ -1803,7 +1803,7 @@ render(sel.value);
   /* CHL Top 10 weekly ranking badge, drawn next to the team logo. Data: lineups/chl_top10.json (team key -> rank 1 to 10). */
   var P = null;
   function load() {
-    if (!P) P = fetch("lineups/chl_top10.json?d=" + new Date().toISOString().slice(0, 13)).then(function (r) { return r.json(); }).catch(function () { return null; });
+    if (!P) P = fetch("lineups/chl_top10.json?d=" + new Date().toISOString().slice(0, 13), { cache: "no-cache" }).then(function (r) { return r.json(); }).catch(function () { return null; });
     return P;
   }
   function place() {
