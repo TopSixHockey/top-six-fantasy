@@ -16,7 +16,7 @@ Other modes:
   python lineups/post_to_x.py --test team_key                    post ONE real test card for that team
   python lineups/post_to_x.py --backfill 2026-11-22              one-time catch-up: post every team with a lineup for that date
 """
-import base64, datetime, hashlib, hmac, json, os, re, sys, time
+import base64, datetime, hashlib, hmac, io, json, os, re, sys, time
 import urllib.error, urllib.parse, urllib.request, uuid
 from zoneinfo import ZoneInfo
 
@@ -319,6 +319,25 @@ def close_shooter(shooter):
         try: shooter.__exit__(None, None, None)
         except Exception: pass
 
+def fit_tile(data, ratio, bg=(11, 18, 32)):
+    """Zooms a picture out onto a canvas of the given width/height ratio (padded, never cropped), so X's
+    cover-crop of its 3-picture grid (tall left tile, two wide tiles on the right) cuts nothing off."""
+    try:
+        from PIL import Image
+        im = Image.open(io.BytesIO(data)).convert("RGB")
+        w, h = im.size
+        cw, ch = (w, int(round(w / ratio))) if w / float(h) > ratio else (int(round(h * ratio)), h)
+        if cw == w and ch == h: return data
+        w2, h2 = w + 2 * int(w * 0.03), h + 2 * int(w * 0.03)   # small margin so jerseys never touch the tile edge
+        cw, ch = (w2, int(round(w2 / ratio))) if w2 / float(h2) > ratio else (int(round(h2 * ratio)), h2)
+        canvas = Image.new("RGB", (cw, ch), bg)
+        canvas.paste(im, ((cw - w) // 2, (ch - h) // 2))
+        out = io.BytesIO(); canvas.save(out, "JPEG", quality=88, optimize=True)
+        return out.getvalue()
+    except Exception as e:
+        print("could not fit picture to tile:", e)
+        return data
+
 def post_item(item, colors, caps, creds, prefix="", shooter=None):
     """-> (outcome, detail). outcome: ok | dup | retry | limit | fatal.  Pictures: forwards, defence, goalies+scratches."""
     images = []
@@ -327,6 +346,8 @@ def post_item(item, colors, caps, creds, prefix="", shooter=None):
         except Exception as e: print("screenshots failed for", item["team"], "-", e)
     if not images:
         images = [(render_card(item, colors, caps), "image/png")]
+    elif len(images) == 3:
+        images = [(fit_tile(b, 8 / 9.0 if i == 0 else 16 / 9.0), m) for i, (b, m) in enumerate(images)]
     ids = []
     for data, mime in images:
         mid, err = _upload(data, mime, creds)
