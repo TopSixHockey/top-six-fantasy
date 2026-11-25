@@ -339,6 +339,18 @@ td.pos{color:var(--ok)}td.neg{color:var(--bad)}td.pts{color:#ff9f43}td.fp{font-w
 #buildView{align-items:stretch}
 /* standings: page scrolls, not the table */
 .tbl:has(.pl-st){max-height:none;overflow-x:auto}
+#gdOv{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9998;display:none;align-items:flex-start;justify-content:center;padding:14px;overflow-y:auto}
+#gdOv.on{display:flex}
+#gd{background:var(--panel);border:1px solid var(--line);border-radius:14px;max-width:780px;width:100%;margin:auto;padding:18px 22px 22px;color:var(--tx);line-height:1.5}
+#gd .gdtop{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+#gd .gdtop h2{margin:0;flex:1;min-width:150px}
+#gd h3{margin:18px 0 6px;font-size:15px}
+#gd p,#gd li{font-size:14px}
+#gd p{margin:6px 0}
+#gd ul{margin:6px 0 6px 18px;padding:0}
+#gd table{border-collapse:collapse;margin:8px 0}
+#gd td,#gd th{border-bottom:1px solid var(--line);padding:5px 14px 5px 0;text-align:left;font-size:13px}
+#gd .gdnote{background:var(--panel2);border-radius:8px;padding:8px 10px;font-size:13px;margin:8px 0}
 </style>
 </head>
 <body>
@@ -360,6 +372,7 @@ td.pos{color:var(--ok)}td.neg{color:var(--bad)}td.pts{color:#ff9f43}td.fp{font-w
   <p>Public and Private leagues for the OHL, WHL, &amp; QMJHL</p>
   <a class="back" href="../">&larr; Line combinations</a>
   <span class="sp"></span>
+  <button class="sec" id="guideBtn">How it works</button>
   <span id="who" class="why"></span>
   <a class="back hide" id="profLink" href="../#profile">Profile</a>
   <button class="sec hide" id="signout">Sign out</button>
@@ -2667,6 +2680,90 @@ navRestore();
     if(e.target.closest&&e.target.closest(".tab"))sync();
   });
   sync();
+})();
+</script>
+<script>
+(function(){
+  var ov = document.createElement("div"); ov.id = "gdOv"; ov.setAttribute("role", "dialog"); ov.setAttribute("aria-modal", "true"); ov.setAttribute("aria-label", "How it works");
+  document.body.appendChild(ov);
+  var cur = "pub";
+  function ages(){
+    return RULES.ages.map(function(a){
+      return "<li><b>" + a.n + "</b> aged " + a.label + (a.y === 2010 ? " (born 2010, or 2011 in the WHL)" : "") + "</li>";
+    }).join("");
+  }
+  function dates(){
+    var o = [];
+    ["OHL", "WHL", "QMJHL"].forEach(function(l){
+      if (typeof CONTESTS !== "undefined" && CONTESTS[l]) o.push("<li><b>" + l + "</b>: " + startTxt(l) + (CONTESTS[l].tentative ? " (tentative)" : "") + "</li>");
+    });
+    return o.length ? "<ul>" + o.join("") + "</ul>" : "";
+  }
+  function pub(){
+    return "<p>Pick a team of 20 players from one league (OHL, WHL or QMJHL) and see how it ranks against everyone else. It is free, you get one team per league, and the leaderboard ranks teams on fantasy points only.</p>" +
+    "<h3>1. Build your team</h3><ul>" +
+    "<li>Sign in (a free account), choose a league, and open <b>Build my team</b>.</li>" +
+    "<li>Add players from the player pool. A full team is <b>" + RULES.F + " forwards, " + RULES.D + " defence and " + RULES.G + " goalies</b>.</li>" +
+    "<li>Skaters must fit these age slots (goalies do not count toward them):<ul>" + ages() + "</ul></li>" +
+    "<li>No more than <b>" + RULES.maxImports + " imports</b> and no more than <b>" + RULES.maxDrafted + " NHL-drafted</b> players.</li>" +
+    "<li>Tick <b>Only players I can add</b> to hide anyone who would break a rule.</li></ul>" +
+    "<h3>2. Lock your team</h3>" +
+    "<p>When all " + (RULES.F + RULES.D + RULES.G) + " spots are filled, press <b>Lock my team</b>. <b>Locking is final</b>: you cannot change players afterwards, so check your roster first.</p>" +
+    "<p>Your points count from the contest start date, or from the day you lock if that is later. Anything a player scored before that does not count.</p>" +
+    "<h3>3. How players score</h3>" +
+    "<table><tr><th>Skaters</th><th></th></tr><tr><td>Goal</td><td>" + SCORE.g + "</td></tr><tr><td>Assist</td><td>" + SCORE.a + "</td></tr><tr><td>Plus/minus</td><td>" + SCORE.pm + " per point</td></tr><tr><td>Shot on goal</td><td>" + SCORE.shots + "</td></tr><tr><td>Power play point</td><td>" + SCORE.ppp + "</td></tr></table>" +
+    "<table><tr><th>Goalies</th><th></th></tr><tr><td>Win</td><td>" + SCORE.w + "</td></tr><tr><td>Shutout</td><td>" + SCORE.so + "</td></tr><tr><td>Each game with a save percentage above .900</td><td>" + SCORE.g900 + "</td></tr></table>" +
+    "<h3>4. Follow your team</h3><ul>" +
+    "<li><b>My lineup</b> shows your players on jerseys. You can drag them around just for fun; it does not change your score.</li>" +
+    "<li><b>Leaderboard</b> ranks the teams in each league, for the season or for a single month. Tap a team to see its lineup.</li></ul>" +
+    "<h3>When does it start?</h3><p>The contest runs for the second half of the season and starts at each league's trade deadline:</p>" + dates() +
+    "<div class=\"gdnote\">Before the start date, the points you see are just for testing. Everyone's points reset to 0.0 when the contest begins.</div>";
+  }
+  function priv(){
+    return "<p>Private leagues are head-to-head leagues for you and your friends. One person is the commissioner and creates the league, friends join with a code, everyone drafts their own players (each player belongs to one team only), and teams face each other every week.</p>" +
+    "<h3>1. Create or join a league</h3><ul>" +
+    "<li>Open the <b>Private leagues</b> tab and press <b>+ Create league</b>. Choose a name, the junior league (OHL, WHL or QMJHL), the number of teams (8 to 16), the scoring type, the Monday that week 1 starts, and how many weeks the season runs.</li>" +
+    "<li>Share the 8-character invite code. Friends press <b>Join with code</b>, enter it and pick a team name.</li>" +
+    "<li>When there are at least 8 teams, the commissioner presses <b>Set schedule</b>. That closes the league to new teams and draws the weekly matchups at random. It can be reopened until the draft starts.</li></ul>" +
+    "<h3>2. Scoring</h3><ul>" +
+    "<li><b>Total fantasy points:</b> the team with more points that week wins. Players score the same way as in the public game.</li>" +
+    "<li><b>Categories:</b> each week you compete in G, A, PTS, +/-, SOG, PPP, W and SV%. Win more categories than your opponent to win the week. Standings give 2 points for a win and 1 for a tie.</li>" +
+    "<li>In category leagues, a team needs at least 2 goalie starts in the week, or it forfeits both goalie categories (W and SV%).</li></ul>" +
+    "<h3>3. The draft</h3><ul>" +
+    "<li>The commissioner sets the draft date and time and the time per pick (30 seconds to 3 minutes, or no limit).</li>" +
+    "<li>It is a 20-round snake draft. The order is drawn at random when the draft starts. If your clock runs out, the best available player is picked for you.</li>" +
+    "<li>You can build a draft list before the draft starts, and it carries into the draft room.</li>" +
+    "<li>The commissioner chooses whether roster quotas apply. With quotas on: at least 1 sixteen-year-old (15 or 16 in the WHL), at least 4 seventeen-year-olds, 1 to 2 overage players, no limits on 18 and 19, 1 to 3 imports, and no more than 5 NHL-drafted. With quotas off, the only rule is 12 forwards, 6 defence and 2 goalies.</li></ul>" +
+    "<h3>4. During the season</h3><ul>" +
+    "<li>Weeks run Monday to Sunday. Check <b>Matchups</b>, <b>Standings</b> and <b>Transactions</b> in your league.</li>" +
+    "<li><b>Adds:</b> up to " + ADDS_PER_WEEK + " adds a week. Once the season has started, a move takes effect the following Monday. A dropped player keeps scoring for you until then.</li>" +
+    "<li><b>Injured reserve:</b> 3 spots per team. Only players marked injured on a lineup sheet can go there. It frees a roster spot, and a player on injured reserve does not score for you. A healed player can stay there, but you need an open roster spot to bring him back.</li></ul>" +
+    "<h3>5. Trades</h3><ul>" +
+    "<li>Press <b>Propose Trade</b> on another team's page and swap 1 to 5 players each way.</li>" +
+    "<li>A team that takes on more players drops players to fit the roster limits (20 players, 12 forwards, 6 defence, 2 goalies).</li>" +
+    "<li>A trade takes effect the next day and does not use up your weekly adds.</li>" +
+    "<li>The commissioner picks how trades are approved: commissioner veto, a majority league vote, or no review. A league can also set a trade deadline. Completed trades show for 3 days for the whole league.</li></ul>" +
+    "<h3>6. Waivers: players returned from the NHL</h3>" +
+    "<p>If an NHL-drafted player is sent back to his junior team after the season has started, he goes on waivers for 3 days in every league of that junior league. Place a claim from the Players tab. The team with the highest waiver priority wins.</p>";
+  }
+  function render(){
+    ov.innerHTML = "<div id=\"gd\"><div class=\"gdtop\"><h2>How it works</h2><button class=\"sec\" id=\"gdX\">Close</button></div>" +
+      "<div class=\"pills\"><button class=\"pill" + (cur === "pub" ? " on" : "") + "\" data-gd=\"pub\">Public leagues</button><button class=\"pill" + (cur === "pl" ? " on" : "") + "\" data-gd=\"pl\">Private leagues</button></div>" +
+      (cur === "pub" ? pub() : priv()) + "</div>";
+    ov.scrollTop = 0;
+  }
+  function openG(w){ cur = w === "pl" ? "pl" : "pub"; render(); ov.classList.add("on"); document.body.style.overflow = "hidden"; var x = document.getElementById("gdX"); if (x) x.focus(); }
+  function closeG(){ ov.classList.remove("on"); document.body.style.overflow = ""; }
+  ov.addEventListener("click", function(e){
+    if (e.target === ov || e.target.id === "gdX") return closeG();
+    var b = e.target.closest ? e.target.closest("[data-gd]") : null;
+    if (b){ cur = b.getAttribute("data-gd"); render(); }
+  });
+  document.addEventListener("keydown", function(e){ if (e.key === "Escape" && ov.classList.contains("on")) closeG(); });
+  var btn = document.getElementById("guideBtn");
+  if (btn) btn.addEventListener("click", function(){ var m = document.querySelector(".mtab.on"); openG(m && m.getAttribute("data-main") === "pl" ? "pl" : "pub"); });
+  if (location.hash === "#how") openG("pub"); else if (location.hash === "#how-private") openG("pl");
+  window.tshGuide = openG;
 })();
 </script>
 </body>
