@@ -346,8 +346,6 @@ def post_item(item, colors, caps, creds, prefix="", shooter=None):
         except Exception as e: print("screenshots failed for", item["team"], "-", e)
     if not images:
         images = [(render_card(item, colors, caps), "image/png")]
-    elif len(images) == 3:
-        images = [(fit_tile(b, 8 / 9.0 if i == 0 else 16 / 9.0), m) for i, (b, m) in enumerate(images)]
     ids = []
     for data, mime in images:
         mid, err = _upload(data, mime, creds)
