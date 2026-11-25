@@ -1813,7 +1813,7 @@ render(sel.value);
     if (lg && lg.getBoundingClientRect().width) {
       var lr = lg.getBoundingClientRect();
       left = lr.right - rr.left + 10;
-      top = lr.top - rr.top + 6;
+      top = lr.top - rr.top;
     }
     b.style.left = Math.max(0, left) + "px"; b.style.top = Math.max(0, top) + "px";
   }
