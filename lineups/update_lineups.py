@@ -370,6 +370,16 @@ def game_start(g):
         return datetime.datetime.combine(datetime.date.fromisoformat(g["date_played"]),
                                          datetime.time.fromisoformat(g["schedule_time"]), ET)
 
+def local_stamp(g):
+    """The arena's own wall-clock puck drop (what the league shows locally), but only when it agrees with the feed's own
+    ISO time. Used so X posts can say "7:00 PM MT" for a game in Alberta instead of converting everything to Eastern."""
+    try:
+        loc = datetime.datetime.combine(datetime.date.fromisoformat(g["date_played"]), datetime.time.fromisoformat(g["schedule_time"]))
+        iso = datetime.datetime.fromisoformat(g["GameDateISO8601"]).replace(tzinfo=None)
+        return loc.isoformat() if loc == iso else ""
+    except Exception:
+        return ""
+
 def fmt_date(d): return d.strftime("%b ") + str(d.day) + d.strftime(", %Y")
 
 def pdf_text(url):
@@ -466,6 +476,7 @@ def main():
                 if not final:    # a lineup for a game still to be played -> queue it for the X account
                     new_posts.append({"id": sk, "lg": lg, "key": key, "team": tname.replace(", ", " "), "opp": opp,
                                       "vsat": vsat, "start": start.astimezone(ET).isoformat(),
+                                      "local": local_stamp(g), "zone": g.get("timezone") or "",
                                       "entry": ent, "queued": now.isoformat()})
     if new_posts:
         try:
