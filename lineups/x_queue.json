@@ -1,1 +1,134 @@
-[]
+[
+ {
+  "id": "whl:1023336:home",
+  "lg": "whl",
+  "key": "whl_medhat",
+  "team": "Medicine Hat Tigers",
+  "opp": "Brandon Wheat Kings",
+  "vsat": "vs",
+  "start": "2026-11-24T20:00:00-05:00",
+  "entry": {
+   "F": [
+    [
+     [
+      11,
+      "Shaeffer",
+      "Gordon-Carroll"
+     ],
+     [
+      26,
+      "Markus",
+      "Ruck"
+     ],
+     [
+      12,
+      "Liam",
+      "Ruck"
+     ]
+    ],
+    [
+     [
+      10,
+      "Yaroslav",
+      "Bryzgalov"
+     ],
+     [
+      23,
+      "Josh",
+      "Evaschesen"
+     ],
+     [
+      16,
+      "Luke",
+      "Cozens"
+     ]
+    ],
+    [
+     [
+      7,
+      "Jake",
+      "Burmis"
+     ],
+     [
+      5,
+      "Kadon",
+      "McCann"
+     ],
+     [
+      21,
+      "Arvid",
+      "Drott"
+     ]
+    ],
+    [
+     [
+      36,
+      "Jaxson",
+      "Craig"
+     ],
+     [
+      24,
+      "Brayden",
+      "Holberton"
+     ],
+     [
+      15,
+      "Luke",
+      "Ruptash"
+     ]
+    ]
+   ],
+   "D": [
+    [
+     [
+      14,
+      "Dayton",
+      "Reschny"
+     ],
+     [
+      3,
+      "Riley",
+      "Steen"
+     ]
+    ],
+    [
+     [
+      18,
+      "Denis",
+      "Pasler"
+     ],
+     [
+      6,
+      "Mace'o",
+      "Phillips"
+     ]
+    ],
+    [
+     [
+      2,
+      "Tyson",
+      "Moss"
+     ],
+     [
+      28,
+      "Luke",
+      "Warrener"
+     ]
+    ]
+   ],
+   "G": [
+    [
+     1,
+     "Carter",
+     "Casey"
+    ],
+    [
+     35,
+     "Cash",
+     "Christie"
+    ]
+   ]
+  },
+  "queued": "2026-11-24T19:26:39.987678-05:00"
+ }
+]
