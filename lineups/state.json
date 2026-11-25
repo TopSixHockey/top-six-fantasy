@@ -1,7 +1,7 @@
 {
  "inj:ohl": 1795556477.344604,
  "inj:whl": 1795556477.344604,
- "ncaa_fetched": "2026-11-24T03:41:01.917918+00:00",
+ "ncaa_fetched": "2026-11-25T00:11:04.478268+00:00",
  "ohl:29211:away": {
   "done": true,
   "flipped": true
@@ -506,5 +506,13 @@
  "whl:1023335:home": {
   "done": true,
   "flipped": true
+ },
+ "whl:1023336:away": {
+  "done": true,
+  "flipped": false
+ },
+ "whl:1023336:home": {
+  "done": true,
+  "flipped": false
  }
 }
