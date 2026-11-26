@@ -1538,7 +1538,7 @@ var iso = m[4] + "-" + (SCMON[m[2]] < 10 ? "0" : "") + SCMON[m[2]] + "-" + (+m[3
 SC.key = k; SC.info = { me: C[k][0], opp: m[1], iso: iso, code: SCLG[leagueOf(k)] };
 scPoll(k);
 }
-/* NCAA live score: lineups/ncaa_live.json is refreshed by a GitHub job (lineups/ncaa_live.py) while games are on */
+/* NCAA live score: ncaa_live.json on the "live" branch is refreshed by a GitHub job (lineups/ncaa_live.py) while games are on */
 var NCSEO = { ncaa_michigan: "michigan", ncaa_michiganstate: "michigan-st", ncaa_minnesota: "minnesota", ncaa_notredame: "notre-dame", ncaa_ohiostate: "ohio-st", ncaa_pennstate: "penn-st", ncaa_wisconsin: "wisconsin" },
   NCTZ = { minnesota: "America/Chicago", wisconsin: "America/Chicago" };
 function ncLive(k, d, m) {
@@ -1549,7 +1549,7 @@ function ncLive(k, d, m) {
     if (SC.key !== k) return;
     var next = 300000;
     try {
-      var j = await (await fetch("lineups/ncaa_live.json?t=" + Date.now(), { cache: "no-store" })).json(), g = null;
+      var j = await (await fetch("https://raw.githubusercontent.com/TopSixHockey/top-six-fantasy/live/ncaa_live.json?t=" + Date.now(), { cache: "no-store" })).json(), g = null;
       (j.games || []).forEach(function (x) {
         if (x.date === iso && (x.teams || []).some(function (t) { return t.seo === seo; })) g = x;
       });
@@ -1581,8 +1581,9 @@ function ncPaint(k, g, opp, seo) {
     return 0;
   }
   per = per.replace(/^(\d)(ST|ND|RD|TH)\b/i, function (_, n, x) { return n + x.toLowerCase(); });
-  el.innerHTML = html + '<span class="clk">' + esc2(per) + '</span><span class="st live">Live</span>';
-  return 60000;
+  var ck = String(g.clock || "").replace(/^0/, "");
+  el.innerHTML = html + '<span class="clk">' + esc2(per) + (ck ? " · " + esc2(ck) : "") + '</span><span class="st live">Live</span>';
+  return 30000;
 }
 function scLater(k, ms) { if (SC.key !== k) return; if (SC.timer) clearTimeout(SC.timer); SC.timer = setTimeout(function () { if (document.hidden) { scLater(k, 15000); } else { scPoll(k); } }, ms); }
 async function scPoll(k) {
