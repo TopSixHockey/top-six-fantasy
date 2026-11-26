@@ -1,0 +1,40 @@
+name: NCAA live scores
+
+# Saves the Big Ten teams' live scores to lineups/ncaa_live.json (the NCAA pages read that file).
+# Starts hourly; each run checks every 2 minutes for up to ~55 minutes, and stops early when no game is on or near.
+on:
+  schedule:
+    - cron: "11 11-23,0-5 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ncaa-live-scores
+  cancel-in-progress: false
+
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 58
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Poll the scoreboard
+        run: |
+          git config user.name "Top Six Hockey bot"
+          git config user.email "actions@users.noreply.github.com"
+          for i in $(seq 1 25); do
+            rc=0
+            python lineups/ncaa_live.py || rc=$?
+            git add lineups/ncaa_live.json
+            if ! git diff --cached --quiet; then
+              git commit -m "NCAA live scores"
+              git pull --rebase origin main && git push || echo "push failed, will retry next round"
+            fi
+            [ "$rc" = "10" ] && break
+            sleep 120
+          done
