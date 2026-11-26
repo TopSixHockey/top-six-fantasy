@@ -1,1 +1,136 @@
-[]
+[
+ {
+  "id": "ohl:29239:home",
+  "lg": "ohl",
+  "key": "barrie",
+  "team": "Barrie Colts",
+  "opp": "Ottawa 67's",
+  "vsat": "vs",
+  "start": "2026-11-26T19:00:00-05:00",
+  "local": "2026-11-26T19:00:00",
+  "zone": "America/Toronto",
+  "entry": {
+   "F": [
+    [
+     [
+      85,
+      "Carter",
+      "Lowe"
+     ],
+     [
+      11,
+      "William",
+      "Schneid"
+     ],
+     [
+      37,
+      "Eamon",
+      "Edgar"
+     ]
+    ],
+    [
+     [
+      24,
+      "Ben",
+      "Lombardi"
+     ],
+     [
+      89,
+      "Dylan",
+      "Tsherna"
+     ],
+     [
+      19,
+      "Michael",
+      "Tang"
+     ]
+    ],
+    [
+     [
+      71,
+      "Gleb",
+      "Olkhovik"
+     ],
+     [
+      83,
+      "Jonah",
+      "McCormick"
+     ],
+     [
+      98,
+      "Anthony",
+      "Figliomeni"
+     ]
+    ],
+    [
+     [
+      8,
+      "Sebastian",
+      "Mogull"
+     ],
+     [
+      2,
+      "Nicholas",
+      "Desiderio"
+     ],
+     [
+      39,
+      "Rocco",
+      "Olek"
+     ]
+    ]
+   ],
+   "D": [
+    [
+     [
+      74,
+      "Declan",
+      "McNally"
+     ],
+     [
+      22,
+      "Lucas",
+      "Matheson"
+     ]
+    ],
+    [
+     [
+      9,
+      "Luke",
+      "Howard"
+     ],
+     [
+      17,
+      "Patrick",
+      "Babin"
+     ]
+    ],
+    [
+     [
+      21,
+      "Ryan",
+      "Yurkiw"
+     ],
+     [
+      72,
+      "Aiden",
+      "Mowrey"
+     ]
+    ]
+   ],
+   "G": [
+    [
+     70,
+     "Matvei",
+     "Nikonovich"
+    ],
+    [
+     33,
+     "Hagan",
+     "Bach"
+    ]
+   ]
+  },
+  "queued": "2026-11-26T17:38:18.842531-05:00"
+ }
+]
