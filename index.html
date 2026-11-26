@@ -1837,7 +1837,7 @@ async function openHistNcaa(k, n, nm, d) {
   var chl = "";
   try {
     var r = await histLoad(SCLG[lg], nm, n, "", true);
-    if (r && r.reg && r.reg.length) chl = '<div class="ht">' + lg + ' regular season</div>' + histTable(r.reg, g, 0);
+    if (r && r.reg && r.reg.length) chl = '<div class="ht">' + lg + ' regular season</div>' + histTable(r.reg.map(function (x) { var c = {}; for (var q in x) c[q] = x[q]; c.team_name = (x.team_name || "") + " (" + lg + ")"; return c; }), g, 0);
   } catch (e) {}
   if (histBox === box) box.querySelector(".hc").innerHTML = (ncaaHtml + chl) || none;
 }
