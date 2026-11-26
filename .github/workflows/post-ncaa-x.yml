@@ -1,0 +1,57 @@
+name: Post NCAA lineups to X
+
+# NCAA - Big Ten lineups are entered by hand in index.html, so this runs whenever index.html is pushed.
+# It posts every NCAA team whose "Last game" line is new (three screenshots + caption, same as the CHL posts).
+# Pushes made by the other workflows (bot commits) do not start this one.
+on:
+  push:
+    branches: [main]
+    paths: [index.html]
+  workflow_dispatch:
+    inputs:
+      ncaa_test_team:
+        description: "Post ONE real test card to X for this NCAA team key (for example ncaa_michigan). Leave empty for a normal run."
+        default: ""
+        type: string
+      ncaa_force_team:
+        description: "Post this NCAA team's current lineup now, even if it was already posted (for example ncaa_michigan)."
+        default: ""
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: post-ncaa-x
+  cancel-in-progress: false
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Post NCAA lineups to X
+        env:
+          X_POSTING: ${{ vars.X_POSTING }}
+          X_API_KEY: ${{ secrets.X_API_KEY }}
+          X_API_SECRET: ${{ secrets.X_API_SECRET }}
+          X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
+          X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
+          NCAA_TEST: ${{ github.event.inputs.ncaa_test_team }}
+          NCAA_FORCE: ${{ github.event.inputs.ncaa_force_team }}
+        run: |
+          [ -f /usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf ] || (sudo apt-get update -qq && sudo apt-get install -y -qq fonts-dejavu-core)
+          python -c "import PIL" 2>/dev/null || pip install --quiet pillow
+          python -c "import playwright" 2>/dev/null || pip install --quiet playwright
+          if [ -n "$NCAA_TEST" ]; then python lineups/post_ncaa.py --test "$NCAA_TEST"; exit $?; fi
+          if [ -n "$NCAA_FORCE" ]; then python lineups/post_ncaa.py --force "$NCAA_FORCE"; else python lineups/post_ncaa.py; fi
+          git config user.name "Top Six Hockey bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add lineups/ncaa_x_posted.json
+          if git diff --cached --quiet; then echo "No changes"; exit 0; fi
+          git commit -m "NCAA X posts"
+          git pull --rebase origin main
+          git push
