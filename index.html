@@ -1165,6 +1165,7 @@ var SPEC = {
   SPEC["Minnesota Golden Gophers"] = d([[56, 4.8, "#ffffff"], [60.8, 7.5, "#7a0019"], [68.3, 4.8, "#ffffff"]], [[94, 4.8, "#ffffff"], [98.8, 7.5, "#7a0019"], [106.3, 4.8, "#ffffff"]], "#7a0019");
   SPEC["Minnesota Golden Gophers"].ny = 44;
   SPEC["Minnesota Golden Gophers"].ty = 88;
+  SPEC["Minnesota Golden Gophers"].ls = 4;
   SPEC["Minnesota Golden Gophers"].svg += '<path d="M0 0 H120 V36 L100 27 H20 L0 36 Z" fill="#7a0019"/><path d="M0 36 L20 27 H100 L120 36" fill="none" stroke="#ffffff" stroke-width="2.4"/>';
   SPEC["Notre Dame Fighting Irish"] = d([[52, 2.6, "#c99700"], [59.1, 7.6, "#ffffff"], [71.2, 2.6, "#c99700"]], [[90, 2.6, "#c99700"], [97.1, 7.6, "#ffffff"], [109.2, 2.6, "#c99700"]], "body");
   SPEC["Notre Dame Fighting Irish"].ny = 35.5; SPEC["Notre Dame Fighting Irish"].nfill = "#ffffff";
@@ -1199,7 +1200,7 @@ function jersey(n, c, name) {
     return '<path d="' + d + '" fill="' + num + '" stroke="' + ol + '" stroke-width="' + (spx && sp.sw != null ? sp.sw : 1.6) + '" paint-order="stroke" stroke-linejoin="round" ' + (extra || "") + '/>';
   };
   var tx = function (x, yy, size, t, w, extra) {
-    return '<text x="' + x + '" y="' + yy + '" text-anchor="middle" font-family="' + (spx && sp.nf ? sp.nf : (srn || wsr) ? "'Barlow Semi Condensed','Arial Narrow',sans-serif" : F) + '" font-weight="700" font-size="' + size + '" fill="' + num + '" stroke="' + ol + '" stroke-width="' + (fw ? (spx && sp.sw != null ? sp.sw : ott ? 2.4 : ktc ? 3 : gue || srn || bar || osd ? 2.6 : fnt ? 1.6 : nia ? 2.2 : osh ? 2.6 : wsr ? 2.4 : lon || eri ? 1.3 : sag ? 3 : 0) : w) + '" paint-order="stroke" stroke-linejoin="round" ' + (extra || "") + '>' + t + '</text>';
+    return '<text x="' + x + '" y="' + yy + '" text-anchor="middle" font-family="' + (spx && sp.nf ? sp.nf : (srn || wsr) ? "'Barlow Semi Condensed','Arial Narrow',sans-serif" : F) + '" font-weight="700" font-size="' + size + '" fill="' + num + '" stroke="' + ol + '" stroke-width="' + (fw ? (spx && sp.sw != null ? sp.sw : ott ? 2.4 : ktc ? 3 : gue || srn || bar || osd ? 2.6 : fnt ? 1.6 : nia ? 2.2 : osh ? 2.6 : wsr ? 2.4 : lon || eri ? 1.3 : sag ? 3 : 0) : w) + '" paint-order="stroke" stroke-linejoin="round" ' + (extra || "") + (spx && sp.ls ? ' letter-spacing="' + sp.ls + '"' : "") + '>' + t + '</text>';
   };
   var lay = function (q, c1, w1, c2, w2) { var k = function (f, st, w) { return q.split('fill="' + num + '"').join('fill="' + f + '"').split('stroke="' + ol + '"').join('stroke="' + st + '"').replace(/stroke-width="[^"]*"/g, 'stroke-width="' + w + '"'); }; return k(c1, c1, w1) + k(c2, c2, w2) + k(num, 'none', 0); };
   var sh = function (q, dx, dy, w) { var wt = q.split('fill="' + num + '"').join('fill="#fff"').replace(/stroke-width="[^"]*"/g, 'stroke-width="' + w + '"').split('<text ').join('<text transform="translate(' + dx + ' ' + dy + ')" '); return wt + q.replace(/stroke-width="[^"]*"/g, 'stroke-width="3"'); };
