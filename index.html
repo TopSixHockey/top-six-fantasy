@@ -1116,7 +1116,7 @@ var SPEC = {
   // small slits in each body number (one per digit; no 7/8 reference yet)
   SPEC["Michigan State Spartans"].svg += '<g class="slitmsu"></g>';
   (function () {
-    var SL = { 0: [0.7, 0.2, 0.7, 0.55], 1: [0.2, 0.22, 0.55, 0.22], 2: [0.05, 0.52, 0.35, 0.52], 3: [0.05, 0.5, 0.35, 0.5], 4: [0.25, 0.68, 0.55, 0.68], 5: [0.25, 0.4, 0.6, 0.4], 6: [0.55, 0.5, 0.9, 0.5], 9: [0.1, 0.38, 0.4, 0.38] };
+    var SL = { 0: [0.6, 0.62, 0.8, 0.62, 0.7, 0.2], 1: [-0.05, 0.16, -0.05, 0.34, 0.45, 0.25], 2: [1.05, 0.3, 1.05, 0.48, 0.6, 0.39], 3: [-0.05, 0.42, -0.05, 0.6, 0.42, 0.51], 4: [1.05, 0.28, 1.05, 0.44, 0.68, 0.36], 5: [-0.05, 0.3, -0.05, 0.48, 0.38, 0.39], 6: [1.05, 0.5, 1.05, 0.68, 0.58, 0.59], 9: [-0.05, 0.3, -0.05, 0.48, 0.38, 0.39] };
     var NS = "http://www.w3.org/2000/svg", tm = 0;
     function run() {
       var list = document.querySelectorAll("svg");
@@ -1134,14 +1134,11 @@ var SPEC = {
             if (!e.width) { ok = false; break; }
             var sg = SL[str.charAt(k)];
             if (!sg) continue;
-            var top = base - fs * 0.7, h = fs * 0.7, ln = document.createElementNS(NS, "line");
-            ln.setAttribute("x1", (e.x + e.width * sg[0]).toFixed(2));
-            ln.setAttribute("y1", (top + h * sg[1]).toFixed(2));
-            ln.setAttribute("x2", (e.x + e.width * sg[2]).toFixed(2));
-            ln.setAttribute("y2", (top + h * sg[3]).toFixed(2));
-            ln.setAttribute("stroke", t.getAttribute("stroke") || "#1c4a39");
-            ln.setAttribute("stroke-width", "1.5");
-            g.appendChild(ln);
+            var top = base - fs * 0.7, h = fs * 0.7, pl = document.createElementNS(NS, "polygon"), pts = [];
+            for (var q = 0; q < 6; q += 2) pts.push((e.x + e.width * sg[q]).toFixed(2) + "," + (top + h * sg[q + 1]).toFixed(2));
+            pl.setAttribute("points", pts.join(" "));
+            pl.setAttribute("fill", t.getAttribute("stroke") || "#1c4a39");
+            g.appendChild(pl);
           }
           if (!ok) continue;
           t.parentNode.appendChild(g);
