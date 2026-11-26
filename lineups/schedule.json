@@ -1,18 +1,67 @@
 {
  "ohl": [
   {
-   "away": "Ottawa 67's",
+   "away": "North Bay Battalion",
    "et": "19:00",
-   "home": "Barrie Colts",
-   "id": "29239",
+   "home": "Brampton Steelheads",
+   "id": "29241",
    "time": "19:00"
   },
   {
-   "away": "Guelph Storm",
+   "away": "Owen Sound Attack",
+   "et": "19:00",
+   "home": "Brantford Bulldogs",
+   "id": "29242",
+   "time": "19:00"
+  },
+  {
+   "away": "Windsor Spitfires",
+   "et": "19:00",
+   "home": "Kitchener Rangers",
+   "id": "29245",
+   "time": "19:00"
+  },
+  {
+   "away": "Niagara IceDogs",
+   "et": "19:00",
+   "home": "London Knights",
+   "id": "29246",
+   "time": "19:00"
+  },
+  {
+   "away": "Barrie Colts",
    "et": "19:05",
-   "home": "Peterborough Petes",
-   "id": "29240",
+   "home": "Sudbury Wolves",
+   "id": "29249",
    "time": "19:05"
+  },
+  {
+   "away": "Peterborough Petes",
+   "et": "19:05",
+   "home": "Kingston Frontenacs",
+   "id": "29244",
+   "time": "19:05"
+  },
+  {
+   "away": "Flint Firebirds",
+   "et": "19:05",
+   "home": "Sarnia Sting",
+   "id": "29247",
+   "time": "19:05"
+  },
+  {
+   "away": "Erie Otters",
+   "et": "19:07",
+   "home": "Guelph Storm",
+   "id": "29243",
+   "time": "19:07"
+  },
+  {
+   "away": "Oshawa Generals",
+   "et": "19:07",
+   "home": "Soo Greyhounds",
+   "id": "29248",
+   "time": "19:07"
   }
  ],
  "qmjhl": [
@@ -20,30 +69,129 @@
    "away": "Chicoutimi, Saguen\u00e9ens",
    "et": "17:30",
    "home": "Newfoundland, Regiment",
-   "id": "32952",
+   "id": "32953",
    "time": "19:00"
   },
   {
    "away": "Blainville-Boisbriand, Armada",
    "et": "18:00",
    "home": "Cape Breton, Eagles",
-   "id": "32723",
+   "id": "32724",
    "time": "19:00"
   },
   {
-   "away": "Charlottetown, Islanders",
+   "away": "Moncton, Wildcats",
+   "et": "18:00",
+   "home": "Halifax, Mooseheads",
+   "id": "32886",
+   "time": "19:00"
+  },
+  {
+   "away": "Drummondville, Voltigeurs",
    "et": "19:00",
-   "home": "Gatineau, Olympiques",
-   "id": "32855",
+   "home": "Qu\u00e9bec, Remparts",
+   "id": "32984",
+   "time": "19:00"
+  },
+  {
+   "away": "Sherbrooke, Ph\u0153nix",
+   "et": "19:00",
+   "home": "Rimouski, Oc\u00e9anic",
+   "id": "33016",
    "time": "19:00"
   },
   {
    "away": "Saint John, Sea Dogs",
    "et": "19:00",
-   "home": "Val-d'Or, Foreurs",
-   "id": "33178",
+   "home": "Rouyn-Noranda, Huskies",
+   "id": "33048",
+   "time": "19:00"
+  },
+  {
+   "away": "Victoriaville, Tigres",
+   "et": "19:00",
+   "home": "Gatineau, Olympiques",
+   "id": "32856",
+   "time": "19:00"
+  },
+  {
+   "away": "Baie-Comeau, Drakkar",
+   "et": "19:00",
+   "home": "Shawinigan, Cataractes",
+   "id": "33110",
    "time": "19:00"
   }
  ],
- "whl": []
+ "whl": [
+  {
+   "away": "Swift Current Broncos",
+   "et": "20:00",
+   "home": "Prince Albert Raiders",
+   "id": "1023349",
+   "time": "19:00"
+  },
+  {
+   "away": "Saskatoon Blades",
+   "et": "20:00",
+   "home": "Lethbridge Hurricanes",
+   "id": "1023347",
+   "time": "19:00"
+  },
+  {
+   "away": "Calgary Hitmen",
+   "et": "20:00",
+   "home": "Medicine Hat Tigers",
+   "id": "1023348",
+   "time": "19:00"
+  },
+  {
+   "away": "Brandon Wheat Kings",
+   "et": "20:00",
+   "home": "Red Deer Rebels",
+   "id": "1023345",
+   "time": "19:00"
+  },
+  {
+   "away": "Kamloops Blazers",
+   "et": "21:00",
+   "home": "Prince George Cougars",
+   "id": "1023350",
+   "time": "19:00"
+  },
+  {
+   "away": "Regina Pats",
+   "et": "21:00",
+   "home": "Vancouver Giants",
+   "id": "1023352",
+   "time": "19:00"
+  },
+  {
+   "away": "Kelowna Rockets",
+   "et": "22:00",
+   "home": "Wenatchee Wild",
+   "id": "1023354",
+   "time": "19:00"
+  },
+  {
+   "away": "Seattle Thunderbirds",
+   "et": "21:05",
+   "home": "Victoria Royals",
+   "id": "1023353",
+   "time": "19:05"
+  },
+  {
+   "away": "Penticton Vees",
+   "et": "22:05",
+   "home": "Tri-City Americans",
+   "id": "1023351",
+   "time": "19:05"
+  },
+  {
+   "away": "Portland Winterhawks",
+   "et": "22:05",
+   "home": "Everett Silvertips",
+   "id": "1023346",
+   "time": "19:05"
+  }
+ ]
 }
