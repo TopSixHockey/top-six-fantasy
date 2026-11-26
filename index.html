@@ -1183,6 +1183,11 @@ function flagCode(h){
   if (s.length > 1 && FLAG_CA[last]) return "ca";
   if (s.length > 1 && FLAG_US[last]) return "us";
   if (s.length === 1 && FLAG_CA[last]) return "ca";
+  var kk = last.toLowerCase().replace(/\./g, "");   // NCAA-style abbreviations, e.g. "Ont." or "Mich."
+  if (s.length > 1) {
+    if (" ont que qc ns nb pei alta bc man sask nl nfld yt nt nu ".indexOf(" " + kk + " ") >= 0) return "ca";
+    if (" ala ariz ark calif colo conn del fla ga ill ind kan ky la md mass mich minn miss mo mont neb nev nh nj nm ny nc nd okla ore pa ri sc sd tenn vt va wash wva wis wyo dc alaska hawaii idaho iowa maine ohio texas utah ".indexOf(" " + kk + " ") >= 0) return "us";
+  }
   return "";
 }
 function flagImg(h){ var c = flagCode(h); return c ? ' <img class="fl" src="https://flagcdn.com/w40/' + c + '.png" srcset="https://flagcdn.com/w80/' + c + '.png 2x" alt="" height="11">' : ""; }
