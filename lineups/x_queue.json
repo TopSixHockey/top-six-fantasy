@@ -1,1 +1,676 @@
-[]
+[
+ {
+  "id": "ohl:29239:away",
+  "lg": "ohl",
+  "key": "ottawa",
+  "team": "Ottawa 67's",
+  "opp": "Barrie Colts",
+  "vsat": "at",
+  "start": "2026-11-26T19:00:00-05:00",
+  "local": "2026-11-26T19:00:00",
+  "zone": "America/Toronto",
+  "entry": {
+   "F": [
+    [
+     [
+      16,
+      "Chase",
+      "Yanni"
+     ],
+     [
+      12,
+      "Spencer",
+      "Bowes"
+     ],
+     [
+      21,
+      "Matthew",
+      "Manza"
+     ]
+    ],
+    [
+     [
+      10,
+      "Nic",
+      "Whitehead"
+     ],
+     [
+      11,
+      "Reid",
+      "Hayes"
+     ],
+     [
+      20,
+      "Lucas",
+      "Balanyk"
+     ]
+    ],
+    [
+     [
+      24,
+      "Teddy",
+      "Spitznagel"
+     ],
+     [
+      25,
+      "Zach",
+      "Houben"
+     ],
+     [
+      17,
+      "Brock",
+      "Chitaroni"
+     ]
+    ],
+    [
+     [
+      18,
+      "Brayden",
+      "Krawczyk"
+     ],
+     [
+      8,
+      "Jaiden",
+      "Newton"
+     ],
+     [
+      9,
+      "Andrew",
+      "Laurin"
+     ]
+    ]
+   ],
+   "D": [
+    [
+     [
+      13,
+      "Ondrej",
+      "Ruml"
+     ],
+     [
+      19,
+      "Kohyn",
+      "Eshkawkogan"
+     ]
+    ],
+    [
+     [
+      2,
+      "Justin",
+      "Handsor"
+     ],
+     [
+      4,
+      "Kaleb",
+      "Dietsch"
+     ]
+    ],
+    [
+     [
+      27,
+      "Nolan",
+      "Jackson"
+     ],
+     [
+      22,
+      "Jack",
+      "Johnson"
+     ]
+    ]
+   ],
+   "G": [
+    [
+     32,
+     "Jaeden",
+     "Nelson"
+    ],
+    [
+     31,
+     "Noah",
+     "LaGambina"
+    ]
+   ]
+  },
+  "queued": "2026-11-26T17:04:18.447881-05:00"
+ },
+ {
+  "id": "qmjhl:32855:home",
+  "lg": "qmjhl",
+  "key": "qmjhl_gatineau",
+  "team": "Gatineau Olympiques",
+  "opp": "Charlottetown Islanders",
+  "vsat": "vs",
+  "start": "2026-11-26T19:00:00-05:00",
+  "local": "2026-11-26T19:00:00",
+  "zone": "America/Toronto",
+  "entry": {
+   "F": [
+    [
+     [
+      18,
+      "Gabriel",
+      "Séguin"
+     ],
+     [
+      91,
+      "Simon-Xavier",
+      "Cyr"
+     ],
+     [
+      17,
+      "Finn",
+      "Barton"
+     ]
+    ],
+    [
+     [
+      7,
+      "Dylan",
+      "Allie"
+     ],
+     [
+      21,
+      "Vasily",
+      "Serov"
+     ],
+     [
+      61,
+      "Peter",
+      "Legostaev"
+     ]
+    ],
+    [
+     [
+      93,
+      "Charles",
+      "Pigeon"
+     ],
+     [
+      72,
+      "Nicolas",
+      "Petrut"
+     ],
+     [
+      97,
+      "Artem",
+      "Glukhikh"
+     ]
+    ],
+    [
+     [
+      23,
+      "Édouard",
+      "Michaud"
+     ],
+     [
+      27,
+      "Zakary",
+      "Horvat-Edouard"
+     ],
+     [
+      22,
+      "Noah",
+      "Florent"
+     ]
+    ]
+   ],
+   "D": [
+    [
+     [
+      5,
+      "Michel",
+      "Myloserdnyy"
+     ],
+     [
+      12,
+      "Justin",
+      "Blais"
+     ]
+    ],
+    [
+     [
+      14,
+      "Luke",
+      "Murphy"
+     ],
+     [
+      26,
+      "Benson",
+      "Hirst"
+     ]
+    ],
+    [
+     [
+      11,
+      "Ryan",
+      "White"
+     ],
+     [
+      3,
+      "Drew",
+      "McLennan"
+     ]
+    ]
+   ],
+   "G": [
+    [
+     90,
+     "Danai",
+     "Shaiikov"
+    ],
+    [
+     35,
+     "Finn",
+     "Moffett"
+    ]
+   ]
+  },
+  "queued": "2026-11-26T17:04:18.447881-05:00"
+ },
+ {
+  "id": "qmjhl:32855:away",
+  "lg": "qmjhl",
+  "key": "qmjhl_charlottetown",
+  "team": "Charlottetown Islanders",
+  "opp": "Gatineau Olympiques",
+  "vsat": "at",
+  "start": "2026-11-26T19:00:00-05:00",
+  "local": "2026-11-26T19:00:00",
+  "zone": "America/Toronto",
+  "entry": {
+   "F": [
+    [
+     [
+      26,
+      "Aslan",
+      "Tremblay"
+     ],
+     [
+      13,
+      "Matthew",
+      "Butler"
+     ],
+     [
+      88,
+      "Nolan",
+      "Duskocy"
+     ]
+    ],
+    [
+     [
+      29,
+      "Antoine",
+      "Boudreau"
+     ],
+     [
+      17,
+      "Antoine",
+      "Provencher"
+     ],
+     [
+      74,
+      "Hugo",
+      "Charron"
+     ]
+    ],
+    [
+     [
+      19,
+      "Hudson",
+      "Armstrong"
+     ],
+     [
+      14,
+      "Anthony",
+      "Flanagan"
+     ],
+     [
+      72,
+      "William",
+      "Shields"
+     ]
+    ],
+    [
+     "h",
+     [
+      34,
+      "Rowan",
+      "Walsh"
+     ],
+     [
+      82,
+      "Kimani",
+      "Eccleston"
+     ],
+     "h"
+    ]
+   ],
+   "D": [
+    [
+     [
+      10,
+      "Owen",
+      "Conrad"
+     ],
+     [
+      77,
+      "Kage",
+      "Flory"
+     ]
+    ],
+    [
+     [
+      15,
+      "Cameron",
+      "Holyoke"
+     ],
+     [
+      43,
+      "Ryan",
+      "Jewer"
+     ]
+    ],
+    [
+     [
+      40,
+      "Aleksandrs Leonards",
+      "Grundmanis"
+     ],
+     [
+      2,
+      "Hughston",
+      "Hurt"
+     ]
+    ],
+    [
+     [
+      47,
+      "Artyom",
+      "Mate"
+     ]
+    ]
+   ],
+   "G": [
+    [
+     31,
+     "Seth",
+     "Ronan"
+    ],
+    [
+     1,
+     "Donald",
+     "Hickey"
+    ]
+   ]
+  },
+  "queued": "2026-11-26T17:04:18.447881-05:00"
+ },
+ {
+  "id": "qmjhl:33178:home",
+  "lg": "qmjhl",
+  "key": "qmjhl_valdor",
+  "team": "Val-d'Or Foreurs",
+  "opp": "Saint John Sea Dogs",
+  "vsat": "vs",
+  "start": "2026-11-26T19:00:00-05:00",
+  "local": "2026-11-26T19:00:00",
+  "zone": "America/Toronto",
+  "entry": {
+   "F": [
+    [
+     [
+      44,
+      "Philippe",
+      "Veilleux"
+     ],
+     [
+      72,
+      "Nathan",
+      "Brisson"
+     ],
+     [
+      88,
+      "Maxime",
+      "Sauthier"
+     ]
+    ],
+    [
+     [
+      23,
+      "Jordan",
+      "Labelle"
+     ],
+     [
+      10,
+      "Benjamin",
+      "Olivier"
+     ],
+     [
+      81,
+      "Nolann",
+      "Héroux"
+     ]
+    ],
+    [
+     [
+      27,
+      "Josef",
+      "Holejšovský"
+     ],
+     [
+      11,
+      "Charles-Antoine",
+      "Thériault"
+     ],
+     [
+      89,
+      "Gabriel",
+      "Provencher"
+     ]
+    ],
+    [
+     [
+      24,
+      "Maxim",
+      "LeBlanc"
+     ],
+     [
+      12,
+      "Mathias",
+      "Bourque"
+     ],
+     [
+      16,
+      "Étienne",
+      "Maheu"
+     ]
+    ]
+   ],
+   "D": [
+    [
+     [
+      3,
+      "Esteban",
+      "Cinq-Mars"
+     ],
+     [
+      7,
+      "Benjamin",
+      "Cossette Ayotte"
+     ]
+    ],
+    [
+     [
+      5,
+      "Anthony",
+      "Paré"
+     ],
+     [
+      26,
+      "Noah",
+      "McKinnon"
+     ]
+    ],
+    [
+     [
+      15,
+      "Hemrick",
+      "Carbonneau"
+     ],
+     [
+      6,
+      "Jacob",
+      "Gouchie"
+     ]
+    ]
+   ],
+   "G": [
+    [
+     31,
+     "Vincent",
+     "Moreau"
+    ],
+    [
+     20,
+     "Arseni",
+     "Radkov"
+    ]
+   ]
+  },
+  "queued": "2026-11-26T17:04:18.447881-05:00"
+ },
+ {
+  "id": "qmjhl:33178:away",
+  "lg": "qmjhl",
+  "key": "qmjhl_saintjohn",
+  "team": "Saint John Sea Dogs",
+  "opp": "Val-d'Or Foreurs",
+  "vsat": "at",
+  "start": "2026-11-26T19:00:00-05:00",
+  "local": "2026-11-26T19:00:00",
+  "zone": "America/Toronto",
+  "entry": {
+   "F": [
+    [
+     [
+      2,
+      "Torkel",
+      "Jennersjo"
+     ],
+     [
+      19,
+      "Alexis",
+      "Joseph"
+     ],
+     [
+      17,
+      "Jamie",
+      "Glance"
+     ]
+    ],
+    [
+     [
+      21,
+      "Matyas",
+      "Cancik"
+     ],
+     [
+      86,
+      "Olivier",
+      "Groulx"
+     ],
+     [
+      9,
+      "Alexander",
+      "Donovan"
+     ]
+    ],
+    [
+     [
+      8,
+      "Dylan",
+      "Rozzi"
+     ],
+     [
+      10,
+      "Zachary",
+      "Morin"
+     ],
+     [
+      92,
+      "Olivier",
+      "Lemieux"
+     ]
+    ],
+    [
+     [
+      12,
+      "Ryan",
+      "Howard"
+     ],
+     [
+      28,
+      "Alexis",
+      "Gauthier"
+     ],
+     [
+      23,
+      "Jabez",
+      "Seymour"
+     ]
+    ]
+   ],
+   "D": [
+    [
+     [
+      72,
+      "Julien",
+      "Lanthier"
+     ],
+     [
+      26,
+      "Bo",
+      "Damphousse"
+     ]
+    ],
+    [
+     [
+      76,
+      "Brandon",
+      "Delarosbil"
+     ],
+     [
+      5,
+      "Cameron",
+      "Chartrand"
+     ]
+    ],
+    [
+     [
+      27,
+      "Thomas",
+      "Charbonneau"
+     ],
+     [
+      71,
+      "Olivier",
+      "Duhamel"
+     ]
+    ]
+   ],
+   "G": [
+    [
+     37,
+     "Rafaël",
+     "Courchesne"
+    ],
+    [
+     31,
+     "Samuel",
+     "Meloche"
+    ]
+   ]
+  },
+  "queued": "2026-11-26T17:04:18.447881-05:00"
+ }
+]
