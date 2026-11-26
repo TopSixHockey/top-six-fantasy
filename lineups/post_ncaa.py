@@ -44,15 +44,16 @@ def caption(item):
 X.caption = caption   # post_item() builds its text with this
 
 
-def game_id(key, game):
-    return "ncaa:%s:%s" % (key, hashlib.sha1(game.encode("utf-8")).hexdigest()[:8])
+def game_id(key, vsat, opp, day):
+    # keyed on team + opponent + date, so changing the label text ("Today:" / "Last game:") never causes a repost
+    return "ncaa:%s:%s" % (key, hashlib.sha1(("%s|%s|%s" % (vsat, opp, day)).encode("utf-8")).hexdigest()[:8])
 
 
 def item_from(row):
     m = re.search(r"<b>(vs|at) (.*?)</b>\s*·\s*([A-Z][a-z]{2}) (\d{1,2}), (\d{4})", row["game"])
     if not m or not (row["F"] and row["D"] and row["G"]): return None
     day = datetime.date(int(m.group(5)), MONTHS[m.group(3)], int(m.group(4)))
-    return {"id": game_id(row["key"], row["game"]), "lg": "ncaa", "key": row["key"], "team": row["name"],
+    return {"id": game_id(row["key"], m.group(1), m.group(2), day.isoformat()), "lg": "ncaa", "key": row["key"], "team": row["name"],
             "opp": m.group(2), "vsat": m.group(1), "date_only": day.isoformat(),
             "start": datetime.datetime.combine(day, datetime.time(19, 0), tzinfo=X.ET).isoformat(),
             "entry": {"F": row["F"], "D": row["D"], "G": row["G"]}}
