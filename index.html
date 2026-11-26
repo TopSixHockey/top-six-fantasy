@@ -266,8 +266,8 @@ var N = {
  ncaa_pennstate:["Penn State Nittany Lions","#041e42","#041e42","#ffffff","#ffffff","#ffffff","#041e42"],
  ncaa_wisconsin:["Wisconsin Badgers","#c5050c","#c5050c","#ffffff","#ffffff","#ffffff","#1a1a1a"]
 };
-// NCAA is hidden from the public site; open /?preview=ncaa to see it while it is being built
-var NCAA_ON = false; try { NCAA_ON = new URLSearchParams(location.search).get("preview") === "ncaa"; } catch (e) {}
+// NCAA men's section is live (launched Nov 26, 2026)
+var NCAA_ON = true;
 if (NCAA_ON) { for (var nk in N) C[nk] = N[nk]; document.getElementById("league").insertAdjacentHTML("beforeend", '<option value="NCAA">NCAA - Big Ten</option><option value="NCAA_IP" disabled>NCAA in progress</option>'); }
 // Lineup data is kept separate so a refresh only edits this object. Teams not listed here have no lines loaded yet.
 var L = {
