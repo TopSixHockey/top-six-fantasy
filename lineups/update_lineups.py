@@ -97,13 +97,14 @@ ROW = re.compile(r"^\s*\d+\s+(\d+)\s+(?:(X)\s+|\?\s+)?(G|LD|RD|LW|RW|C|D)\s+(.+?
 
 def parse_card(text):
     """-> dict(players={num:(first,last,pos,starter,mark)}, F=[[lw,c,rw]..], D=[[ld,rd]..])"""
-    players, order = {}, []
+    players, order, subs = {}, [], set()
     lines = text.splitlines()
     split = next((i for i, l in enumerate(lines) if "LINEUP PAIRINGS" in l), len(lines))
     for l in lines[:split]:
         m = ROW.match(l)
         if not m: continue
         num, x, pos, nm = int(m.group(1)), bool(m.group(2)), m.group(3), m.group(4)
+        if re.match(r"^\s*\d+\s+\d+\s+\?\s", l): subs.add(num)      # "?" = substitute listed on the sheet, not dressed
         mark = None
         mm = re.search(r"\((C|A)\)", nm)
         if mm: mark = mm.group(1)
@@ -131,7 +132,7 @@ def parse_card(text):
             j = min(range(len(hdr)), key=lambda k: abs(hdr[k] - pos_))
             row[j] = n
         (F if mode == "F" else D).append(row)
-    return {"players": players, "order": order, "F": F, "D": D}
+    return {"players": players, "order": order, "F": F, "D": D, "subs": subs}
 
 def build_entry(card, roster_prev=None):
     P = card["players"]
@@ -153,8 +154,13 @@ def build_entry(card, roster_prev=None):
         D.append([nm(n) for n in row if n is not None and n in P])
     # dressed skaters missing from the pairings table
     left = [n for n in card["order"] if P[n][2] != "G" and n not in used]
+    subs = card.get("subs", set())          # "?" on the sheet = substitute who is not in the lineup
+    left = [n for n in left if n not in subs]
     lf = [n for n in left if P[n][2] not in ("LD", "RD", "D")]
     ld = [n for n in left if P[n][2] in ("LD", "RD", "D")]
+    del F[4:]                                # a lineup never has more than 12 forwards (7 defence is allowed)
+    nfw = sum(1 for r in F for p in r if p and p != "h")
+    lf = lf[:max(0, 12 - nfw)]
     for i in range(0, len(lf), 3):
         grp = lf[i:i+3]
         F.append([nm(n) for n in grp] if len(grp) == 3 else (["h"] + [nm(n) for n in grp] + ["h"] if len(grp) == 2 else [None, None, nm(grp[0])]))
@@ -164,7 +170,7 @@ def build_entry(card, roster_prev=None):
     gs.sort(key=lambda n: (not P[n][3]))
     G = [nm(n) for n in gs]
     caps = {str(n): P[n][4] for n in P if P[n][4]}
-    return {"F": F, "D": D, "G": G}, caps, set(P)
+    return {"F": F, "D": D, "G": G}, caps, set(P) - subs
 
 # ------------------------------------------------- QMJHL combined game sheet
 def parse_qmjhl(text):
