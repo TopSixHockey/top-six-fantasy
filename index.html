@@ -1903,7 +1903,7 @@ function futTab(k) {
   if (!FUT[k]) return;
   if (!document.getElementById("futCss")) {
     var st = document.createElement("style"); st.id = "futCss";
-    st.textContent = "#futTab{position:absolute;top:12px;right:12px;z-index:4;background:rgba(15,28,40,.86);color:#fff;border:1px solid rgba(255,255,255,.45);border-radius:999px;padding:6px 12px;font-weight:700;font-size:.74rem;line-height:1;font-family:inherit;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.35)}#futTab:hover{background:rgba(15,28,40,1)}.fcg{display:grid;grid-template-columns:repeat(auto-fill,minmax(122px,1fr));gap:26px 18px;margin-bottom:14px}.fcg .p{max-width:none}.fcm{font-size:.62rem;font-weight:600;color:rgba(255,255,255,.8);line-height:1.2;margin-top:2px;text-align:center}.fcn{margin-top:18px;font-size:.66rem;color:rgba(255,255,255,.6);text-align:center}";
+    st.textContent = "#futTab{position:absolute;top:12px;right:12px;z-index:4;background:rgba(15,28,40,.86);color:#fff;border:1px solid rgba(255,255,255,.45);border-radius:999px;padding:6px 12px;font-weight:700;font-size:.74rem;line-height:1;font-family:inherit;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.35)}#futTab:hover{background:rgba(15,28,40,1)}.fcg{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:28px 22px;margin-bottom:14px}.fcg .p{max-width:none}.fcm{font-size:.62rem;font-weight:600;color:rgba(255,255,255,.8);line-height:1.2;margin-top:2px;text-align:center}.fcn{margin-top:18px;font-size:.66rem;color:rgba(255,255,255,.6);text-align:center}";
     document.head.appendChild(st);
   }
   var b = document.createElement("button"); b.id = "futTab"; b.type = "button"; b.textContent = "Future Commitments";
