@@ -1,1 +1,817 @@
-[]
+[
+ {
+  "id": "whl:1023342:home",
+  "lg": "whl",
+  "key": "whl_seattle",
+  "team": "Seattle Thunderbirds",
+  "opp": "Tri-City Americans",
+  "vsat": "vs",
+  "start": "2026-11-25T22:05:00-05:00",
+  "local": "2026-11-25T19:05:00",
+  "zone": "America/Los_Angeles",
+  "entry": {
+   "F": [
+    [
+     [
+      16,
+      "Brock",
+      "England"
+     ],
+     [
+      71,
+      "Noah",
+      "Kosick"
+     ],
+     [
+      89,
+      "Antonio",
+      "Martorana"
+     ]
+    ],
+    [
+     [
+      17,
+      "Ethan",
+      "Bibeau"
+     ],
+     [
+      7,
+      "Matthew",
+      "Gard"
+     ],
+     [
+      22,
+      "Simon",
+      "Lovsin"
+     ]
+    ],
+    [
+     [
+      9,
+      "Luke",
+      "Puchner"
+     ],
+     [
+      14,
+      "Sawyer",
+      "Mayes"
+     ],
+     [
+      21,
+      "Dominik",
+      "Ripa"
+     ]
+    ],
+    [
+     [
+      19,
+      "Knox",
+      "Burton"
+     ],
+     [
+      39,
+      "Seamus",
+      "Dillon"
+     ],
+     [
+      43,
+      "Josh",
+      "Polak"
+     ]
+    ]
+   ],
+   "D": [
+    [
+     [
+      2,
+      "Brennen",
+      "Hocher"
+     ],
+     [
+      74,
+      "Grayson",
+      "Tash"
+     ]
+    ],
+    [
+     [
+      93,
+      "Jonas",
+      "Kemps"
+     ],
+     [
+      4,
+      "Reko",
+      "Alanko"
+     ]
+    ],
+    [
+     [
+      5,
+      "Owen",
+      "Hayden"
+     ],
+     [
+      18,
+      "Brook",
+      "Haile"
+     ]
+    ]
+   ],
+   "G": [
+    [
+     31,
+     "Grayson",
+     "Malinoski"
+    ],
+    [
+     35,
+     "Marek",
+     "Sklenicka"
+    ]
+   ]
+  },
+  "queued": "2026-11-25T20:05:40.571532-05:00"
+ },
+ {
+  "id": "whl:1023342:away",
+  "lg": "whl",
+  "key": "whl_tricity",
+  "team": "Tri-City Americans",
+  "opp": "Seattle Thunderbirds",
+  "vsat": "at",
+  "start": "2026-11-25T22:05:00-05:00",
+  "local": "2026-11-25T19:05:00",
+  "zone": "America/Los_Angeles",
+  "entry": {
+   "F": [
+    [
+     [
+      11,
+      "Cruz",
+      "Pavao"
+     ],
+     [
+      28,
+      "Grady",
+      "Martin"
+     ],
+     [
+      25,
+      "Koji",
+      "Gibson"
+     ]
+    ],
+    [
+     [
+      26,
+      "Brock",
+      "Cheslock"
+     ],
+     [
+      20,
+      "Alexander",
+      "Laing"
+     ],
+     [
+      17,
+      "Eli",
+      "McKamey"
+     ]
+    ],
+    [
+     [
+      27,
+      "Lukas",
+      "Lima"
+     ],
+     [
+      24,
+      "Crew",
+      "Martinson"
+     ],
+     [
+      4,
+      "Ben",
+      "Oliverio"
+     ]
+    ],
+    [
+     "h",
+     [
+      18,
+      "Trae",
+      "Peterson"
+     ],
+     [
+      44,
+      "Justin",
+      "Moon"
+     ],
+     "h"
+    ]
+   ],
+   "D": [
+    [
+     [
+      21,
+      "Jakub",
+      "Vanecek"
+     ],
+     [
+      2,
+      "Dylan",
+      "LeBret"
+     ]
+    ],
+    [
+     [
+      10,
+      "Aden",
+      "Bouchard"
+     ],
+     [
+      3,
+      "Jaxen",
+      "Adam"
+     ]
+    ],
+    [
+     [
+      5,
+      "Lukasz",
+      "McIsaac"
+     ],
+     [
+      7,
+      "Caden",
+      "Campion"
+     ]
+    ],
+    [
+     [
+      6,
+      "Carter",
+      "Bylycia"
+     ]
+    ]
+   ],
+   "G": [
+    [
+     40,
+     "Xavier",
+     "Wendt"
+    ],
+    [
+     35,
+     "Ryan",
+     "Grout"
+    ]
+   ]
+  },
+  "queued": "2026-11-25T20:05:40.571532-05:00"
+ },
+ {
+  "id": "whl:1023343:home",
+  "lg": "whl",
+  "key": "whl_spokane",
+  "team": "Spokane Chiefs",
+  "opp": "Kelowna Rockets",
+  "vsat": "vs",
+  "start": "2026-11-25T22:05:00-05:00",
+  "local": "2026-11-25T19:05:00",
+  "zone": "America/Los_Angeles",
+  "entry": {
+   "F": [
+    [
+     [
+      26,
+      "Chase",
+      "Harrington"
+     ],
+     [
+      21,
+      "Owen",
+      "Martin"
+     ],
+     [
+      88,
+      "Tyus",
+      "Sparks"
+     ]
+    ],
+    [
+     [
+      96,
+      "Matěj",
+      "Tománek"
+     ],
+     [
+      12,
+      "Gavin",
+      "Burcar"
+     ],
+     [
+      23,
+      "Tristen",
+      "Buckley"
+     ]
+    ],
+    [
+     [
+      10,
+      "Parker",
+      "Colmer"
+     ],
+     [
+      17,
+      "Brody",
+      "Gillespie"
+     ],
+     [
+      15,
+      "Luca",
+      "Jarvis"
+     ]
+    ],
+    [
+     [
+      86,
+      "Jan",
+      "Brabenec"
+     ],
+     [
+      91,
+      "Ethan",
+      "Hughes"
+     ],
+     [
+      16,
+      "Caden",
+      "Zasada"
+     ]
+    ]
+   ],
+   "D": [
+    [
+     [
+      22,
+      "Harry",
+      "Mattern"
+     ],
+     [
+      47,
+      "Rhett",
+      "Sather"
+     ]
+    ],
+    [
+     [
+      7,
+      "Owen",
+      "Schoettler"
+     ],
+     [
+      44,
+      "Marek",
+      "Howell"
+     ]
+    ],
+    [
+     [
+      2,
+      "Nolan",
+      "Saunderson"
+     ],
+     [
+      5,
+      "Nathan",
+      "Mayes"
+     ]
+    ],
+    [
+     [
+      4,
+      "Bryson",
+      "Roberts"
+     ]
+    ]
+   ],
+   "G": [
+    [
+     30,
+     "Carter",
+     "Esler"
+    ],
+    [
+     35,
+     "Bryce",
+     "Francisco"
+    ]
+   ]
+  },
+  "queued": "2026-11-25T20:05:40.571532-05:00"
+ },
+ {
+  "id": "whl:1023343:away",
+  "lg": "whl",
+  "key": "whl_kelowna",
+  "team": "Kelowna Rockets",
+  "opp": "Spokane Chiefs",
+  "vsat": "at",
+  "start": "2026-11-25T22:05:00-05:00",
+  "local": "2026-11-25T19:05:00",
+  "zone": "America/Los_Angeles",
+  "entry": {
+   "F": [
+    [
+     [
+      20,
+      "Vojtech",
+      "Cihar"
+     ],
+     [
+      10,
+      "Tomas",
+      "Poletin"
+     ],
+     [
+      9,
+      "Jakub",
+      "Frolo"
+     ]
+    ],
+    [
+     [
+      18,
+      "Dawson",
+      "Gerwing"
+     ],
+     [
+      25,
+      "Jaxon",
+      "Kehrig"
+     ],
+     [
+      17,
+      "Eli",
+      "Barrett"
+     ]
+    ],
+    [
+     [
+      19,
+      "Ryan",
+      "Oothoudt"
+     ],
+     [
+      24,
+      "Colton",
+      "Lien"
+     ],
+     [
+      14,
+      "Cole",
+      "Braunshausen"
+     ]
+    ],
+    [
+     [
+      28,
+      "Gabriel",
+      "O'Brien"
+     ],
+     [
+      11,
+      "William",
+      "Matte"
+     ],
+     [
+      37,
+      "Von",
+      "Lakovic"
+     ]
+    ]
+   ],
+   "D": [
+    [
+     [
+      7,
+      "Rowan",
+      "Guest"
+     ],
+     [
+      4,
+      "Peyton",
+      "Kettles"
+     ]
+    ],
+    [
+     [
+      22,
+      "Nate",
+      "Corbet"
+     ],
+     [
+      27,
+      "Jacob",
+      "Henderson"
+     ]
+    ],
+    [
+     [
+      8,
+      "Remy",
+      "Koch"
+     ],
+     [
+      6,
+      "Dallin",
+      "Antos"
+     ]
+    ]
+   ],
+   "G": [
+    [
+     30,
+     "Harrison",
+     "Boettiger"
+    ],
+    [
+     31,
+     "Linden",
+     "Sobocan"
+    ]
+   ]
+  },
+  "queued": "2026-11-25T20:05:40.571532-05:00"
+ },
+ {
+  "id": "whl:1023339:home",
+  "lg": "whl",
+  "key": "whl_everett",
+  "team": "Everett Silvertips",
+  "opp": "Vancouver Giants",
+  "vsat": "vs",
+  "start": "2026-11-25T22:05:00-05:00",
+  "local": "2026-11-25T19:05:00",
+  "zone": "America/Los_Angeles",
+  "entry": {
+   "F": [
+    [
+     [
+      22,
+      "Caine",
+      "Wilke"
+     ],
+     [
+      26,
+      "Atte",
+      "Vuori"
+     ],
+     [
+      15,
+      "Jaxsin",
+      "Vaughan"
+     ]
+    ],
+    [
+     [
+      12,
+      "Lukas",
+      "Kaplan"
+     ],
+     [
+      13,
+      "Dario",
+      "Blengino"
+     ],
+     [
+      34,
+      "Hunter",
+      "Rudolph"
+     ]
+    ],
+    [
+     [
+      16,
+      "Brendan",
+      "Rudolph"
+     ],
+     [
+      24,
+      "Mirco",
+      "Dufour"
+     ],
+     [
+      25,
+      "Rhys",
+      "Jamieson"
+     ]
+    ],
+    [
+     [
+      21,
+      "Dominik",
+      "Drábek"
+     ],
+     [
+      10,
+      "Henri",
+      "Ament"
+     ],
+     [
+      11,
+      "Henry",
+      "Meier"
+     ]
+    ]
+   ],
+   "D": [
+    [
+     [
+      42,
+      "Brek",
+      "Liske"
+     ],
+     [
+      5,
+      "Luke",
+      "Vlooswyk"
+     ]
+    ],
+    [
+     [
+      43,
+      "Jaxon",
+      "Pisani"
+     ],
+     [
+      29,
+      "Max",
+      "Kelly"
+     ]
+    ],
+    [
+     [
+      28,
+      "Mattias",
+      "Uyeda"
+     ],
+     [
+      8,
+      "Kale",
+      "McCann"
+     ]
+    ]
+   ],
+   "G": [
+    [
+     33,
+     "Jayden",
+     "Kraus"
+    ],
+    [
+     31,
+     "Bennett",
+     "Byers"
+    ]
+   ]
+  },
+  "queued": "2026-11-25T20:05:40.571532-05:00"
+ },
+ {
+  "id": "whl:1023339:away",
+  "lg": "whl",
+  "key": "whl_vancouver",
+  "team": "Vancouver Giants",
+  "opp": "Everett Silvertips",
+  "vsat": "at",
+  "start": "2026-11-25T22:05:00-05:00",
+  "local": "2026-11-25T19:05:00",
+  "zone": "America/Los_Angeles",
+  "entry": {
+   "F": [
+    [
+     [
+      17,
+      "Cam",
+      "Parr"
+     ],
+     [
+      20,
+      "Jakob",
+      "Oreskovic"
+     ],
+     [
+      27,
+      "Mathis",
+      "Preston"
+     ]
+    ],
+    [
+     [
+      13,
+      "Tobias",
+      "Tomik"
+     ],
+     [
+      16,
+      "Blake",
+      "Chorney"
+     ],
+     [
+      43,
+      "Brogan",
+      "McNeil"
+     ]
+    ],
+    [
+     [
+      29,
+      "Sam",
+      "Charko"
+     ],
+     [
+      12,
+      "Brett",
+      "Olson"
+     ],
+     [
+      25,
+      "Gleb",
+      "Semenov"
+     ]
+    ],
+    [
+     [
+      34,
+      "Dennis",
+      "Emesibe"
+     ],
+     [
+      18,
+      "Colton",
+      "Gerrior"
+     ],
+     [
+      26,
+      "Brayden",
+      "Jugnauth"
+     ]
+    ]
+   ],
+   "D": [
+    [
+     [
+      8,
+      "Derek",
+      "Thurston"
+     ],
+     [
+      6,
+      "Lance",
+      "McCloskey"
+     ]
+    ],
+    [
+     [
+      7,
+      "Kaleb",
+      "Hartmann"
+     ],
+     [
+      2,
+      "Sullivan",
+      "Humeniuk"
+     ]
+    ],
+    [
+     [
+      23,
+      "Crosby",
+      "Mateychuk"
+     ],
+     [
+      24,
+      "Ethan",
+      "Armstrong"
+     ]
+    ]
+   ],
+   "G": [
+    [
+     35,
+     "Burke",
+     "Hood"
+    ],
+    [
+     31,
+     "Oliver",
+     "Bryks"
+    ]
+   ]
+  },
+  "queued": "2026-11-25T20:05:40.571532-05:00"
+ }
+]
