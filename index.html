@@ -1190,6 +1190,7 @@ var MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","De
 function ageOf(s) { var a = s.split("-"), t = new Date(), y = t.getFullYear() - +a[0]; if (t.getMonth() + 1 < +a[1] || (t.getMonth() + 1 === +a[1] && t.getDate() < +a[2])) y--; return y; }
 function popHtml(k, n, nm) {
   var d = PL[k] && PL[k][n]; if (!d) return "";
+  if (d.cls) return popNcaa(k, n, nm, d);
   var a = d.dob.split("-"), g = d.pos === "G";
   var lab = g ? ["GP", "GAA", "SV%", "W", "L", "OTL", "SO"] : ["GP", "G", "A", "PTS", "+/-", "PIM"];
   var st = '<div class="pst">' + d.st.map(function (v, i) { return '<div><b>' + lab[i] + '</b><span>' + (!g && i === 4 && v > 0 ? "+" + v : v) + '</span></div>'; }).join("") + '</div>';
@@ -1703,6 +1704,102 @@ if (BD.sb) {
 }
 if (location.hash === "#profile") setTimeout(pfOpen, 900);
 
+/* ---- NCAA (Big Ten) lineups, entered by hand from each team's X lineup graphic ---- */
+function popNcaa(k, n, nm, d) {
+  var cap = CAP[k] && CAP[k][n] ? '<span class="pi">' + (CAP[k][n] === "C" ? "Captain" : "Assistant Captain") + '</span>' : "";
+  var ht = d.ht || ""; if (ht.indexOf("-") > 0) { var q = ht.split("-"); ht = q[0] + "'" + q[1] + '"'; }
+  return '<div class="ph"><span class="pn">' + nm + '</span><span class="pm">#' + n + ' · ' + d.pos + '</span>' + cap + '</div>' +
+    '<div class="pr"><i>Class</i>' + d.cls + '</div>' +
+    (d.sh ? '<div class="pr"><i>' + (d.pos === "G" ? "Catches" : "Shoots") + '</i>' + d.sh + '</div>' : '') +
+    '<div class="pr"><i>Size</i>' + ht + ' · ' + d.wt + ' lb</div>' +
+    '<div class="pr"><i>From</i><span>' + d.home + flagImg(d.home) + '</span></div>' +
+    (d.prev ? '<div class="pr"><i>Last team</i>' + d.prev + '</div>' : '') +
+    (d.nhl ? '<div class="pr"><i class="tp">NHL rights</i><span>' + d.nhl + '</span></div>' : '');
+}
+(function () {
+  function put(k, rows) { PL[k] = PL[k] || {}; rows.forEach(function (r) { PL[k][r[0]] = { pos: r[1], cls: r[2], sh: r[3], ht: r[4], wt: r[5], home: r[6], prev: r[7], nhl: r[8] }; }); }
+  L.ncaa_michigan = {
+    game: "Last game: <b>at Michigan State Spartans</b> · Nov 21, 2026", updated: "Nov 25, 2026",
+    note: "Lines are from Michigan’s “Tonight’s lines” post on X for the Nov 21 game at Michigan State. The graphic lists goalie Julian Molinaro in the fourth-line forward slot, so he is shown with the scratches.",
+    F: [
+      [[27,"Malcolm","Spence"],[19,"Michael","Hage"],[18,"Jayden","Perron"]],
+      [[2,"J.P.","Hurlbert"],[11,"Cole","McKinney"],[17,"Garrett","Schifsky"]],
+      [[68,"Josh","Orrico"],[95,"Kieren","Dervin"],[3,"Brandt","Harper"]]
+    ],
+    D: [[[81,"Cam","Reid"],[8,"Landon","Dupont"]],[[21,"Ben","Robertson"],[10,"Drew","Schock"]],[[4,"Asher","Barnett"],[7,"Dakoda","Rhéaume-Muller"]]],
+    G: [[72,"Jack","Ivankovic"],[31,"Stephen","Peck"]],
+    S: [[34,"Julian","Molinaro"]]
+  };
+  CAP.ncaa_michigan = { "17": "C", "21": "A", "4": "A" };
+  L.ncaa_michiganstate = {
+    game: "Last game: <b>vs Michigan Wolverines</b> · Nov 21, 2026", updated: "Nov 25, 2026",
+    note: "Lines are from Michigan State’s lineup post on X for the Nov 21 game. Diego Johnson was listed as the extra forward and Quentin Sigurdson and JJ Salajko are the other goalies on the sheet.",
+    F: [
+      [[16,"Ethan","Belchetz"],[26,"Eric","Nilson"],[15,"Anthony","Romani"]],
+      [[21,"Cullen","Potter"],[17,"Jack","Hextall"],[29,"Gavin","O’Connell"]],
+      [[10,"Tommi","Männistö"],[7,"Jimmy","Clark"],[18,"Ryker","Lee"]],
+      [[12,"Griffin","Jurecki"],[25,"Cole","Burke"],[9,"Mason","West"]]
+    ],
+    D: [[[11,"Owen","West"],[22,"Tommy","Bleyl"]],[[4,"Brady","Peddle"],[27,"Chase","Reid"]],[[6,"Cole","Ward"]]],
+    G: [[31,"Joshua","Ravensbergen"],[1,"Quentin","Sigurdson"]],
+    S: [[19,"Diego","Johnson"],[32,"JJ","Salajko"]]
+  };
+  L.ncaa_wisconsin = {
+    game: "Last game: <b>vs Penn State Nittany Lions</b> · Nov 20, 2026", updated: "Nov 25, 2026",
+    note: "Lines are from Wisconsin’s “Lines are set!” post on X for the Nov 20 game. The sheet doesn’t list scratches, so the scratch list is the players on the team’s roster who weren’t on the sheet (some may be injured or away).",
+    F: [
+      [[19,"Zach","Wooten"],[7,"Gavin","Morrissey"],[86,"JJ","Wiebusch"]],
+      [[91,"Bruno","Idžan"],[94,"Vasily","Zelenov"],[55,"Oliver","Tulk"]],
+      [[21,"Ryan","Botterill"],[17,"Grady","Deering"],[3,"Brent","Solomon"]],
+      [[27,"Finn","Brink"],[9,"Chase","Jette"],[18,"Adam","Pietila"]]
+    ],
+    D: [[[2,"Luke","Osburn"],[8,"Jack","Phelan"]],[[14,"Joe","Palodichuk"],[6,"Logan","Hensler"]],[[5,"Zach","Schulz"],[4,"Dylan","Compton"]]],
+    G: [[30,"Alexis","Cournoyer"],[31,"Daniel","Hauser"]],
+    S: [[57,"Eetu","Orpana"],[12,"Gavin","Uhlenkamp"],[24,"Talan","Blanck"],[23,"John","Stout"],[26,"Weston","Knox"],[35,"Xander","Miceli"]]
+  };
+  CAP.ncaa_wisconsin = { "7": "C", "14": "A", "5": "A" };
+  L.ncaa_notredame = {
+    game: "Last game: <b>vs Bowling Green Falcons</b> · Nov 24, 2026", updated: "Nov 25, 2026",
+    note: "Lines are from Notre Dame’s lineup post on X for the Nov 24 game. Dashel Oliver was listed as an extra. The rest of the scratch list is the players on the roster who weren’t on the sheet (some may be injured or away).",
+    F: [
+      [[13,"Brennan","Ali"],[11,"Danny","Nelson"],[34,"Sammy","Nelson"]],
+      [[9,"Cole","Brown"],[81,"Beckham","Edwards"],[19,"Evan","Werner"]],
+      [[25,"Carter","Slaggert"],[17,"Pano","Fimis"],[22,"Hagen","Burrows"]],
+      [[20,"David","Klee"],[15,"Jayden","Davis"],[8,"Will","Belle"]]
+    ],
+    D: [[[16,"Paul","Fischer"],[21,"Jaedon","Kerr"]],[[12,"Henry","Nelson"],[5,"Leo","Gruba"]],[[6,"Drew","Mackie"],[43,"Danny","Klaers"]]],
+    G: [[31,"Nicholas","Kempf"],[32,"Patrick","Quinlan"]],
+    S: [[24,"Dashel","Oliver"],[37,"Toby","Hopp"],[14,"Maddox","Fleming"],[23,"Michael","Schermerhorn"],[2,"Jimmy","Jurcev"],[4,"Michael","Quinn"]]
+  };
+  CAP.ncaa_notredame = { "11": "C", "16": "A" };
+  L.ncaa_ohiostate = {
+    game: "Last game: <b>vs Notre Dame Fighting Irish</b> · Nov 21, 2026", updated: "Nov 25, 2026",
+    note: "Lines are from Ohio State’s lineup post on X for the Nov 21 game. Jackson Crowder was listed as the extra forward. The rest of the scratch list is the players on the roster who weren’t on the sheet (some may be injured or away).",
+    F: [
+      [[53,"Benjamin","Wilmott"],[49,"Jake","Karabela"],[13,"Félix","Caron"]],
+      [[19,"James","Hong"],[16,"Max","Montes"],[24,"Niall","Crocker"]],
+      [[9,"Evan","Jardine"],[56,"Ryan","Rucinski"],[18,"Will","Tomko"]],
+      [[10,"Thomas","Weis"],[25,"Sam","Deckhut"],[63,"Nathan","Lewis"]]
+    ],
+    D: [[[8,"Nathan","McBrayer"],[5,"Jakub","Fibigr"]],[[28,"William","Smith"],[2,"Chris","Able"]],[[27,"Sam","McGinley"],[21,"Bryce","Ingles"]]],
+    G: [[31,"Jakub","Milota"],[1,"Jack","Erickson"]],
+    S: [[11,"Jackson","Crowder"],[29,"Ryan","Gordon"],[33,"Erik","Påhlsson"],[4,"Frankie","Marrelli"],[78,"Sascha","Boumedienne"],[60,"Kristoffer","Eberly"]]
+  };
+  CAP.ncaa_ohiostate = { "8": "C" };
+  put("ncaa_wisconsin", [
+    [2,"D","So.","L","6-1",189,"Plymouth, Mich.","Orchard Lake St. Mary’s"],[3,"RW","Fr.","R","6-0",180,"Champlin, Minn.","Sioux Falls (USHL)"],[4,"D","So.","R","6-0",194,"Victoria, B.C.","Northeastern (NCAA)"],[5,"D","Sr.","L","6-1",195,"South Lyon, Mich.","USA Hockey NTDP"],[6,"D","Jr.","R","6-2",199,"Woodbury, Minn.","Hill-Murray School"],[7,"C","Jr.","L","5-11",190,"Rochester Hills, Mich.","Fargo (USHL)"],[8,"D","Jr.","R","6-3",197,"Hinsdale, Ill.","Hinsdale Central High School"],[9,"C","Fr.","R","5-10",179,"Lake Forest, Ill.","Green Bay (USHL)"],
+    [12,"F","Fr.","R","5-7",170,"Chanhassen, Minn.","Madison (USHL)"],[14,"D","Sr.","L","6-0",183,"Cottage Grove, Minn.","Fargo (USHL)"],[17,"C","So.","R","6-2",206,"Des Moines, Iowa","Waukee Community High School"],[18,"RW","Jr.","R","5-11",190,"Hartland, Mich.","Hartland High School"],[19,"LW","Fr.","L","6-2",207,"Apple Valley, Minn.","Green Bay (USHL)","Winnipeg"],[21,"LW","Jr.","L","5-11",188,"Portage la Prairie, Manitoba","Portage Collegiate Institute"],[23,"D","Fr.","L","6-2",207,"Minnetonka, Minn.","Madison (USHL)"],[24,"F","Fr.","L","5-11",178,"Fond du Lac, Wis."],
+    [26,"D","Jr.","L","6-0",184,"Andover, Minn.","Andover High School"],[27,"LW","So.","L","5-10",180,"Maple Grove, Minn.","Maple Grove Senior High"],[30,"G","So.","L","6-4",206,"Trois-Rivières, Quebec","Cornell (NCAA)"],[31,"G","So.","L","5-11",167,"Chestermere, Alberta","Foothills Composite High School"],[35,"G","Fr.","L","6-4",195,"Nashville, Tenn.","Corpus Christi (NAHL)"],[55,"RW","So.","R","5-8",174,"Gibsons, B.C.","North Delta Secondary School"],[57,"F","Fr.","L","6-1",196,"Lempäälä, Finland","Dubuque (USHL)"],[86,"RW","Jr.","R","6-0",185,"Verona, Wis.","Penn State (NCAA)"],[91,"LW","So.","L","6-0",193,"Zagreb, Croatia","Birotehnika Zagreb"],[94,"C","So.","L","6-0",195,"Moscow, Russia","St. Gilgen International School"]
+  ]);
+  put("ncaa_notredame", [
+    [2,"D","Jr.","","6-5",211,"Palos Heights, Ill.","Lincoln (USHL)"],[4,"D","Jr.","","5-11",188,"St. Louis, Mo.","Miami (NCHC)"],[5,"D","Jr.","","6-2",203,"Lake Elmo, Minn.","Minnesota (Big Ten)"],[6,"D","So.","","6-0",185,"Anchorage, Alaska","Brooks (BCHL)"],[8,"RW","So.","","6-4",239,"Dongguan, China","USNTDP"],[9,"LW","So.","","6-3",205,"Rocky View County, Alberta","Brantford (OHL)"],[11,"C","Sr.","","6-3",218,"Maple Grove, Minn.","USNTDP"],[12,"D","Sr.","","6-2",198,"Maple Grove, Minn.","Lincoln (USHL)"],[13,"LW","Sr.","","6-1",198,"Glencoe, Ill.","Lincoln (USHL)"],[14,"F","Sr.","","5-11",196,"Rochester, Minn.","Sioux Falls (USHL)"],[15,"C","Sr.","","5-11",196,"Calgary, Alberta","Green Bay (USHL)"],[16,"D","Sr.","","6-1",203,"River Forest, Ill.","USNTDP"],[17,"C","So.","","5-10",186,"Richmond Hill, Ontario","Erie (OHL)"],[19,"RW","Sr.","","5-8",183,"Flower Mound, Texas","Michigan (Big Ten)"],
+    [20,"LW","So.","","6-4",207,"Castle Rock, Colo.","North Dakota (NCHC)"],[21,"D","Jr.","","6-4",228,"Elk River, Minn.","Waterloo (USHL)"],[22,"RW","Jr.","","6-3",188,"Orono, Minn.","Denver (NCHC)"],[23,"F","Jr.","","6-0",219,"Traverse City, Mich.","New Mexico (NAHL)"],[24,"F","So.","","5-10",197,"Bloomington, Ind.","Lincoln (USHL)"],[25,"LW","Sr.","","5-10",181,"South Bend, Ind.","USNTDP"],[31,"G","Jr.","","6-2",210,"Morton Grove, Ill.","USNTDP"],[32,"G","Fr.","","6-1",200,"Unionville, Pa.","Sarnia (OHL)"],[34,"RW","Fr.","","6-2",197,"Maple Grove, Minn.","USNTDP"],[37,"G","Jr.","","6-1",194,"Maple Grove, Minn.","Air Force (AHA)"],[43,"D","Fr.","","6-0",187,"Minnetonka, Minn.","Muskegon (USHL)"],[81,"C","Fr.","","6-1",193,"Komoka, Ontario","Sarnia (OHL)"]
+  ]);
+  put("ncaa_ohiostate", [
+    [1,"G","So.","","6-1",185,"White Bear Lake, Minn.","Colorado Grit (NAHL)"],[2,"D","Jr.","","6-1",198,"Libertyville, Ill.","Chicago Steel (USHL)"],[4,"D","Fr.","","5-11",190,"Uxbridge, Ontario","Ottawa 67’s (OHL)"],[5,"D","Fr.","","6-1",202,"Unicov, Czech Republic","Windsor Spitfires (OHL)"],[8,"D","Sr.","","6-0",195,"Dublin, Ohio","Muskegon (USHL)"],[9,"LW","Fr.","","6-0",191,"Bloomfield Hills, Mich.","Youngstown (USHL)"],[10,"LW","Sr.","","5-10",180,"Madison, Wis.","Madison (USHL)"],[11,"F","Fr.","","6-3",205,"Allen, Texas","Chicago Steel (USHL)"],[13,"RW","Jr.","","6-0",180,"Montreal, Quebec","West Kelowna (BCHL)"],[16,"C","Sr.","","5-8",165,"Hartland, Wis.","Dubuque (USHL)"],[18,"RW","Fr.","","6-0",192,"Venetia, Pa.","Sioux City (USHL)"],[19,"LW","Jr.","","5-10",177,"Irvine, Calif.","Madison (USHL)"],[21,"D","So.","","5-9",195,"Port Huron, Mich.","Sioux Falls (USHL)"],[24,"RW","So.","","6-3",195,"Delta, B.C.","Prince Albert (WHL)"],[25,"C","Sr.","","5-11",195,"San Diego, Calif.","Sioux City (USHL)"],[27,"D","Sr.","","6-3",198,"Calgary, Alberta","Swift Current (WHL)"],[28,"D","Sr.","","6-1",200,"Toronto, Ontario","Omaha (USHL)"],
+    [29,"F","Sr.","","6-0",185,"Stone Mountain, Ga.","Sioux Falls (USHL)"],[31,"G","Fr.","","6-1",187,"Ostrava, Czech Republic","Blainville-Boisbriand (QMJHL)"],[33,"F","Jr.","","6-1",194,"Landskrona, Sweden","Dubuque (USHL)"],[49,"C","So.","","5-11",187,"Guelph, Ontario","Guelph (OHL)"],[53,"LW","Fr.","","6-2",190,"Long Valley, N.J.","Barrie (OHL)"],[56,"C","Fr.","","5-11",185,"Broadview Heights, Ohio","Youngstown (USHL)"],[60,"G","Sr.","","6-4",208,"Pinckney, Mich.","Green Bay (USHL)"],[63,"RW","Jr.","","6-6",220,"Shorewood, Ill.","Madison (USHL)"],[78,"D","Jr.","","6-3",195,"Stockholm, Sweden","Youngstown (USHL)"]
+  ]);
+})();
 var sel = document.getElementById("team"), lsel = document.getElementById("league");
 function leagueOf(k) { return k.indexOf("whl_") === 0 ? "WHL" : (k.indexOf("qmjhl_") === 0 ? "QMJHL" : (k.indexOf("ncaa_") === 0 ? "NCAA" : "OHL")); }
 function fillTeams(lg, pick) {
