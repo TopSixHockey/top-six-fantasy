@@ -1734,7 +1734,7 @@ function bdPaint() {
   if (BD.loading) h += '<p class="bd-note" style="margin-top:12px">Loading posts…</p>';
   else if (!tops.length && !BD.err) h += '<p class="bd-note" style="margin-top:12px">No posts yet. Be the first to post.</p>';
   tops.forEach(function (p) { h += '<div class="bd-thread">' + one(p, false) + (kids[p.id] || []).map(function (r) { return one(r, true); }).join("") + '</div>'; });
-  h += '<p class="bd-fine">Posts are public. Keep it friendly.</p>';
+ 
   b.innerHTML = h;
   Object.keys(drafts).forEach(function (id) { var el = document.getElementById(id); if (el && drafts[id]) el.value = drafts[id]; });
 }
