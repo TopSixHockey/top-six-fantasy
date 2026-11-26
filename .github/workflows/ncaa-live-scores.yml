@@ -1,7 +1,8 @@
 name: NCAA live scores
 
-# Saves the Big Ten teams' live scores to lineups/ncaa_live.json (the NCAA pages read that file).
-# Starts hourly; each run checks every 2 minutes for up to ~55 minutes, and stops early when no game is on or near.
+# Saves the Big Ten teams' live scores (with the game clock) to ncaa_live.json on the separate "live" branch,
+# which the NCAA pages read. A separate branch means frequent updates never rebuild the site.
+# Starts hourly; each run checks about every 45 seconds for up to ~55 minutes, and stops early when no game is on or near.
 on:
   schedule:
     - cron: "11 11-23,0-5 * * *"
@@ -24,17 +25,22 @@ jobs:
         with:
           python-version: "3.12"
       - name: Poll the scoreboard
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          git config user.name "Top Six Hockey bot"
-          git config user.email "actions@users.noreply.github.com"
-          for i in $(seq 1 25); do
+          mkdir -p live
+          curl -sf "https://raw.githubusercontent.com/$GITHUB_REPOSITORY/live/ncaa_live.json" -o live/ncaa_live.json || rm -f live/ncaa_live.json
+          for i in $(seq 1 68); do
+            cp live/ncaa_live.json /tmp/prev.json 2>/dev/null || rm -f /tmp/prev.json
             rc=0
             python lineups/ncaa_live.py || rc=$?
-            git add lineups/ncaa_live.json
-            if ! git diff --cached --quiet; then
-              git commit -m "NCAA live scores"
-              git pull --rebase origin main && git push || echo "push failed, will retry next round"
+            if [ -f live/ncaa_live.json ] && ! cmp -s live/ncaa_live.json /tmp/prev.json; then
+              d=$(mktemp -d)
+              cp live/ncaa_live.json "$d/"
+              (cd "$d" && git init -q -b live && git add ncaa_live.json \
+                && git -c user.name="Top Six Hockey bot" -c user.email="actions@users.noreply.github.com" commit -qm "NCAA live scores" \
+                && git push -qf "https://x-access-token:$GH_TOKEN@github.com/$GITHUB_REPOSITORY.git" live) || echo "push failed"
             fi
             [ "$rc" = "10" ] && break
-            sleep 120
+            sleep 45
           done
