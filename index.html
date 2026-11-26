@@ -1937,6 +1937,16 @@ function openFut(k) {
     box.addEventListener("click", function (e) { var t = tgt(e); if (t && popFor !== t) showPop(t); else if (t) openHist(t); else hidePop(); });
   }
 }
+/* display "oe"/"Oe" in place of the French ligatures (e.g. Phœnix) everywhere on the page; data keys stay untouched */
+(function () {
+  function fix(n) {
+    if (n.nodeType === 3) { var t = n.nodeValue; if (t.indexOf("\u0153") >= 0 || t.indexOf("\u0152") >= 0) n.nodeValue = t.replace(/\u0153/g, "oe").replace(/\u0152/g, "Oe"); }
+    else if (n.nodeType === 1) { var w = document.createTreeWalker(n, 4), x; while ((x = w.nextNode())) fix(x); }
+  }
+  new MutationObserver(function (ms) { ms.forEach(function (m) { if (m.type === "characterData") fix(m.target); else m.addedNodes.forEach(fix); }); }).observe(document.documentElement, { childList: true, subtree: true, characterData: true });
+  if (document.body) fix(document.body);
+  document.title = document.title.replace(/\u0153/g, "oe");
+})();
 (function () { var r0 = render; render = function (k) { r0(k); closeFut(); futTab(k); }; if (typeof curKey !== "undefined" && curKey) futTab(curKey); })();
 var sel = document.getElementById("team"), lsel = document.getElementById("league");
 function leagueOf(k) { return k.indexOf("whl_") === 0 ? "WHL" : (k.indexOf("qmjhl_") === 0 ? "QMJHL" : (k.indexOf("ncaa_") === 0 ? "NCAA" : "OHL")); }
