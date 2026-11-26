@@ -260,7 +260,7 @@ for (var qk in Q) C[qk] = Q[qk];
 var N = {
  ncaa_michigan:["Michigan Wolverines","#00274c","#00274c","#ffcb05","#ffcb05","#ffcb05","#00274c"],
  ncaa_michiganstate:["Michigan State Spartans","#143528","#143528","#ffffff","#ffffff","#ffffff","#000000"],
- ncaa_minnesota:["Minnesota Golden Gophers","#e3a21a","#e3a21a","#7a0019","#7a0019","#7a0019","#7a0019"],
+ ncaa_minnesota:["Minnesota Golden Gophers","#7a0019","#e3a21a","#7a0019","#7a0019","#7a0019","#7a0019"],
  ncaa_notredame:["Notre Dame Fighting Irish","#0c2340","#0c2340","#c99700","#c99700","#c99700","#f4efe0"],
  ncaa_ohiostate:["Ohio State Buckeyes","#bb0000","#bb0000","#ffffff","#ffffff","#ffffff","#2a2a2a"],
  ncaa_pennstate:["Penn State Nittany Lions","#041e42","#041e42","#ffffff","#ffffff","#ffffff","#041e42"],
@@ -1179,7 +1179,7 @@ var SPEC = {
   SPEC["Wisconsin Badgers"].sw = 0; SPEC["Wisconsin Badgers"].ty = 82;
 })();
 function jersey(n, c, name) {
-  var b = c[1], y = c[2], s1 = c[3], s2 = c[4], num = c[5], ol = c[6];
+  var b = c[0] === "Minnesota Golden Gophers" ? "#e3a21a" : c[1], y = c[2], s1 = c[3], s2 = c[4], num = c[5], ol = c[6];
   var B = "M45 2 Q60 9 75 2 L101 12 L120 45 L118.5 98 L100 96 L100.5 120 L19.5 120 L20 96 L1.5 98 L0 45 L19 12 Z";
   var has = n !== "" && n !== null;
   var ds = String(n), L1 = ds.length > 1 ? ds.charAt(0) : ds, R1 = ds.length > 1 ? ds.slice(1) : ds;
