@@ -1267,7 +1267,7 @@ async function histLoad(lg, nm, num, team, x) {
     }
     own.sort(function (a, b) { var ya = histYear(a, 0), yb = histYear(b, 0); return yb < ya ? -1 : yb > ya ? 1 : (/\(/.test(a.team_name) ? 1 : 0) - (/\(/.test(b.team_name) ? 1 : 0); });
   }
-  return (HIST[ck] = { reg: own });
+  return (HIST[ck] = { reg: own, foreign: Object.keys(foreign) });
 }
 function histTable(rows, g, po) {
   var lab = g ? ["GP", "GAA", "SV%", "W", "L", "OTL", "SO"] : ["GP", "G", "A", "PTS", "+/-", "PIM"];
@@ -1868,30 +1868,32 @@ function popNcaaSt(d) {
   return '<div class="pt">2026-27 regular season</div><div class="pst">' + d.st.map(function (v, i) { return '<div><b>' + lab[i] + '</b><span>' + (!g && i === 4 && v > 0 ? "+" + v : v) + '</span></div>'; }).join("") + '</div><div class="pmore">' + (window.matchMedia && window.matchMedia("(hover: hover)").matches ? "Click" : "Tap again") + ' for past seasons</div>';
 }
 async function openHistNcaa(k, n, nm, d) {
-  var g = d.pos === "G", lab = g ? ["GP", "GAA", "SV%", "W", "L", "OTL", "SO"] : ["GP", "G", "A", "PTS", "+/-", "PIM"];
-  var rows = ((NCAA_HIST[k] && NCAA_HIST[k][n]) || []).slice().reverse(), ncaaHtml = "";
-  if (rows.length) {
-    ncaaHtml = '<div class="ht">NCAA regular season</div><div class="tw"><table><thead><tr><th>Season</th><th>Team</th>' + lab.map(function (l) { return "<th>" + l + "</th>"; }).join("") + "</tr></thead><tbody>";
-    rows.forEach(function (r) {
-      ncaaHtml += "<tr><td>" + injEsc(r[0]) + "</td><td>" + injEsc(r[1]) + "</td>" + r.slice(2).map(function (x, i) { return "<td>" + injEsc(!g && i === 4 && x > 0 ? "+" + x : x) + "</td>"; }).join("") + "</tr>";
-    });
-    ncaaHtml += "</tbody></table></div>";
-  }
+  var g = d.pos === "G";
+  var nrows = (NCAA_HIST[k] && NCAA_HIST[k][n]) || [];
+  var xr = nrows.map(function (r) { return ["NCAA", r[0], r[1]].concat(r.slice(2).map(function (x, i) { return !g && i === 4 && x > 0 ? "+" + x : x; })); });
   var m = /\((OHL|WHL|QMJHL)\)/.exec(d.prev || ""), lg = m && m[1];
   var none = '<div class="hs">No previous seasons yet.</div>';
+  var first = xr.length ? '<div class="ht">Past Regular Seasons</div>' + histUnified([], xr, g, "NCAA") : "";
   histBox = document.createElement("div"); histBox.id = "hist";
-  histBox.innerHTML = '<div class="hb" style="background:' + ((C[k] && C[k][1]) || "#232f5a") + '"><button class="hx" aria-label="Close">&times;</button><div class="hh"><span class="hn">' + injEsc(nm) + '</span><span class="hm">#' + injEsc(n) + " &middot; " + injEsc(d.pos) + '</span></div><div class="hc">' + ncaaHtml + (lg ? '<div class="hs">Loading ' + lg + ' seasons&hellip;</div>' : (ncaaHtml ? "" : none)) + '</div></div>';
+  histBox.innerHTML = '<div class="hb" style="background:' + ((C[k] && C[k][1]) || "#232f5a") + '"><button class="hx" aria-label="Close">&times;</button><div class="hh"><span class="hn">' + injEsc(nm) + '</span><span class="hm">#' + injEsc(n) + " &middot; " + injEsc(d.pos) + '</span></div><div class="hc">' + first + (lg ? '<div class="hs">Loading ' + lg + ' seasons&hellip;</div>' : (first ? "" : none)) + '</div></div>';
   document.body.appendChild(histBox);
   var box = histBox;
   box.addEventListener("click", function (e) { if (e.target === box || (e.target.classList && e.target.classList.contains("hx"))) closeHist(); });
   document.addEventListener("keydown", histKey);
   if (!lg) return;
-  var chl = "";
+  var chl = [];
   try {
     var r = await histLoad(SCLG[lg], nm, n, "", true);
-    if (r && r.reg && r.reg.length) chl = '<div class="ht">' + lg + ' regular season</div>' + histTable(r.reg, g, 0);
+    if (r && r.reg) chl = r.reg.slice();
+    var fl = (r && r.foreign) || [];
+    for (var fi = 0; fi < fl.length; fi++) {
+      try {
+        var o = await histLoad(SCLG[fl[fi]], nm, "", "", true);
+        if (o && o.reg) o.reg.forEach(function (x) { var c2 = {}; for (var q in x) c2[q] = x[q]; c2.team_name = (x.team_name || "") + " (" + fl[fi] + ")"; chl.push(c2); });
+      } catch (e2) {}
+    }
   } catch (e) {}
-  if (histBox === box) box.querySelector(".hc").innerHTML = (ncaaHtml + chl) || none;
+  if (histBox === box) box.querySelector(".hc").innerHTML = (chl.length || xr.length) ? '<div class="ht">Past Regular Seasons</div>' + histUnified(chl, xr, g, lg) : none;
 }
 var NCAA_HIST = {};
 (function () {
