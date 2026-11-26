@@ -1220,7 +1220,9 @@ function popHtml(k, n, nm) {
     "#hist th:first-child,#hist td:first-child,#hist th:nth-child(2),#hist td:nth-child(2){text-align:left}" +
     "#hist td:nth-child(2){font-weight:500;color:rgba(255,255,255,.85)}" +
     "#hist .hs{padding:14px 0;text-align:center;color:rgba(255,255,255,.8)}" +
-    "#hist .tw{overflow-x:auto}";
+    "#hist .tw{overflow-x:auto}" +
+    "#hist .tl{width:22px;height:22px;object-fit:contain;vertical-align:middle;margin-left:6px}" +
+    "#hist .tm{white-space:nowrap}";
   document.head.appendChild(st);
 })();
 var HIST = {};
@@ -1282,6 +1284,35 @@ function histTable(rows, g, po) {
 var histBox = null;
 function closeHist() { if (histBox) { histBox.remove(); histBox = null; } document.removeEventListener("keydown", histKey); }
 function histKey(e) { if (e.key === "Escape") closeHist(); }
+var TLK = null, TLA = { "hamilton bulldogs": "hamilton", "mississauga steelheads": "brampton", "sherbrooke phoenix": "qmjhl_sherbrooke", "newfoundland growlers": "qmjhl_newfoundland" };
+function histLogo(name) {
+  if (!TLK) { TLK = {}; for (var k in C) TLK[injNrm(C[k][0])] = k; for (var a in TLA) TLK[a] = TLA[a]; }
+  var k2 = TLK[injNrm(name)]; if (!k2 || !window.tsLogoSrc) return "";
+  var s = window.tsLogoSrc(k2); return s ? ' <img class="tl" src="' + s + '" alt="">' : "";
+}
+function histUnified(reg, xr, g, lg) {
+  var lab = g ? ["GP", "GAA", "SV%", "W", "L", "OTL", "SO"] : ["GP", "G", "A", "PTS", "+/-", "PIM"];
+  function sv(v) { v = parseFloat(v); return isFinite(v) ? v.toFixed(3).replace(/^0/, "") : "-"; }
+  function gaa(v) { v = parseFloat(v); return isFinite(v) ? v.toFixed(2) : "-"; }
+  function pm(v) { return +v > 0 ? "+" + v : v; }
+  var rows = [], sfx = /\s*\((OHL|WHL|QMJHL)\)\s*$/i;
+  reg.forEach(function (r) {
+    var m = sfx.exec(r.team_name || ""), tl = m ? m[1].toUpperCase() : lg, tn = (r.team_name || "").replace(sfx, "").replace(/,\s*/g, " ");
+    var c = g ? [r.games_played, gaa(r.goals_against_average), sv(r.savepct), r.wins, r.losses, r.ot_losses, r.shutouts] : [r.games_played, r.goals, r.assists, r.points, pm(r.plus_minus), r.penalty_minutes];
+    rows.push({ y: histYear(r, 0), t: tn, l: tl, c: c, i: rows.length });
+  });
+  xr.forEach(function (r) {
+    var tn = String(r[2]).replace(/,\s*/g, " ");
+    if (rows.some(function (o) { return o.y === r[1] && o.t === tn && o.l === r[0]; })) return;
+    rows.push({ y: r[1], t: tn, l: r[0], c: r.slice(3), i: rows.length });
+  });
+  rows.sort(function (a, b) { return a.y < b.y ? 1 : a.y > b.y ? -1 : a.i - b.i; });
+  var h = '<div class="tw"><table><thead><tr><th>Season</th><th>Team</th>' + lab.map(function (l) { return "<th>" + l + "</th>"; }).join("") + "</tr></thead><tbody>";
+  rows.forEach(function (o) {
+    h += "<tr><td>" + injEsc(o.y) + '</td><td class="tm">' + injEsc(o.t) + " (" + injEsc(o.l) + ")" + histLogo(o.t) + "</td>" + o.c.map(function (x) { return "<td>" + injEsc(x == null ? "-" : x) + "</td>"; }).join("") + "</tr>";
+  });
+  return h + "</tbody></table></div>";
+}
 async function openHist(el) {
   var k = el.getAttribute("data-k") || curKey, n = el.getAttribute("data-n"), nm = el.getAttribute("data-nm"), d = PL[k] && PL[k][n]; if (!d) return;
   hidePop(); closeHist();
@@ -1296,11 +1327,10 @@ async function openHist(el) {
   var hc = box.querySelector(".hc"), html;
   try {
     var r = await histLoad(SCLG[lg], nm, n, C[k] && C[k][0]);
-    if (r.none) html = '<div class="hs">No ' + lg + ' stats found for this player.</div>';
-    else if (!r.reg.length) html = '<div class="hs">No previous ' + lg + ' seasons yet.</div>';
-    else html = (r.reg.length ? '<div class="ht">' + lg + " regular season</div>" + histTable(r.reg, g, 0) : "");
+    var xr = XHIST[k + "|" + n] || [];
+    if ((r.none || !r.reg.length) && !xr.length) html = '<div class="hs">' + (r.none ? 'No ' + lg + ' stats found for this player.' : 'No previous ' + lg + ' seasons yet.') + '</div>';
+    else html = '<div class="ht">Past Regular Seasons</div>' + histUnified(r.reg || [], xr, g, lg);
   } catch (e) { html = '<div class="hs">Couldn’t load past seasons. Please try again.</div>'; }
-  var xh = xhistHtml(k + "|" + n, g); if (xh) html = (html && html.indexOf('class="hs"') < 0 ? html : "") + xh;
   if (histBox === box) hc.innerHTML = html;
 }
 /* seasons played in another CHL league before the current one (source: Elite Prospects) */
@@ -1988,6 +2018,7 @@ render(sel.value);
   LG.ncaa_michiganstate = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgwIiBoZWlnaHQ9IjQ4MCIgdmlld0JveD0iMCAwIDQ4IDQ4IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxwYXRoIGQ9Ik00Mi4wNzY2IDMuMzAzNjlDNDIuMDc2NiAzLjMwMzY5IDM4LjM1MTYgMTEuMzI4NiAzOC4zMTgzIDExLjMxMDNDMzEuMzU2NiA3LjgwNjk5IDIzLjE3ODQgNy45ODAzMiAxNi4zNDE4IDEyLjAzMDNDMTEuNzgzNSAxNC44MTY5IDguNjQzNDkgMTkuNTIwMiA4LjM1NTE1IDI1LjE5NjhDOC4xMjg0OSAyOS42ODE4IDkuNTQ1MTQgMzMuMTYxOCA5LjM0MTgxIDM2LjczODRDOS4yMzAxNSAzOC42ODM0IDguODcwMTUgMzkuOTIzNCA3Ljk4MTgyIDQxLjU2ODRDNi44NDM1IDQzLjQ2ODQgNS40Nzg1MSA0NS4xMTUgMy4yMDAyIDQ1LjI0MTdDMy43MDY4NiA0NC42MDg0IDcuMjI1MTYgNDIuODczNCA1Ljg0MTg0IDM0LjkwNTFDNS4yOTM1MSAzMS43NDUxIDAuOTUwMjEzIDIzLjkxMDIgNS4xNDg1MSAxNC4wODY5QzguOTgwMTUgNS4xMTcwMSAyNS41NiAtNS41MDk1OCA0Mi4wNzY2IDMuMzAzNjlaIiBmaWxsPSIjMTg0NTNCIi8+PHBhdGggZD0iTTIzLjA3ODUgMTkuMDMxOUMyNS4yMjUyIDE4LjI1ODYgMjcuNjMxOCAxOC4yNDM2IDI5LjkxMTggMTguNzQ4NkMzNC4yMTY4IDE5LjUwODYgMzcuNDM4NCAyMi4xMDY5IDM5LjAwODQgMjUuOTYzNUM0MC42NTE3IDMwLjAwMDIgNDEuODMxNyAzMy4yNTY4IDQ0LjY1NSAzNi43MDY4QzQ0LjczNSAzNi44MDUxIDQwLjI0NjcgMzYuMDQ2OCA0MC4yNjM0IDM1LjkyMzRDNDEuMzYxNyAyNy45MjUyIDMzLjgwMDEgMjcuNTkzNSAzMS43MTUxIDMwLjU5MDFDMzMuMjgzNCAzMi4zMTUxIDM1Ljk3NjggMzMuMjAxOCAzOC4wNjg0IDMyLjg2NTFDMzcuNjI1MSA0MC44MDg0IDM5Ljg0MDEgNDguMDE2NyAzOS43MTUxIDQ4QzM3LjkxMzQgNDcuNzUgMjkuNjU4NSA0Mi44OTUxIDI3LjI0NTIgNDAuNzg1MUMyMy42OTg1IDQxLjQxNjcgMjAuOTIxOSA0Mi43MjY3IDE2LjgxNTIgNDMuMjk1QzE2LjY4ODYgNDMuMzExNyAxNy41Njg2IDQwLjI2NTEgMTcuNDQxOSAzOC43NDY4QzE3LjQ0MTkgMzQuNTY4NSAxNC4yNDAzIDMwLjY1MTggMTYuNTA1MiAyNS41MjAyQzE3Ljg2MzYgMjIuNDQxOSAxOS45MTE5IDIwLjE3MTkgMjMuMDc2OSAxOS4wMzE5SDIzLjA3ODVaIiBmaWxsPSIjMTg0NTNCIi8+PHBhdGggZD0iTTI2LjA1IDE2LjYyMTlDMjYuMjkgMTYuNjI1MiAyNi42NTUgMTYuNjgxOSAyNi42NjE3IDE2LjY1NTJDMjYuNzMgMTYuMzc4NiAyNi45NTUgMTQuMzk4NiAyOC42NDE3IDEyLjk1MzZDMzAuNTIgMTEuMzQ2OSAzMi45ODY2IDExLjUwNTMgMzIuOTYxNiAxMS40OTAzQzMwLjUwMzMgMTAuNzM4NiAyNy45NjgzIDEwLjY4NTMgMjYuMjE4MyAxMC44NDAzTDI2LjA0ODMgMTYuNjIxOUgyNi4wNVoiIGZpbGw9IiMxODQ1M0IiLz48cGF0aCBkPSJNMTAuNDA4MyAyMy44MzAyQzEwLjAzNSAyNi4yMTAyIDEwLjI1ODMgMjguMDcxOCAxMC42MzMzIDI5LjU3MThDMTAuNjM2NiAyOS41ODY4IDEwLjU2MzMgMjcuNTc2OCAxMS43MTgzIDI2LjQzMzVDMTIuNzI0OSAyNS40MzUyIDE0LjAwODMgMjUuMjQxOSAxNC40NjMzIDI1LjI1NjlDMTQuNDYzMyAyNS4yNTAyIDE0LjY5MTYgMjQuNDc4NSAxNC42NTk5IDI0LjQ3NjlMMTAuNDEgMjMuODMwMkgxMC40MDgzWiIgZmlsbD0iIzE4NDUzQiIvPjxwYXRoIGQ9Ik0xNS4xNjg1IDIzLjM4ODVDMTUuMjkxOCAyMy4wNzAyIDE1LjQ0MzUgMjIuNzkxOSAxNS42MjY4IDIyLjQzMDJMMTEuMjU4NSAyMC43MzUyQzEwLjk4NjggMjEuMjgwMiAxMC43ODE4IDIyLjA5NTIgMTAuNjgwMiAyMi41Mzg1TDE1LjE2ODUgMjMuMzg4NVoiIGZpbGw9IiMxODQ1M0IiLz48cGF0aCBkPSJNMTYuMjIxOSAyMS43MjE5QzE2LjIzMzYgMjEuNzA4NiAxNi45MjM2IDIwLjgyODYgMTYuOTM2OSAyMC44Mzg2TDEyLjkzMzYgMTcuODI4NkMxMi41MTY5IDE4LjM1NTIgMTIuMTc2OSAxOC45MzM2IDExLjkwNTMgMTkuNTQ1MkwxNi4yMjM2IDIxLjcyMTlIMTYuMjIxOVoiIGZpbGw9IiMxODQ1M0IiLz48cGF0aCBkPSJNMTcuNzEzMiAyMC4wODM2QzE3LjczNDggMjAuMDYwMiAxOC42MDMxIDE5LjI3NTIgMTguNjAzMSAxOS4yNzUyTDE1LjEzNDggMTUuMzMwM0MxNC4zNTMyIDE2LjAxMDMgMTQuMTE0OCAxNi4zMTUzIDEzLjYzODIgMTYuODk1M0wxNy43MTMyIDIwLjA4NTJWMjAuMDgzNloiIGZpbGw9IiMxODQ1M0IiLz48cGF0aCBkPSJNMTkuNTEzNCAxOC43MTUyQzE5LjUyMDEgMTguNzYzNiAyMC41MTAxIDE4LjE2MTkgMjAuNTMxNyAxOC4xMTY5TDE3Ljk1NTEgMTMuNDI1M0MxNi45Njg0IDEzLjkwMTkgMTYuMzQwMSAxNC40MTE5IDE2LjA1MTggMTQuNjE1M0wxOS41MTM0IDE4LjcxNTJaIiBmaWxsPSIjMTg0NTNCIi8+PHBhdGggZD0iTTIxLjQyNSAxNy42NzY5QzIyLjY1NSAxNy4yNTg2IDIyLjY1IDE3LjI0NjkgMjIuNjUgMTcuMjY4NkwyMS4xODg0IDExLjk5N0MyMC4zNzM0IDEyLjIzNTMgMTkuMjcxNyAxMi43MDcgMTkuMDExNyAxMi44ODJMMjEuNDI2NyAxNy42NzY5SDIxLjQyNVoiIGZpbGw9IiMxODQ1M0IiLz48cGF0aCBkPSJNMjMuNjAxNSAxNi45NjE5QzIzLjY0NjUgMTYuOTgzNiAyNC43MDk4IDE2LjcyNTIgMjQuNzIzMSAxNi43MjM2TDI0Ljg1ODEgMTEuMDEwM0MyNC44MTMxIDExLjA1NTMgMjMuNTMxNSAxMS4yNDg2IDIyLjQ0NDggMTEuNTU1M0wyMy42MDE1IDE2Ljk2MTlaIiBmaWxsPSIjMTg0NTNCIi8+PHBhdGggZD0iTTQxLjEzMDEgNDhDNDAuNjMxNyA0OCA0MC4yMzM0IDQ3LjYwMTcgNDAuMjMzNCA0Ny4xMDM0QzQwLjIzMzQgNDYuNjA1IDQwLjYzMTcgNDYuMjA2NyA0MS4xMzAxIDQ2LjIwNjdDNDEuNjI4NCA0Ni4yMDY3IDQyLjAyNjcgNDYuNjAzNCA0Mi4wMjY3IDQ3LjEwMzRDNDIuMDI2NyA0Ny42MDM0IDQxLjYzMDEgNDggNDEuMTMwMSA0OFpNNDEuMTMwMSA0Ni4zMTY3QzQwLjY5NTEgNDYuMzE2NyA0MC4zNDM0IDQ2LjY2ODQgNDAuMzQzNCA0Ny4xMDM0QzQwLjM0MzQgNDcuNTM4NCA0MC42OTUxIDQ3Ljg5IDQxLjEzMDEgNDcuODlDNDEuNTY1MSA0Ny44OSA0MS45MTY3IDQ3LjUzODQgNDEuOTE2NyA0Ny4xMDM0QzQxLjkxNjcgNDYuNjY4NCA0MS41NjUxIDQ2LjMxNjcgNDEuMTMwMSA0Ni4zMTY3Wk00MS4yNDY3IDQ3LjE3ODRMNDEuNDQ2NyA0Ny41ODM0SDQxLjMyMzRMNDEuMTMxNyA0Ny4xODg0SDQwLjkyODRWNDcuNTgzNEg0MC44MTE3VjQ2LjYyMzRINDEuMTQxN0M0MS4yNDAxIDQ2LjYyMzQgNDEuMzE1MSA0Ni42NSA0MS4zNjg0IDQ2LjdDNDEuNDI1MSA0Ni43NSA0MS40NTE3IDQ2LjgxODQgNDEuNDUxNyA0Ni45MDVDNDEuNDUxNyA0Ny4wNDE3IDQxLjM5MzQgNDcuMTI2NyA0MS4yNDY3IDQ3LjE3NjdWNDcuMTc4NFpNNDEuMTQ1MSA0Ni43MjE3SDQwLjkyODRWNDcuMDg2N0g0MS4xNTUxQzQxLjIwNTEgNDcuMDg2NyA0MS4yNTE3IDQ3LjA3IDQxLjI4ODQgNDcuMDM2N0M0MS4zMjUxIDQ3LjAwNSA0MS4zNDUxIDQ2Ljk2IDQxLjM0NTEgNDYuOTA2N0M0MS4zNDUxIDQ2Ljc4MzQgNDEuMjczNCA0Ni43MjM0IDQxLjE0NTEgNDYuNzIzNFY0Ni43MjE3WiIgZmlsbD0iIzE4NDUzQiIvPjwvc3ZnPg==";
   var LGN = {};
   var LGS = { kingston: 0.8 };
+  window.tsLogoSrc = function (k) { return LGN[k] || LG[k] || ""; };
   function tsSharp(c, amt) {
     var w = c.width, h = c.height, x = c.getContext("2d"), id = x.getImageData(0, 0, w, h), d = id.data, o = new Uint8ClampedArray(d), y, X, i, j, p, q, qa, sr, sg, sb, sa;
     for (y = 1; y < h - 1; y++) for (X = 1; X < w - 1; X++) {
