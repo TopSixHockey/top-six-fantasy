@@ -1733,7 +1733,7 @@ function popNcaa(k, n, nm, d) {
   CAP.ncaa_michigan = { "17": "C", "21": "A", "4": "A" };
   L.ncaa_michiganstate = {
     game: "Last game: <b>vs Michigan Wolverines</b> · Nov 21, 2026", updated: "Nov 25, 2026",
-    note: "Lines are from Michigan State’s lineup post on X for the Nov 21 game. Diego Johnson was listed as the extra forward and Quentin Sigurdson and JJ Salajko are the other goalies on the sheet.",
+    note: "Lines are from Michigan State’s lineup post on X for the Nov 21 game. Diego Johnson was listed as the extra forward. The rest of the scratch list is the players on the roster who weren’t on the sheet (some may be injured or away).",
     F: [
       [[16,"Ethan","Belchetz"],[26,"Eric","Nilson"],[15,"Anthony","Romani"]],
       [[21,"Cullen","Potter"],[17,"Jack","Hextall"],[29,"Gavin","O’Connell"]],
@@ -1742,7 +1742,7 @@ function popNcaa(k, n, nm, d) {
     ],
     D: [[[11,"Owen","West"],[22,"Tommy","Bleyl"]],[[4,"Brady","Peddle"],[27,"Chase","Reid"]],[[6,"Cole","Ward"]]],
     G: [[31,"Joshua","Ravensbergen"],[1,"Quentin","Sigurdson"]],
-    S: [[19,"Diego","Johnson"],[32,"JJ","Salajko"]]
+    S: [[19,"Diego","Johnson"],[32,"JJ","Salajko"],[2,"Patrick","Geary"],[3,"Sean","Barnhill"],[14,"Matt","Lahey"],[23,"Shane","Vansaghi"],[28,"Cayden","Lindstrom"]]
   };
   L.ncaa_wisconsin = {
     game: "Last game: <b>vs Penn State Nittany Lions</b> · Nov 20, 2026", updated: "Nov 25, 2026",
@@ -1786,6 +1786,11 @@ function popNcaa(k, n, nm, d) {
     S: [[11,"Jackson","Crowder"],[29,"Ryan","Gordon"],[33,"Erik","Påhlsson"],[4,"Frankie","Marrelli"],[78,"Sascha","Boumedienne"],[60,"Kristoffer","Eberly"]]
   };
   CAP.ncaa_ohiostate = { "8": "C" };
+  put("ncaa_michiganstate", [
+    [1,"G","Jr.","L","6-2",175,"Sartell, Minn.","Northeastern (NCAA)"],[2,"D","Sr.","L","6-1",192,"Buffalo, N.Y.","Waterloo (USHL)","Buffalo"],[3,"D","So.","R","6-6",215,"Scottsdale, Ariz.","Dubuque (USHL)","NY Rangers"],[4,"D","Fr.","L","6-3",194,"Antigonish, N.S.","","Pittsburgh"],[6,"D","So.","R","6-6",210,"Rochester, Mich.","Tri-City (USHL)"],[7,"F","Sr.","L","6-0",180,"Edina, Minn.","Minnesota (Big Ten)","Minnesota"],[9,"C","Fr.","R","6-6",215,"Edina, Minn.","Fargo (USHL)","Chicago"],[10,"F","Sr.","L","6-0",205,"Riihimäki, Finland","Tappara J20 (Finland)"],[11,"D","Jr.","L","5-11",195,"Pittsboro, Ind.","Des Moines (USHL)"],[12,"F","Sr.","L","5-10",180,"Grosse Ile, Mich.","Omaha (USHL)"],[14,"D","So.","L","6-6",210,"Victoria, B.C.","Fargo (USHL)","Toronto"],
+    [15,"F","So.","R","6-1",195,"Pickering, Ont.","Barrie (OHL)","Vancouver"],[16,"LW","Fr.","","6-5",230,"Oakville, Ont.","Windsor (OHL)","Utah"],[17,"C","Fr.","","6-1",188,"Rolling Meadows, Ill.","Youngstown (USHL)","Calgary"],[18,"F","So.","R","6-1",185,"Wilmette, Ill.","Madison (USHL)","Nashville"],[19,"F","Fr.","R","5-11",179,"Fort St. James, B.C.","Penticton (WHL)"],[21,"LW","Jr.","","5-10",180,"Minneapolis, Minn.","Arizona State (NCAA)","Calgary"],[22,"D","Fr.","","6-0",165,"Schenectady, N.Y.","Moncton (QMJHL)","Nashville"],[23,"F","Jr.","R","6-2",215,"St. Louis, Mo.","USNTDP","Philadelphia"],[25,"F","So.","R","6-2",180,"Trenton, Mich.","Fairbanks (NAHL)"],[26,"F","So.","R","6-0",170,"Bålsta, Sweden","Djurgårdens (Sweden)","Anaheim"],[27,"D","Fr.","","6-2",190,"Chesterfield, Mich.","Soo (OHL)","Seattle"],
+    [28,"F","So.","L","6-3",220,"Chetwynd, B.C.","Medicine Hat (WHL)","Columbus"],[29,"F","Sr.","R","6-0",195,"Plymouth, Minn.","Waterloo (USHL)"],[31,"G","Fr.","","6-5",190,"North Vancouver, B.C.","Prince George (WHL)","San Jose"],[32,"G","Fr.","R","6-2",183,"Columbus, Ohio","NAHL"]
+  ]);
   put("ncaa_wisconsin", [
     [2,"D","So.","L","6-1",189,"Plymouth, Mich.","Orchard Lake St. Mary’s"],[3,"RW","Fr.","R","6-0",180,"Champlin, Minn.","Sioux Falls (USHL)"],[4,"D","So.","R","6-0",194,"Victoria, B.C.","Northeastern (NCAA)"],[5,"D","Sr.","L","6-1",195,"South Lyon, Mich.","USA Hockey NTDP"],[6,"D","Jr.","R","6-2",199,"Woodbury, Minn.","Hill-Murray School"],[7,"C","Jr.","L","5-11",190,"Rochester Hills, Mich.","Fargo (USHL)"],[8,"D","Jr.","R","6-3",197,"Hinsdale, Ill.","Hinsdale Central High School"],[9,"C","Fr.","R","5-10",179,"Lake Forest, Ill.","Green Bay (USHL)"],
     [12,"F","Fr.","R","5-7",170,"Chanhassen, Minn.","Madison (USHL)"],[14,"D","Sr.","L","6-0",183,"Cottage Grove, Minn.","Fargo (USHL)"],[17,"C","So.","R","6-2",206,"Des Moines, Iowa","Waukee Community High School"],[18,"RW","Jr.","R","5-11",190,"Hartland, Mich.","Hartland High School"],[19,"LW","Fr.","L","6-2",207,"Apple Valley, Minn.","Green Bay (USHL)","Winnipeg"],[21,"LW","Jr.","L","5-11",188,"Portage la Prairie, Manitoba","Portage Collegiate Institute"],[23,"D","Fr.","L","6-2",207,"Minnetonka, Minn.","Madison (USHL)"],[24,"F","Fr.","L","5-11",178,"Fond du Lac, Wis."],
