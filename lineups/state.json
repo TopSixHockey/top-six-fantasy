@@ -227,6 +227,14 @@
   "done": true,
   "flipped": true
  },
+ "qmjhl:32723:away": {
+  "done": true,
+  "flipped": false
+ },
+ "qmjhl:32723:home": {
+  "done": true,
+  "flipped": false
+ },
  "qmjhl:32757:away": {
   "done": true,
   "flipped": true

@@ -1,1 +1,270 @@
-[]
+[
+ {
+  "id": "qmjhl:32723:home",
+  "lg": "qmjhl",
+  "key": "qmjhl_capbreton",
+  "team": "Cape Breton Eagles",
+  "opp": "Blainville-Boisbriand Armada",
+  "vsat": "vs",
+  "start": "2026-11-26T18:00:00-05:00",
+  "local": "2026-11-26T19:00:00",
+  "zone": "America/Halifax",
+  "entry": {
+   "F": [
+    [
+     [
+      81,
+      "Brayden",
+      "Reynolds"
+     ],
+     [
+      86,
+      "Cole",
+      "Chandler"
+     ],
+     [
+      39,
+      "Liam",
+      "Lefebvre"
+     ]
+    ],
+    [
+     [
+      21,
+      "Reece",
+      "Peitzsche"
+     ],
+     [
+      19,
+      "Eliot",
+      "Litalien"
+     ],
+     [
+      22,
+      "Jacob",
+      "Hartlin"
+     ]
+    ],
+    [
+     [
+      10,
+      "Maxim",
+      "Schäfer"
+     ],
+     [
+      9,
+      "Elias",
+      "Schneider"
+     ],
+     [
+      27,
+      "Romain",
+      "Litalien"
+     ]
+    ],
+    [
+     [
+      17,
+      "Jason",
+      "Rothstein"
+     ],
+     [
+      11,
+      "Derek",
+      "Andrews"
+     ],
+     [
+      94,
+      "Jack",
+      "Broderick"
+     ]
+    ]
+   ],
+   "D": [
+    [
+     [
+      55,
+      "Will",
+      "Murphy"
+     ],
+     [
+      65,
+      "Aiden",
+      "McCullough"
+     ]
+    ],
+    [
+     [
+      8,
+      "Jacob",
+      "De Ladurantaye"
+     ],
+     [
+      23,
+      "Noah",
+      "Jettelson"
+     ]
+    ],
+    [
+     [
+      13,
+      "Alonso",
+      "Gosselin"
+     ],
+     [
+      77,
+      "Tyler",
+      "Roccas"
+     ]
+    ]
+   ],
+   "G": [
+    [
+     33,
+     "Lucas",
+     "Beckman"
+    ],
+    [
+     92,
+     "Sam",
+     "Berthiaume"
+    ]
+   ]
+  },
+  "queued": "2026-11-26T16:02:23.207451-05:00"
+ },
+ {
+  "id": "qmjhl:32723:away",
+  "lg": "qmjhl",
+  "key": "qmjhl_blainville",
+  "team": "Blainville-Boisbriand Armada",
+  "opp": "Cape Breton Eagles",
+  "vsat": "at",
+  "start": "2026-11-26T18:00:00-05:00",
+  "local": "2026-11-26T19:00:00",
+  "zone": "America/Halifax",
+  "entry": {
+   "F": [
+    [
+     [
+      26,
+      "Jacob",
+      "McKinnon"
+     ],
+     [
+      11,
+      "Matt",
+      "Gosselin"
+     ],
+     [
+      75,
+      "Andrei",
+      "Milyayev"
+     ]
+    ],
+    [
+     [
+      98,
+      "Oliver",
+      "Ozogany"
+     ],
+     [
+      44,
+      "Elliot",
+      "Dubé"
+     ],
+     [
+      90,
+      "Giovanni",
+      "Collin"
+     ]
+    ],
+    [
+     [
+      84,
+      "Ludovik",
+      "Grenier"
+     ],
+     [
+      10,
+      "Amelio",
+      "Santini"
+     ],
+     [
+      15,
+      "Stefano",
+      "Pietrantonio"
+     ]
+    ],
+    [
+     [
+      61,
+      "Mikhail",
+      "Zakharov"
+     ],
+     [
+      48,
+      "Liam",
+      "Campbell"
+     ],
+     [
+      12,
+      "Zachary",
+      "Chouinard"
+     ]
+    ]
+   ],
+   "D": [
+    [
+     [
+      6,
+      "Olivier",
+      "Filaj"
+     ],
+     [
+      5,
+      "Logan",
+      "Brennan"
+     ]
+    ],
+    [
+     [
+      21,
+      "Alexis",
+      "Bonin-Lallemand"
+     ],
+     [
+      29,
+      "Camden",
+      "Jackson"
+     ]
+    ],
+    [
+     [
+      71,
+      "Charles-Isaac",
+      "Leroux"
+     ],
+     [
+      58,
+      "Alain",
+      "Bourdeau"
+     ]
+    ]
+   ],
+   "G": [
+    [
+     73,
+     "Benjamin",
+     "Lelièvre"
+    ],
+    [
+     39,
+     "Nicolas",
+     "Gillham-Cirka"
+    ]
+   ]
+  },
+  "queued": "2026-11-26T16:02:23.207451-05:00"
+ }
+]
