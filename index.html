@@ -1886,6 +1886,46 @@ var NCAA_HIST = {};
 })();
 /* final score of each NCAA team's last game: [team goals, opponent goals, optional "OT"/"SO"] */
 L.ncaa_michiganstate.score = [2, 0]; L.ncaa_michigan.score = [0, 2]; L.ncaa_wisconsin.score = [2, 1]; L.ncaa_notredame.score = [1, 3]; L.ncaa_ohiostate.score = [2, 3];
+/* Future Commitments: CHL (OHL/WHL/QMJHL) players committed to an NCAA team, grouped by the season they are expected to arrive */
+var FUT = {
+  ncaa_michiganstate: [
+    { season: "2027-28", p: [
+      [14, "Savin", "Virk", "F", "whl_victoria"], [12, "Gavin", "Burcar", "F", "whl_spokane"], [14, "Brody", "George", "F", "saginaw"],
+      [84, "Tyler", "Challenger", "LW", "sarnia"], [7, "Matthew", "Gard", "C", "whl_seattle"], [10, "Brooks", "Rogowski", "C", "oshawa"],
+      [19, "Dryden", "Allen", "D", "flint"], [2, "Nick", "Bogas", "D", "flint"], [93, "Jonas", "Kemps", "D", "whl_seattle"],
+      [24, "Tyler", "Martyniuk", "D", "saginaw"], [53, "Cullen", "McCrate", "D", "hamilton"]
+    ] },
+    { season: "2028-29", p: [[86, "Charlie", "Murata", "F", "flint"]] }
+  ]
+};
+function futTab(k) {
+  var old = document.getElementById("futTab"); if (old) old.remove();
+  if (!FUT[k]) return;
+  if (!document.getElementById("futCss")) {
+    var st = document.createElement("style"); st.id = "futCss";
+    st.textContent = "#futTab{position:absolute;top:12px;right:12px;z-index:4;background:rgba(15,28,40,.86);color:#fff;border:1px solid rgba(255,255,255,.45);border-radius:999px;padding:6px 12px;font-weight:700;font-size:.74rem;line-height:1;font-family:inherit;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.35)}#futTab:hover{background:rgba(15,28,40,1)}.fcg{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px 6px;margin-bottom:6px}.fcg .p{max-width:none}.fcm{font-size:.62rem;font-weight:600;color:rgba(255,255,255,.8);line-height:1.2;margin-top:2px;text-align:center}.fcn{margin-top:10px;font-size:.66rem;color:rgba(255,255,255,.6);text-align:center}";
+    document.head.appendChild(st);
+  }
+  var b = document.createElement("button"); b.id = "futTab"; b.type = "button"; b.textContent = "Future Commitments";
+  b.addEventListener("click", function () { openFut(k); });
+  document.querySelector(".rink").appendChild(b);
+}
+function openFut(k) {
+  closeHist();
+  var body = FUT[k].map(function (g) {
+    return '<div class="ht">' + g.season + '</div><div class="fcg">' + g.p.map(function (p) {
+      var c = C[p[4]];
+      return '<div class="p">' + jersey(p[0], c, p[2]) + '<div class="nm">' + p[1] + " " + p[2] + '</div><div class="fcm">' + p[3] + " &middot; " + injEsc(c[0]) + " (" + leagueOf(p[4]) + ")</div></div>";
+    }).join("") + "</div>";
+  }).join("");
+  histBox = document.createElement("div"); histBox.id = "hist";
+  histBox.innerHTML = '<div class="hb" style="background:' + ((C[k] && C[k][1]) || "#232f5a") + '"><button class="hx" aria-label="Close">&times;</button><div class="hh"><span class="hn">Future Commitments</span><span class="hm">' + injEsc(C[k][0]) + '</span></div><div class="hc">' + body + '<div class="fcn">Jerseys show each player&rsquo;s current OHL, WHL or QMJHL team. Commitments are not binding.</div></div></div>';
+  document.body.appendChild(histBox);
+  var box = histBox;
+  box.addEventListener("click", function (e) { if (e.target === box || (e.target.classList && e.target.classList.contains("hx"))) closeHist(); });
+  document.addEventListener("keydown", histKey);
+}
+(function () { var r0 = render; render = function (k) { r0(k); futTab(k); }; if (typeof curKey !== "undefined" && curKey) futTab(curKey); })();
 var sel = document.getElementById("team"), lsel = document.getElementById("league");
 function leagueOf(k) { return k.indexOf("whl_") === 0 ? "WHL" : (k.indexOf("qmjhl_") === 0 ? "QMJHL" : (k.indexOf("ncaa_") === 0 ? "NCAA" : "OHL")); }
 function fillTeams(lg, pick) {
