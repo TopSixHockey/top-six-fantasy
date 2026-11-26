@@ -1125,6 +1125,8 @@ var SPEC = {
       for (var i = 0; i < list.length; i++) {
         var s = list[i];
         if (s.getAttribute("data-slit") === "1" || !s.querySelector(".slitmsu")) continue;
+        var hm = s.querySelector('rect[y="101"]');
+        if (hm && !s.querySelector(".hem2")) { var hg = document.createElementNS(NS, "g"); hg.setAttribute("class", "hem2"); hg.setAttribute("clip-path", "url(#cb)"); hg.appendChild(hm.cloneNode()); s.appendChild(hg); }
         var ts = s.querySelectorAll("text"), t = null, fs = 0;
         for (var j = 0; j < ts.length; j++) { var f = parseFloat(ts[j].getAttribute("font-size")) || 0; if (f > fs && !ts[j].getAttribute("textLength")) { fs = f; t = ts[j]; } }
         if (!t || fs < 30) continue;
