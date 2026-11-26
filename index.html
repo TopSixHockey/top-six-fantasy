@@ -1348,7 +1348,7 @@ function closeHist() { if (histBox) { histBox.remove(); histBox = null; } docume
 function histKey(e) { if (e.key === "Escape") closeHist(); }
 function ncaaLogoImg(s) {
   var h = histLogo(String(s || "").split(" \u00b7 ")[0]);
-  return h ? h.replace('class="tl"', 'class="tl" style="width:18px;height:18px;vertical-align:middle;margin-left:6px' + (String(s || '').split(' \u00b7 ')[0] === 'Michigan' ? ';position:relative;top:1px' : '') + '"') : "";
+  return h ? h.replace('class="tl"', 'class="tl" style="width:18px;height:18px;vertical-align:middle;margin-left:' + (String(s || '').split(' \u00b7 ')[0] === 'Penn State' ? '0' : '6') + 'px' + (String(s || '').split(' \u00b7 ')[0] === 'Michigan' ? ';position:relative;top:1px' : '') + '"') : "";
 }
 function histEdge(im) {
   try {
