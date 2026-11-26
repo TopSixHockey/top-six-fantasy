@@ -1162,8 +1162,10 @@ var SPEC = {
     if (document.fonts) { if (document.fonts.ready) document.fonts.ready.then(reset); if (document.fonts.addEventListener) document.fonts.addEventListener("loadingdone", reset); }
     later();
   })();
-  SPEC["Minnesota Golden Gophers"] = d([[53, 3.2, "#ffffff"], [56.2, 5, "#7a0019"], [61.2, 3.2, "#ffffff"]], [[90, 3.2, "#ffffff"], [93.2, 5, "#7a0019"], [98.2, 3.2, "#ffffff"]], "#7a0019");
-  SPEC["Minnesota Golden Gophers"].svg += '<polygon points="0,0 120,0 120,29.4 75,14.4 45,14.4 0,29.4" fill="#ffffff"/><polygon points="0,0 120,0 120,27.4 75,12.4 45,12.4 0,27.4" fill="#7a0019"/>';
+  SPEC["Minnesota Golden Gophers"] = d([[53, 4.8, "#ffffff"], [57.8, 7.5, "#7a0019"], [65.3, 4.8, "#ffffff"]], [[94, 4.8, "#ffffff"], [98.8, 7.5, "#7a0019"], [106.3, 4.8, "#ffffff"]], "#7a0019");
+  SPEC["Minnesota Golden Gophers"].ny = 44;
+  SPEC["Minnesota Golden Gophers"].ty = 88;
+  SPEC["Minnesota Golden Gophers"].svg += '<path d="M0 0 H120 V36 L100 27 H20 L0 36 Z" fill="#7a0019"/><path d="M0 36 L20 27 H100 L120 36" fill="none" stroke="#ffffff" stroke-width="2.4"/>';
   SPEC["Notre Dame Fighting Irish"] = d([[52, 2.6, "#c99700"], [59.1, 7.6, "#ffffff"], [71.2, 2.6, "#c99700"]], [[90, 2.6, "#c99700"], [97.1, 7.6, "#ffffff"], [109.2, 2.6, "#c99700"]], "body");
   SPEC["Notre Dame Fighting Irish"].ny = 35.5; SPEC["Notre Dame Fighting Irish"].nfill = "#ffffff";
   SPEC["Ohio State Buckeyes"] = d([[54, 1.2, "#1a1a1a"], [55.2, 4.6, "#ffffff"], [67.58, 4.6, "#ffffff"], [72.18, 1.2, "#1a1a1a"]], [[91, 1.2, "#1a1a1a"], [92.2, 4.6, "#ffffff"], [104.58, 4.6, "#ffffff"], [109.18, 1.2, "#1a1a1a"]], "body");
