@@ -1221,7 +1221,7 @@ function popHtml(k, n, nm) {
     "#hist td:nth-child(2){font-weight:500;color:rgba(255,255,255,.85)}" +
     "#hist .hs{padding:14px 0;text-align:center;color:rgba(255,255,255,.8)}" +
     "#hist .tw{overflow-x:auto}" +
-    "#hist .tl{width:22px;height:22px;object-fit:contain;vertical-align:middle;margin-left:6px}" +
+    "#hist .tl{width:22px;height:22px;object-fit:contain;vertical-align:middle;margin-right:8px}" +
     "#hist .tw td:first-child{white-space:nowrap}";
   document.head.appendChild(st);
 })();
@@ -1288,7 +1288,7 @@ var TLK = null, TLA = { "hamilton bulldogs": "hamilton", "mississauga steelheads
 function histLogo(name) {
   if (!TLK) { TLK = {}; for (var k in C) TLK[injNrm(C[k][0])] = k; for (var a in TLA) TLK[a] = TLA[a]; }
   var k2 = TLK[injNrm(name)]; if (!k2 || !window.tsLogoSrc) return "";
-  var s = window.tsLogoSrc(k2); return s ? ' <img class="tl" src="' + s + '" alt="">' : "";
+  var s = window.tsLogoSrc(k2); return s ? '<img class="tl" src="' + s + '" alt="">' : "";
 }
 function histUnified(reg, xr, g, lg) {
   var lab = g ? ["GP", "GAA", "SV%", "W", "L", "OTL", "SO"] : ["GP", "G", "A", "PTS", "+/-", "PIM"];
@@ -1309,7 +1309,7 @@ function histUnified(reg, xr, g, lg) {
   rows.sort(function (a, b) { return a.y < b.y ? 1 : a.y > b.y ? -1 : a.i - b.i; });
   var h = '<div class="tw"><table><thead><tr><th>Season</th><th>Team</th>' + lab.map(function (l) { return "<th>" + l + "</th>"; }).join("") + "</tr></thead><tbody>";
   rows.forEach(function (o) {
-    h += "<tr><td>" + injEsc(o.y) + '</td><td class="tm">' + injEsc(o.t) + " (" + injEsc(o.l) + ")" + histLogo(o.t) + "</td>" + o.c.map(function (x) { return "<td>" + injEsc(x == null ? "-" : x) + "</td>"; }).join("") + "</tr>";
+    h += "<tr><td>" + injEsc(o.y) + '</td><td class="tm">' + histLogo(o.t) + injEsc(o.t) + " (" + injEsc(o.l) + ")" + "</td>" + o.c.map(function (x) { return "<td>" + injEsc(x == null ? "-" : x) + "</td>"; }).join("") + "</tr>";
   });
   return h + "</tbody></table></div>";
 }
