@@ -1910,20 +1910,23 @@ function futTab(k) {
   b.addEventListener("click", function () { openFut(k); });
   document.querySelector(".rink").appendChild(b);
 }
+var futBox = null;
+function closeFut() { if (futBox) { futBox.remove(); futBox = null; } document.removeEventListener("keydown", futKey); }
+function futKey(e) { if (e.key === "Escape" && !histBox) closeFut(); }
 function openFut(k) {
-  closeHist();
+  closeHist(); closeFut();
   var body = FUT[k].map(function (g) {
     return '<div class="ht">' + g.season + '</div><div class="fcg">' + g.p.map(function (p) {
       var c = C[p[4]];
       var hv = PL[p[4]] && PL[p[4]][p[0]]; return '<div class="p' + (hv ? " hv" : "") + '"' + (hv ? ' data-n="' + p[0] + '" data-nm="' + p[1] + " " + p[2] + '" data-k="' + p[4] + '"' : "") + '>' + jersey(p[0], c, p[2]) + '<div class="nm">' + p[1] + " " + p[2] + '</div><div class="fcm">' + p[3] + " &middot; " + injEsc(c[0]) + " (" + leagueOf(p[4]) + ")</div></div>";
     }).join("") + "</div>";
   }).join("");
-  histBox = document.createElement("div"); histBox.id = "hist";
-  histBox.innerHTML = '<div class="hb fut" style="background-color:#0b1d3a"><button class="hx" aria-label="Close">&times;</button><div class="hh"><span class="hn">Future Commitments</span><span class="hm">' + injEsc(C[k][0]) + '</span></div><div class="hc">' + body + '</div></div>';
-  document.body.appendChild(histBox);
-  var box = histBox;
-  box.addEventListener("click", function (e) { if (e.target === box || (e.target.classList && e.target.classList.contains("hx"))) closeHist(); });
-  document.addEventListener("keydown", histKey);
+  futBox = document.createElement("div"); futBox.id = "hist";
+  futBox.innerHTML = '<div class="hb fut" style="background-color:#0b1d3a"><button class="hx" aria-label="Close">&times;</button><div class="hh"><span class="hn">Future Commitments</span><span class="hm">' + injEsc(C[k][0]) + '</span></div><div class="hc">' + body + '</div></div>';
+  document.body.appendChild(futBox);
+  var box = futBox;
+  box.addEventListener("click", function (e) { if (e.target === box || (e.target.classList && e.target.classList.contains("hx"))) closeFut(); });
+  document.addEventListener("keydown", futKey);
   var canHover = window.matchMedia && window.matchMedia("(hover: hover)").matches;
   function tgt(e) { var t = e.target; while (t && t !== box) { if (t.classList && t.classList.contains("hv")) return t; t = t.parentNode; } return null; }
   if (canHover) {
@@ -1934,7 +1937,7 @@ function openFut(k) {
     box.addEventListener("click", function (e) { var t = tgt(e); if (t && popFor !== t) showPop(t); else if (t) openHist(t); else hidePop(); });
   }
 }
-(function () { var r0 = render; render = function (k) { r0(k); futTab(k); }; if (typeof curKey !== "undefined" && curKey) futTab(curKey); })();
+(function () { var r0 = render; render = function (k) { r0(k); closeFut(); futTab(k); }; if (typeof curKey !== "undefined" && curKey) futTab(curKey); })();
 var sel = document.getElementById("team"), lsel = document.getElementById("league");
 function leagueOf(k) { return k.indexOf("whl_") === 0 ? "WHL" : (k.indexOf("qmjhl_") === 0 ? "QMJHL" : (k.indexOf("ncaa_") === 0 ? "NCAA" : "OHL")); }
 function fillTeams(lg, pick) {
