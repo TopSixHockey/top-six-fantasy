@@ -1114,7 +1114,7 @@ var SPEC = {
   SPEC["Michigan State Spartans"] = d([], [[101, 11, "#ffffff"]], "body");   // no sleeve band, body-colour collar
   SPEC["Michigan State Spartans"].svg += '<rect x="20" y="42" width="4.5" height="50" fill="#ffffff"/><rect x="95.5" y="42" width="4.5" height="50" fill="#ffffff"/>';   // thin side-of-body strips
   // small slits in each body number (one per digit; no 7/8 reference yet)
-  SPEC["Michigan State Spartans"].sw = 2.2;
+  SPEC["Michigan State Spartans"].sw = 3.3;
   SPEC["Michigan State Spartans"].ty = 84;
   SPEC["Michigan State Spartans"].svg += '<g class="slitmsu" data-c="#143528"></g>';
   (function () {
@@ -1132,25 +1132,9 @@ var SPEC = {
         if (!t || fs < 30) continue;
         try {
           var str = t.textContent, base = parseFloat(t.getAttribute("y")), ok = true, g = document.createElementNS(NS, "g");
-          if (str.indexOf("9") >= 0 && !t.querySelector("tspan")) { t.textContent = ""; for (var z = 0; z < str.length; z++) { var tp = document.createElementNS(NS, "tspan"); tp.textContent = str.charAt(z); if (str.charAt(z) === "9") { tp.setAttribute("fill", "none"); tp.setAttribute("stroke", "none"); } t.appendChild(tp); } }
-          g.setAttribute("class", "slits");
           for (var k = 0; k < str.length; k++) {
             var e = t.getExtentOfChar(k);
             if (!e.width) { ok = false; break; }
-            if (str.charAt(k) === "9") {
-              cv.font = "700 " + fs + "px " + t.getAttribute("font-family");
-              var m9 = cv.measureText("9"), top9 = base - m9.actualBoundingBoxAscent, h9 = m9.actualBoundingBoxAscent + m9.actualBoundingBoxDescent, cx9 = e.x + e.width / 2, w9 = h9 * 0.74, sx = w9 / 70, sy = h9 / 87, p9 = document.createElementNS(NS, "path");
-              p9.setAttribute("d", NINE);
-              p9.setAttribute("fill-rule", "evenodd");
-              p9.setAttribute("transform", "translate(" + (cx9 - w9 / 2).toFixed(2) + " " + top9.toFixed(2) + ") scale(" + sx.toFixed(4) + " " + sy.toFixed(4) + ")");
-              p9.setAttribute("fill", t.getAttribute("fill") || "#ffffff");
-              p9.setAttribute("stroke", t.getAttribute("stroke") || "#000000");
-              p9.setAttribute("stroke-width", (parseFloat(t.getAttribute("stroke-width") || 2) / ((sx + sy) / 2)).toFixed(2));
-              p9.setAttribute("paint-order", "stroke");
-              p9.setAttribute("stroke-linejoin", "miter");
-              g.appendChild(p9);
-              continue;
-            }
             var sg = SL[str.charAt(k)];
             if (!sg) continue;
             cv.font = "700 " + fs + "px " + t.getAttribute("font-family");
