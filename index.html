@@ -2030,6 +2030,8 @@ var NCAA_HIST = {};
 })();
 /* final score of each NCAA team's last game: [team goals, opponent goals, optional "OT"/"SO"] */
 L.ncaa_michiganstate.score = [2, 0]; L.ncaa_michigan.score = [0, 2]; L.ncaa_wisconsin.score = [2, 1]; L.ncaa_notredame.score = [1, 3]; L.ncaa_ohiostate.score = [2, 3];
+/* NHL Draft eligibility (source: Elite Prospects draft center 2027/2028/2029 lists; refreshed weekly) */
+[["ncaa_michigan", "8", "Top Prospect · Eligible for the 2027 NHL Draft"], ["ncaa_notredame", "34", "Top Prospect · Eligible for the 2027 NHL Draft"]].forEach(function (c) { if (PL[c[0]] && PL[c[0]][c[1]] && !PL[c[0]][c[1]].nhl) PL[c[0]][c[1]].nhl = c[2]; });
 /* NCAA commitments missing from CHL player pop-ups */
 [["saginaw", "71", "Michigan · 2027-28"], ["flint", "2", "Michigan State · 2027-28"], ["qmjhl_quebec", "47", "Ohio State · 2027-28"]].forEach(function (c) { if (PL[c[0]] && PL[c[0]][c[1]] && !PL[c[0]][c[1]].ncaa) PL[c[0]][c[1]].ncaa = c[2]; });
 /* Future Commitments: CHL (OHL/WHL/QMJHL) players committed to an NCAA team, grouped by the season they are expected to arrive */
