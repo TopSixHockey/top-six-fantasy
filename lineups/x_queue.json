@@ -1,1 +1,270 @@
-[]
+[
+ {
+  "id": "qmjhl:32952:home",
+  "lg": "qmjhl",
+  "key": "qmjhl_newfoundland",
+  "team": "Newfoundland Regiment",
+  "opp": "Chicoutimi Saguenéens",
+  "vsat": "vs",
+  "start": "2026-11-26T17:30:00-05:00",
+  "local": "2026-11-26T19:00:00",
+  "zone": "America/St_Johns",
+  "entry": {
+   "F": [
+    [
+     [
+      72,
+      "Nikita",
+      "Bloch"
+     ],
+     [
+      18,
+      "Louis-François",
+      "Bélanger"
+     ],
+     [
+      95,
+      "Alexis",
+      "Michaud"
+     ]
+    ],
+    [
+     [
+      88,
+      "Benjamin",
+      "Veitch"
+     ],
+     [
+      29,
+      "Tyson",
+      "Goguen"
+     ],
+     [
+      14,
+      "Matthew",
+      "Frost"
+     ]
+    ],
+    [
+     [
+      13,
+      "Liam",
+      "Arsenault"
+     ],
+     [
+      98,
+      "Maddex",
+      "Marmulak"
+     ],
+     [
+      16,
+      "Luke",
+      "Sinclair"
+     ]
+    ],
+    [
+     [
+      23,
+      "Phenwick",
+      "MacLean"
+     ],
+     [
+      27,
+      "Damian",
+      "Norris"
+     ],
+     [
+      15,
+      "Ty",
+      "Hymovitz"
+     ]
+    ]
+   ],
+   "D": [
+    [
+     [
+      12,
+      "Kingsley",
+      "Austin"
+     ],
+     [
+      71,
+      "Will",
+      "Reynolds"
+     ]
+    ],
+    [
+     [
+      77,
+      "Alexis",
+      "Mathieu"
+     ],
+     [
+      91,
+      "Quinn",
+      "Norman"
+     ]
+    ],
+    [
+     [
+      58,
+      "William",
+      "Lundqvist"
+     ],
+     [
+      55,
+      "Benjamin",
+      "Girard"
+     ]
+    ]
+   ],
+   "G": [
+    [
+     35,
+     "Antoine",
+     "Proulx"
+    ],
+    [
+     31,
+     "Louis-Antoine",
+     "Denault"
+    ]
+   ]
+  },
+  "queued": "2026-11-26T15:33:11.085125-05:00"
+ },
+ {
+  "id": "qmjhl:32952:away",
+  "lg": "qmjhl",
+  "key": "qmjhl_chicoutimi",
+  "team": "Chicoutimi Saguenéens",
+  "opp": "Newfoundland Regiment",
+  "vsat": "at",
+  "start": "2026-11-26T17:30:00-05:00",
+  "local": "2026-11-26T19:00:00",
+  "zone": "America/St_Johns",
+  "entry": {
+   "F": [
+    [
+     [
+      88,
+      "Loïc",
+      "Poirier"
+     ],
+     [
+      42,
+      "Nathan",
+      "Lecompte"
+     ],
+     [
+      19,
+      "Mathis",
+      "Dufour"
+     ]
+    ],
+    [
+     [
+      11,
+      "Émile",
+      "Ricard"
+     ],
+     [
+      91,
+      "Darcy",
+      "Terglav"
+     ],
+     [
+      48,
+      "Michal",
+      "Hartl"
+     ]
+    ],
+    [
+     [
+      94,
+      "Andrew",
+      "Mohesky"
+     ],
+     [
+      71,
+      "Alexis",
+      "Toussaint"
+     ],
+     [
+      8,
+      "Christophe",
+      "Berthelot"
+     ]
+    ],
+    [
+     [
+      89,
+      "Owen",
+      "McHale"
+     ],
+     [
+      17,
+      "Joshua",
+      "Phillips"
+     ],
+     [
+      86,
+      "Nolan",
+      "Terglav"
+     ]
+    ]
+   ],
+   "D": [
+    [
+     [
+      2,
+      "Brayden",
+      "Kaldenbach"
+     ],
+     [
+      25,
+      "William",
+      "Dubé"
+     ]
+    ],
+    [
+     [
+      22,
+      "Tobias",
+      "Tilley"
+     ],
+     [
+      76,
+      "Emile-Alexandro",
+      "Lemieux-Goupil"
+     ]
+    ],
+    [
+     [
+      55,
+      "Kasen",
+      "Walsh"
+     ],
+     [
+      72,
+      "Ryan",
+      "Hecker"
+     ]
+    ]
+   ],
+   "G": [
+    [
+     31,
+     "Patriks",
+     "Plumins"
+    ],
+    [
+     34,
+     "Justin",
+     "Lee"
+    ]
+   ]
+  },
+  "queued": "2026-11-26T15:33:11.085125-05:00"
+ }
+]
