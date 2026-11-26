@@ -133,7 +133,7 @@ footer{font-size:.74rem;color:var(--mute);text-align:center;padding:0 12px 20px}
 #rankBadge .n{color:#ff9a1f;font-size:17px;font-weight:800;line-height:1;position:relative;top:1px}
 @media(max-width:520px){#rankBadge{padding:5px 10px 5px 9px;gap:5px}#rankBadge .t{font-size:11px}#rankBadge .n{font-size:14px}}
 </style>
-<style id="msulogoedge">#teamLogo[data-k="ncaa_michiganstate"]{filter:drop-shadow(.8px 0 0 #fff) drop-shadow(-.8px 0 0 #fff) drop-shadow(0 .8px 0 #fff) drop-shadow(0 -.8px 0 #fff)}</style>
+<style id="msulogoedge">#teamLogo[data-k="ncaa_michiganstate"]{filter:drop-shadow(.8px 0 0 #fff) drop-shadow(-.8px 0 0 #fff) drop-shadow(0 .8px 0 #fff) drop-shadow(0 -.8px 0 #fff)}.tmw img.tl[data-k="ncaa_michigan"]{position:relative;top:3px}</style>
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="shx" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".3"/><stop offset=".2" stop-color="#000" stop-opacity="0"/><stop offset=".48" stop-color="#fff" stop-opacity=".14"/><stop offset=".8" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".32"/></linearGradient><linearGradient id="shy" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".12"/><stop offset=".6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".22"/></linearGradient></defs></svg>
@@ -1345,7 +1345,7 @@ function closeHist() { if (histBox) { histBox.remove(); histBox = null; } docume
 function histKey(e) { if (e.key === "Escape") closeHist(); }
 function ncaaLogoImg(s) {
   var h = histLogo(String(s || "").split(" \u00b7 ")[0]);
-  return h ? h.replace('class="tl"', 'class="tl" style="width:18px;height:18px;vertical-align:middle;margin-left:6px' + (String(s || '').split(' \u00b7 ')[0] === 'Michigan' ? ';position:relative;top:3px' : '') + '"') : "";
+  return h ? h.replace('class="tl"', 'class="tl" style="width:18px;height:18px;vertical-align:middle;margin-left:6px' + (String(s || '').split(' \u00b7 ')[0] === 'Michigan' ? ';position:relative;top:1px' : '') + '"') : "";
 }
 function histEdge(im) {
   try {
@@ -1368,7 +1368,7 @@ var TLK = null, TLA = { "hamilton bulldogs": "hamilton", "mississauga steelheads
 function histLogo(name) {
   if (!TLK) { TLK = {}; for (var k in C) TLK[injNrm(C[k][0])] = k; for (var a in TLA) TLK[a] = TLA[a]; }
   var k2 = TLK[injNrm(name)]; if (!k2 || !window.tsLogoSrc) return "";
-  var s = window.tsLogoSrc(k2); return s ? '<img class="tl" src="' + s + '" alt="" onload="histEdge(this)">' : "";
+  var s = window.tsLogoSrc(k2); return s ? '<img class="tl" data-k="' + k2 + '" src="' + s + '" alt="" onload="histEdge(this)">' : "";
 }
 function histUnified(reg, xr, g, lg) {
   var lab = g ? ["GP", "GAA", "SV%", "W", "L", "OTL", "SO"] : ["GP", "G", "A", "PTS", "+/-", "PIM"];
