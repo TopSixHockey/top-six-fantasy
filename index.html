@@ -1118,7 +1118,7 @@ var SPEC = {
   SPEC["Michigan State Spartans"].ty = 84;
   SPEC["Michigan State Spartans"].svg += '<g class="slitmsu" data-c="#143528"></g>';
   (function () {
-    var SL = { 0: [0.4, 0.19, 0.72, 0.19, 0.38, 0.08], 1: [-0.1, 0.16, -0.1, 0.27, 0.55, 0.21], 2: [-0.1, 0.17, -0.1, 0.29, 0.6, 0.23], 3: [-0.1, 0.22, -0.1, 0.34, 0.78, 0.28], 4: [0.45, 0.28, 0.45, 0.4, 0.82, 0.34], 5: [0.45, 0.2, 0.45, 0.31, 0.05, 0.25], 6: [-0.1, 0.12, -0.1, 0.23, 0.55, 0.17], 9: [-0.1, 0.3, -0.1, 0.43, 0.4, 0.36] }, cv = document.createElement("canvas").getContext("2d");
+    var SL = {}, NINE = "M0 0H70V87H14V64H30V70H52V54H0Z M18 17H52V38H18V32L5 28L18 23Z", cv = document.createElement("canvas").getContext("2d");
     var NS = "http://www.w3.org/2000/svg", tm = 0;
     function run() {
       var list = document.querySelectorAll("svg");
@@ -1132,10 +1132,25 @@ var SPEC = {
         if (!t || fs < 30) continue;
         try {
           var str = t.textContent, base = parseFloat(t.getAttribute("y")), ok = true, g = document.createElementNS(NS, "g");
+          if (str.indexOf("9") >= 0 && !t.querySelector("tspan")) { t.textContent = ""; for (var z = 0; z < str.length; z++) { var tp = document.createElementNS(NS, "tspan"); tp.textContent = str.charAt(z); if (str.charAt(z) === "9") { tp.setAttribute("fill", "none"); tp.setAttribute("stroke", "none"); } t.appendChild(tp); } }
           g.setAttribute("class", "slits");
           for (var k = 0; k < str.length; k++) {
             var e = t.getExtentOfChar(k);
             if (!e.width) { ok = false; break; }
+            if (str.charAt(k) === "9") {
+              cv.font = "700 " + fs + "px " + t.getAttribute("font-family");
+              var m9 = cv.measureText("9"), top9 = base - m9.actualBoundingBoxAscent, h9 = m9.actualBoundingBoxAscent + m9.actualBoundingBoxDescent, cx9 = e.x + e.width / 2, w9 = h9 * 0.74, sx = w9 / 70, sy = h9 / 87, p9 = document.createElementNS(NS, "path");
+              p9.setAttribute("d", NINE);
+              p9.setAttribute("fill-rule", "evenodd");
+              p9.setAttribute("transform", "translate(" + (cx9 - w9 / 2).toFixed(2) + " " + top9.toFixed(2) + ") scale(" + sx.toFixed(4) + " " + sy.toFixed(4) + ")");
+              p9.setAttribute("fill", t.getAttribute("fill") || "#ffffff");
+              p9.setAttribute("stroke", t.getAttribute("stroke") || "#000000");
+              p9.setAttribute("stroke-width", (parseFloat(t.getAttribute("stroke-width") || 2) / ((sx + sy) / 2)).toFixed(2));
+              p9.setAttribute("paint-order", "stroke");
+              p9.setAttribute("stroke-linejoin", "miter");
+              g.appendChild(p9);
+              continue;
+            }
             var sg = SL[str.charAt(k)];
             if (!sg) continue;
             cv.font = "700 " + fs + "px " + t.getAttribute("font-family");
