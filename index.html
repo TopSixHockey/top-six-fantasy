@@ -1338,7 +1338,7 @@ async function openHist(el) {
   if (!SCLG[leagueOf(k)]) { if (d.st) openHistNcaa(k, n, nm, d); return; }   // CHL leagues load past seasons live; NCAA uses static data
   var lg = leagueOf(k), g = d.pos === "G";
   histBox = document.createElement("div"); histBox.id = "hist";
-  histBox.innerHTML = '<div class="hb" style="background:' + ((C[k] && C[k][1]) || "#232f5a") + '"><button class="hx" aria-label="Close">&times;</button><div class="hh"><span class="hn">' + injEsc(nm) + '</span><span class="hm">#' + injEsc(n) + " &middot; " + injEsc(d.pos) + '</span></div><div class="hc"><div class="hs">Loading past seasons&hellip;</div></div></div>';
+  histBox.innerHTML = '<div class="hb" style="background:' + ((C[k] && C[k][1]) || "#232f5a") + '"><button class="hx" aria-label="Close">&times;</button><div class="hh"><span class="hn">' + injEsc(nm) + '</span><span class="hm">#' + injEsc(n) + " &middot; " + injEsc(d.pos) + flagImg(d.home) + '</span></div><div class="hc"><div class="hs">Loading past seasons&hellip;</div></div></div>';
   document.body.appendChild(histBox);
   var box = histBox;
   box.addEventListener("click", function (e) { if (e.target === box || (e.target.classList && e.target.classList.contains("hx"))) closeHist(); });
@@ -1894,7 +1894,7 @@ async function openHistNcaa(k, n, nm, d) {
   var none = '<div class="hs">No previous seasons yet.</div>';
   var first = xr.length ? '<div class="ht">Past Regular Seasons</div>' + histUnified([], xr, g, "NCAA") : "";
   histBox = document.createElement("div"); histBox.id = "hist";
-  histBox.innerHTML = '<div class="hb" style="background:' + ((C[k] && C[k][1]) || "#232f5a") + '"><button class="hx" aria-label="Close">&times;</button><div class="hh"><span class="hn">' + injEsc(nm) + '</span><span class="hm">#' + injEsc(n) + " &middot; " + injEsc(d.pos) + '</span></div><div class="hc">' + first + (lg ? '<div class="hs">Loading ' + lg + ' seasons&hellip;</div>' : (first ? "" : none)) + '</div></div>';
+  histBox.innerHTML = '<div class="hb" style="background:' + ((C[k] && C[k][1]) || "#232f5a") + '"><button class="hx" aria-label="Close">&times;</button><div class="hh"><span class="hn">' + injEsc(nm) + '</span><span class="hm">#' + injEsc(n) + " &middot; " + injEsc(d.pos) + flagImg(d.home) + '</span></div><div class="hc">' + first + (lg ? '<div class="hs">Loading ' + lg + ' seasons&hellip;</div>' : (first ? "" : none)) + '</div></div>';
   document.body.appendChild(histBox);
   var box = histBox;
   box.addEventListener("click", function (e) { if (e.target === box || (e.target.classList && e.target.classList.contains("hx"))) closeHist(); });
