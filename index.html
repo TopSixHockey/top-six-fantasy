@@ -1222,6 +1222,7 @@ function popHtml(k, n, nm) {
     "#hist .hs{padding:14px 0;text-align:center;color:rgba(255,255,255,.8)}" +
     "#hist .tw{overflow-x:auto}" +
     "#hist .tl{width:22px;height:22px;object-fit:contain;vertical-align:middle;margin-right:8px}" +
+    "#hist .hh .tl{width:26px;height:26px;margin:0 0 0 8px}" +
     "#hist .tlw{filter:drop-shadow(.8px 0 0 #fff) drop-shadow(-.8px 0 0 #fff) drop-shadow(0 .8px 0 #fff) drop-shadow(0 -.8px 0 #fff)}" +
     "#hist .tw td:first-child{white-space:nowrap}";
   document.head.appendChild(st);
@@ -1987,7 +1988,7 @@ function openFut(k) {
     }).join("") + "</div>";
   }).join("");
   futBox = document.createElement("div"); futBox.id = "hist";
-  futBox.innerHTML = '<div class="hb fut" style="background-color:#0b1d3a"><button class="hx" aria-label="Close">&times;</button><div class="hh"><span class="hn">Future Commitments</span><span class="hm">' + injEsc(C[k][0]) + '</span></div><div class="hc">' + body + '</div></div>';
+  futBox.innerHTML = '<div class="hb fut" style="background-color:#0b1d3a"><button class="hx" aria-label="Close">&times;</button><div class="hh"><span class="hn">Future Commitments</span><span class="hm">' + injEsc(C[k][0]) + '</span>' + (window.tsLogoSrc && window.tsLogoSrc(k) ? '<img class="tl" src="' + window.tsLogoSrc(k) + '" alt="" onload="histEdge(this)">' : "") + '</div><div class="hc">' + body + '</div></div>';
   document.body.appendChild(futBox);
   var box = futBox;
   box.addEventListener("click", function (e) { if (e.target === box || (e.target.classList && e.target.classList.contains("hx"))) closeFut(); });
