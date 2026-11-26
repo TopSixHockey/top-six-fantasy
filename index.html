@@ -1950,6 +1950,8 @@ async function openHistNcaa(k, n, nm, d) {
   var g = d.pos === "G";
   var nrows = (NCAA_HIST[k] && NCAA_HIST[k][n]) || [];
   var xr = nrows.map(function (r) { return ["NCAA", r[0], r[1]].concat(r.slice(2).map(function (x, i) { return !g && i === 4 && x > 0 ? "+" + x : x; })); });
+  var SNM = { ncaa_michigan: "Michigan", ncaa_michiganstate: "Michigan State", ncaa_wisconsin: "Wisconsin", ncaa_notredame: "Notre Dame", ncaa_ohiostate: "Ohio State", ncaa_pennstate: "Penn State", ncaa_minnesota: "Minnesota" };
+  if (d.st && SNM[k] && !xr.some(function (r) { return r[1] === "2026-27"; })) xr.unshift(["NCAA", "2026-27", SNM[k]].concat(d.st.map(function (x, i) { return !g && i === 4 && x > 0 ? "+" + x : x; })));
   var m = /\((OHL|WHL|QMJHL)\)/.exec(d.prev || ""), lg = m && m[1];
   var none = '<div class="hs">No previous seasons yet.</div>';
   var first = xr.length ? '<div class="ht">Past Regular Seasons</div>' + histUnified([], xr, g, "NCAA") : "";
@@ -2028,6 +2030,8 @@ var NCAA_HIST = {};
 })();
 /* final score of each NCAA team's last game: [team goals, opponent goals, optional "OT"/"SO"] */
 L.ncaa_michiganstate.score = [2, 0]; L.ncaa_michigan.score = [0, 2]; L.ncaa_wisconsin.score = [2, 1]; L.ncaa_notredame.score = [1, 3]; L.ncaa_ohiostate.score = [2, 3];
+/* NCAA commitments missing from CHL player pop-ups */
+[["saginaw", "71", "Michigan · 2027-28"], ["flint", "2", "Michigan State · 2027-28"], ["qmjhl_quebec", "47", "Ohio State · 2027-28"]].forEach(function (c) { if (PL[c[0]] && PL[c[0]][c[1]] && !PL[c[0]][c[1]].ncaa) PL[c[0]][c[1]].ncaa = c[2]; });
 /* Future Commitments: CHL (OHL/WHL/QMJHL) players committed to an NCAA team, grouped by the season they are expected to arrive */
 var FUT = {
   ncaa_michiganstate: [
