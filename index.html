@@ -1300,7 +1300,23 @@ async function openHist(el) {
     else if (!r.reg.length) html = '<div class="hs">No previous ' + lg + ' seasons yet.</div>';
     else html = (r.reg.length ? '<div class="ht">' + lg + " regular season</div>" + histTable(r.reg, g, 0) : "");
   } catch (e) { html = '<div class="hs">Couldn’t load past seasons. Please try again.</div>'; }
+  var xh = xhistHtml(nm); if (xh) html = (html && html.indexOf('class="hs"') < 0 ? html : "") + xh;
   if (histBox === box) hc.innerHTML = html;
+}
+/* seasons played in another CHL league before the current one (source: Elite Prospects) */
+var XHIST = {
+  "Hughston Hurt": [["OHL", "2025-26", "Sarnia Sting", 49, 1, 7, 8, "+6", 23], ["OHL", "2024-25", "Sarnia Sting", 67, 3, 10, 13, "-9", 49], ["OHL", "2023-24", "Sarnia Sting", 67, 0, 10, 10, "-12", 42]]
+};
+function xhistHtml(nm) {
+  var rows = XHIST[nm]; if (!rows) return "";
+  var out = "", lgs = [];
+  rows.forEach(function (r) { if (lgs.indexOf(r[0]) < 0) lgs.push(r[0]); });
+  lgs.forEach(function (lg) {
+    out += '<div class="ht">' + lg + ' regular season</div><div class="tw"><table><thead><tr><th>Season</th><th>Team</th><th>GP</th><th>G</th><th>A</th><th>PTS</th><th>+/-</th><th>PIM</th></tr></thead><tbody>';
+    rows.forEach(function (r) { if (r[0] === lg) out += "<tr><td>" + injEsc(r[1]) + "</td><td>" + injEsc(r[2]) + "</td>" + r.slice(3).map(function (x) { return "<td>" + injEsc(x) + "</td>"; }).join("") + "</tr>"; });
+    out += "</tbody></table></div>";
+  });
+  return out;
 }
 var pop = document.createElement("div"); pop.id = "pop"; document.body.appendChild(pop);
 var popFor = null;
