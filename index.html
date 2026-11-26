@@ -258,12 +258,12 @@ var Q = {
 for (var qk in Q) C[qk] = Q[qk];
 var N = {
  ncaa_michigan:["Michigan Wolverines","#00274c","#00274c","#ffcb05","#ffcb05","#ffcb05","#00274c"],
- ncaa_michiganstate:["Michigan State Spartans","#18453b","#18453b","#ffffff","#ffffff","#ffffff","#18453b"],
- ncaa_minnesota:["Minnesota Golden Gophers","#7a0019","#7a0019","#ffcc33","#ffcc33","#ffcc33","#7a0019"],
- ncaa_notredame:["Notre Dame Fighting Irish","#0c2340","#0c2340","#c99700","#c99700","#c99700","#0c2340"],
- ncaa_ohiostate:["Ohio State Buckeyes","#bb0000","#bb0000","#a7b1b7","#a7b1b7","#ffffff","#bb0000"],
- ncaa_pennstate:["Penn State Nittany Lions","#041e42","#041e42","#ffffff","#ffffff","#ffffff","#041e42"],
- ncaa_wisconsin:["Wisconsin Badgers","#c5050c","#c5050c","#ffffff","#ffffff","#ffffff","#c5050c"]
+ ncaa_michiganstate:["Michigan State Spartans","#1c4a39","#1c4a39","#ffffff","#ffffff","#ffffff","#1c4a39"],
+ ncaa_minnesota:["Minnesota Golden Gophers","#7a0019","#7a0019","#ffcc33","#ffcc33","#ffcc33","#ffffff"],
+ ncaa_notredame:["Notre Dame Fighting Irish","#0c2340","#0c2340","#c99700","#c99700","#c99700","#f4efe0"],
+ ncaa_ohiostate:["Ohio State Buckeyes","#bb0000","#bb0000","#ffffff","#ffffff","#ffffff","#2a2a2a"],
+ ncaa_pennstate:["Penn State Nittany Lions","#041e42","#041e42","#ffffff","#a7b1b7","#ffffff","#041e42"],
+ ncaa_wisconsin:["Wisconsin Badgers","#c5050c","#c5050c","#ffffff","#ffffff","#ffffff","#1a1a1a"]
 };
 // NCAA is hidden from the public site; open /?preview=ncaa to see it while it is being built
 var NCAA_ON = false; try { NCAA_ON = new URLSearchParams(location.search).get("preview") === "ncaa"; } catch (e) {}
@@ -1106,6 +1106,18 @@ var SPEC = {
   "Val-d’Or Foreurs": {"sw":1.4,"nsw":0.7,"ny":37,"ty":80,"col":"#111111","svg":"<rect x=\"0\" y=\"59.06\" width=\"20\" height=\"3.6\" fill=\"#f4f4f4\"/><rect x=\"100\" y=\"59.06\" width=\"20\" height=\"3.6\" fill=\"#f4f4f4\"/><rect x=\"0\" y=\"62.66\" width=\"20\" height=\"4.08\" fill=\"#e8b21e\"/><rect x=\"100\" y=\"62.66\" width=\"20\" height=\"4.08\" fill=\"#e8b21e\"/><rect x=\"0\" y=\"66.74\" width=\"20\" height=\"3.6\" fill=\"#f4f4f4\"/><rect x=\"100\" y=\"66.74\" width=\"20\" height=\"3.6\" fill=\"#f4f4f4\"/><rect x=\"20\" y=\"93.06\" width=\"80\" height=\"3.6\" fill=\"#f4f4f4\"/><rect x=\"20\" y=\"96.66\" width=\"80\" height=\"4.08\" fill=\"#e8b21e\"/><rect x=\"20\" y=\"100.74\" width=\"80\" height=\"3.6\" fill=\"#f4f4f4\"/>"},
   "Victoriaville Tigres": {"nf":"'Barlow Semi Condensed','Arial Narrow',sans-serif","sw":2.4,"nsw":0,"ny":37,"ty":80,"col":"#f2b41f","nfill":"#f2b41f","svg":"<rect x=\"0\" y=\"63.05\" width=\"20\" height=\"6.6\" fill=\"#f2b41f\"/><rect x=\"100\" y=\"63.05\" width=\"20\" height=\"6.6\" fill=\"#f2b41f\"/><rect x=\"20\" y=\"93.05\" width=\"80\" height=\"6.6\" fill=\"#f2b41f\"/>","top":"<rect x=\"0\" y=\"57.77\" width=\"20\" height=\"2.4\" fill=\"#f4f4f4\"/><rect x=\"100\" y=\"57.77\" width=\"20\" height=\"2.4\" fill=\"#f4f4f4\"/><rect x=\"0\" y=\"72.53\" width=\"20\" height=\"2.4\" fill=\"#f4f4f4\"/><rect x=\"100\" y=\"72.53\" width=\"20\" height=\"2.4\" fill=\"#f4f4f4\"/><rect x=\"20\" y=\"87.77\" width=\"80\" height=\"2.4\" fill=\"#f4f4f4\"/><rect x=\"20\" y=\"102.53\" width=\"80\" height=\"2.4\" fill=\"#f4f4f4\"/><rect x=\"0\" y=\"56.57\" width=\"20\" height=\"1.2\" fill=\"#f2b41f\"/><rect x=\"100\" y=\"56.57\" width=\"20\" height=\"1.2\" fill=\"#f2b41f\"/><rect x=\"0\" y=\"74.93\" width=\"20\" height=\"1.2\" fill=\"#f2b41f\"/><rect x=\"100\" y=\"74.93\" width=\"20\" height=\"1.2\" fill=\"#f2b41f\"/><rect x=\"20\" y=\"86.57\" width=\"80\" height=\"1.2\" fill=\"#f2b41f\"/><rect x=\"20\" y=\"104.93\" width=\"80\" height=\"1.2\" fill=\"#f2b41f\"/>"}
 };
+/* NCAA jersey stripes (sleeves + waist) */
+(function () {
+  function S(sl, wa) { var o = ""; sl.forEach(function (a) { [0, 100].forEach(function (x) { o += '<rect x="' + x + '" y="' + a[0] + '" width="20" height="' + a[1] + '" fill="' + a[2] + '"/>'; }); }); wa.forEach(function (a) { o += '<rect x="20" y="' + a[0] + '" width="80" height="' + a[1] + '" fill="' + a[2] + '"/>'; }); return o; }
+  function d(sl, wa, col) { return { sw: 1.6, nsw: 0, ny: 37, ty: 80, col: col, svg: S(sl, wa) }; }
+  SPEC["Michigan Wolverines"] = d([[55, 3.6, "#ffcb05"], [61, 3.6, "#ffcb05"]], [[92, 3.6, "#ffcb05"], [98, 3.6, "#ffcb05"]], "#ffcb05");
+  SPEC["Michigan State Spartans"] = d([[58, 8, "#ffffff"]], [[94, 8, "#ffffff"]], "#ffffff");
+  SPEC["Minnesota Golden Gophers"] = d([[54, 5.5, "#ffcc33"], [60.2, 2, "#ffffff"], [63.2, 3, "#ffcc33"]], [[91, 5.5, "#ffcc33"], [97.2, 2, "#ffffff"], [100.2, 3, "#ffcc33"]], "#ffcc33");
+  SPEC["Notre Dame Fighting Irish"] = d([[54, 3.4, "#c99700"], [59, 3.4, "#f4efe0"], [64, 3.4, "#c99700"]], [[91, 3.4, "#c99700"], [96, 3.4, "#f4efe0"], [101, 3.4, "#c99700"]], "#c99700");
+  SPEC["Ohio State Buckeyes"] = d([[54, 4.5, "#ffffff"], [59.2, 2, "#1a1a1a"], [62.4, 4.5, "#ffffff"]], [[91, 4.5, "#ffffff"], [96.2, 2, "#1a1a1a"], [99.4, 4.5, "#ffffff"]], "#ffffff");
+  SPEC["Penn State Nittany Lions"] = d([[53, 3, "#ffffff"], [57, 6.5, "#a7b1b7"], [64.5, 3, "#ffffff"]], [[90, 3, "#ffffff"], [94, 7, "#a7b1b7"], [102, 3, "#ffffff"]], "#ffffff");
+  SPEC["Wisconsin Badgers"] = d([[54, 4.2, "#ffffff"], [61, 4.2, "#ffffff"]], [[91, 4.2, "#ffffff"], [98, 4.2, "#ffffff"]], "#ffffff");
+})();
 function jersey(n, c, name) {
   var b = c[1], y = c[2], s1 = c[3], s2 = c[4], num = c[5], ol = c[6];
   var B = "M45 2 Q60 9 75 2 L101 12 L120 45 L118.5 98 L100 96 L100.5 120 L19.5 120 L20 96 L1.5 98 L0 45 L19 12 Z";
