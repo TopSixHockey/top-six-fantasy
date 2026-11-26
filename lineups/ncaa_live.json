@@ -1,0 +1,110 @@
+{
+ "updated": "2026-11-26T15:30:16-05:00",
+ "games": [
+  {
+   "id": 6643369,
+   "date": "2026-11-27",
+   "start": 1795809600,
+   "state": "P",
+   "period": "",
+   "teams": [
+    {
+     "seo": "notre-dame",
+     "name": "Notre Dame",
+     "score": null,
+     "home": true
+    },
+    {
+     "seo": "boston-college",
+     "name": "Boston College",
+     "score": null,
+     "home": false
+    }
+   ]
+  },
+  {
+   "id": 6642681,
+   "date": "2026-11-27",
+   "start": 1795816800,
+   "state": "P",
+   "period": "",
+   "teams": [
+    {
+     "seo": "minnesota",
+     "name": "Minnesota",
+     "score": null,
+     "home": true
+    },
+    {
+     "seo": "minn-st-mankato",
+     "name": "Minnesota St.",
+     "score": null,
+     "home": false
+    }
+   ]
+  },
+  {
+   "id": 6642979,
+   "date": "2026-11-27",
+   "start": 1795816800,
+   "state": "P",
+   "period": "",
+   "teams": [
+    {
+     "seo": "penn-st",
+     "name": "Penn St.",
+     "score": null,
+     "home": true
+    },
+    {
+     "seo": "princeton",
+     "name": "Princeton",
+     "score": null,
+     "home": false
+    }
+   ]
+  },
+  {
+   "id": 6643159,
+   "date": "2026-11-27",
+   "start": 1795824000,
+   "state": "P",
+   "period": "",
+   "teams": [
+    {
+     "seo": "union-ny",
+     "name": "Union (NY)",
+     "score": null,
+     "home": true
+    },
+    {
+     "seo": "ohio-st",
+     "name": "Ohio St.",
+     "score": null,
+     "home": false
+    }
+   ]
+  },
+  {
+   "id": 6643614,
+   "date": "2026-11-27",
+   "start": 1795824000,
+   "state": "P",
+   "period": "",
+   "teams": [
+    {
+     "seo": "michigan",
+     "name": "Michigan",
+     "score": null,
+     "home": true
+    },
+    {
+     "seo": "ferris-st",
+     "name": "Ferris St.",
+     "score": null,
+     "home": false
+    }
+   ]
+  }
+ ]
+}
