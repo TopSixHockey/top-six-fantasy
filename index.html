@@ -1285,7 +1285,7 @@ function histKey(e) { if (e.key === "Escape") closeHist(); }
 async function openHist(el) {
   var k = curKey, n = el.getAttribute("data-n"), nm = el.getAttribute("data-nm"), d = PL[k] && PL[k][n]; if (!d) return;
   hidePop(); closeHist();
-  if (!SCLG[leagueOf(k)]) return;   // past-seasons stats only exist for the CHL leagues
+  if (!SCLG[leagueOf(k)]) { if (d.st) openHistNcaa(k, n, nm, d); return; }   // CHL leagues load past seasons live; NCAA uses static data
   var lg = leagueOf(k), g = d.pos === "G";
   histBox = document.createElement("div"); histBox.id = "hist";
   histBox.innerHTML = '<div class="hb" style="background:' + ((C[k] && C[k][1]) || "#232f5a") + '"><button class="hx" aria-label="Close">&times;</button><div class="hh"><span class="hn">' + injEsc(nm) + '</span><span class="hm">#' + injEsc(n) + " &middot; " + injEsc(d.pos) + '</span></div><div class="hc"><div class="hs">Loading past seasons&hellip;</div></div></div>';
@@ -1717,7 +1717,7 @@ function popNcaa(k, n, nm, d) {
   return '<div class="ph"><span class="pn">' + nm + '</span><span class="pm">#' + n + ' · ' + d.pos + '</span>' + cap + '</div>' + born +
     '<div class="pr"><i>Size</i>' + ht + ' · ' + d.wt + ' lb</div>' +
     '<div class="pr"><i>From</i><span>' + home + fl + '</span></div>' +
-    '<div class="pr"><i>Class</i>' + (NCAA_CLS[d.cls] || d.cls) + '</div>' + dr;
+    '<div class="pr"><i>Class</i>' + (NCAA_CLS[d.cls] || d.cls) + '</div>' + dr + popNcaaSt(d);
 }
 (function () {
   function put(k, rows) { PL[k] = PL[k] || {}; rows.forEach(function (r) { PL[k][r[0]] = { pos: r[1], cls: r[2], sh: r[3], ht: r[4], wt: r[5], home: r[6], prev: r[7], nhl: r[8], dob: r[9] }; }); }
@@ -1808,6 +1808,65 @@ function popNcaa(k, n, nm, d) {
     [1,"G","So.","","6-1",185,"White Bear Lake, Minn.","Colorado Grit (NAHL)"],[2,"D","Jr.","","6-1",198,"Libertyville, Ill.","Chicago Steel (USHL)"],[4,"D","Fr.","","5-11",190,"Uxbridge, Ontario","Ottawa 67’s (OHL)"],[5,"D","Fr.","","6-1",202,"Unicov, Czech Republic","Windsor Spitfires (OHL)"],[8,"D","Sr.","","6-0",195,"Dublin, Ohio","Muskegon (USHL)"],[9,"LW","Fr.","","6-0",191,"Bloomfield Hills, Mich.","Youngstown (USHL)"],[10,"LW","Sr.","","5-10",180,"Madison, Wis.","Madison (USHL)"],[11,"F","Fr.","","6-3",205,"Allen, Texas","Chicago Steel (USHL)"],[13,"RW","Jr.","","6-0",180,"Montreal, Quebec","West Kelowna (BCHL)"],[16,"C","Sr.","","5-8",165,"Hartland, Wis.","Dubuque (USHL)"],[18,"RW","Fr.","","6-0",192,"Venetia, Pa.","Sioux City (USHL)"],[19,"LW","Jr.","","5-10",177,"Irvine, Calif.","Madison (USHL)"],[21,"D","So.","","5-9",195,"Port Huron, Mich.","Sioux Falls (USHL)"],[24,"RW","So.","","6-3",195,"Delta, B.C.","Prince Albert (WHL)"],[25,"C","Sr.","","5-11",195,"San Diego, Calif.","Sioux City (USHL)"],[27,"D","Sr.","","6-3",198,"Calgary, Alberta","Swift Current (WHL)"],[28,"D","Sr.","","6-1",200,"Toronto, Ontario","Omaha (USHL)"],
     [29,"F","Sr.","","6-0",185,"Stone Mountain, Ga.","Sioux Falls (USHL)"],[31,"G","Fr.","","6-1",187,"Ostrava, Czech Republic","Blainville-Boisbriand (QMJHL)"],[33,"F","Jr.","","6-1",194,"Landskrona, Sweden","Dubuque (USHL)"],[49,"C","So.","","5-11",187,"Guelph, Ontario","Guelph (OHL)"],[53,"LW","Fr.","","6-2",190,"Long Valley, N.J.","Barrie (OHL)"],[56,"C","Fr.","","5-11",185,"Broadview Heights, Ohio","Youngstown (USHL)"],[60,"G","Sr.","","6-4",208,"Pinckney, Mich.","Green Bay (USHL)"],[63,"RW","Jr.","","6-6",220,"Shorewood, Ill.","Madison (USHL)"],[78,"D","Jr.","","6-3",195,"Stockholm, Sweden","Youngstown (USHL)"]
   ]);
+})();
+/* ---- NCAA: 2026-27 stat lines + past NCAA seasons (Michigan State) ---- */
+function popNcaaSt(d) {
+  if (!d.st) return "";
+  var g = d.pos === "G", lab = g ? ["GP", "GAA", "SV%", "W", "L", "OTL", "SO"] : ["GP", "G", "A", "PTS", "+/-", "PIM"];
+  return '<div class="pt">2026-27 regular season</div><div class="pst">' + d.st.map(function (v, i) { return '<div><b>' + lab[i] + '</b><span>' + (!g && i === 4 && v > 0 ? "+" + v : v) + '</span></div>'; }).join("") + '</div><div class="pmore">' + (window.matchMedia && window.matchMedia("(hover: hover)").matches ? "Click" : "Tap again") + ' for past seasons</div>';
+}
+function openHistNcaa(k, n, nm, d) {
+  var g = d.pos === "G", lab = g ? ["GP", "GAA", "SV%", "W", "L", "OTL", "SO"] : ["GP", "G", "A", "PTS", "+/-", "PIM"];
+  var rows = (NCAA_HIST[k] && NCAA_HIST[k][n]) || [], html;
+  if (!rows.length) html = '<div class="hs">No previous NCAA seasons yet.</div>';
+  else {
+    html = '<div class="ht">NCAA regular season</div><div class="tw"><table><thead><tr><th>Season</th><th>Team</th>' + lab.map(function (l) { return "<th>" + l + "</th>"; }).join("") + "</tr></thead><tbody>";
+    rows.forEach(function (r) {
+      html += "<tr><td>" + injEsc(r[0]) + "</td><td>" + injEsc(r[1]) + "</td>" + r.slice(2).map(function (x, i) { return "<td>" + injEsc(!g && i === 4 && x > 0 ? "+" + x : x) + "</td>"; }).join("") + "</tr>";
+    });
+    html += "</tbody></table></div>";
+  }
+  histBox = document.createElement("div"); histBox.id = "hist";
+  histBox.innerHTML = '<div class="hb" style="background:' + ((C[k] && C[k][1]) || "#232f5a") + '"><button class="hx" aria-label="Close">&times;</button><div class="hh"><span class="hn">' + injEsc(nm) + '</span><span class="hm">#' + injEsc(n) + " &middot; " + injEsc(d.pos) + '</span></div><div class="hc">' + html + '</div></div>';
+  document.body.appendChild(histBox);
+  var box = histBox;
+  box.addEventListener("click", function (e) { if (e.target === box || (e.target.classList && e.target.classList.contains("hx"))) closeHist(); });
+  document.addEventListener("keydown", histKey);
+}
+var NCAA_HIST = {};
+(function () {
+  var K = "ncaa_michiganstate", MS = "Michigan State";
+  CAP[K] = { "2": "C", "10": "A", "23": "A" };
+  var CUR = {
+    "15": [12, 8, 5, 13, 2, 12], "26": [12, 3, 8, 11, 5, 6], "18": [12, 3, 7, 10, 1, 2], "27": [12, 1, 8, 9, 2, 16],
+    "29": [12, 2, 5, 7, 2, 10], "17": [12, 2, 5, 7, 2, 4], "22": [12, 0, 6, 6, 4, 4], "21": [12, 2, 3, 5, 0, 4],
+    "28": [11, 4, 1, 5, 4, 24], "10": [12, 3, 1, 4, 2, 2], "16": [12, 2, 2, 4, 2, 2], "7": [12, 1, 2, 3, 1, 0],
+    "23": [11, 3, 0, 3, 3, 49], "4": [12, 0, 2, 2, 1, 8], "9": [12, 2, 0, 2, 0, 16], "2": [11, 0, 2, 2, 4, 24],
+    "3": [11, 0, 1, 1, 0, 33], "11": [12, 0, 0, 0, 5, 2], "14": [10, 0, 0, 0, -1, 33], "6": [1, 0, 0, 0, 1, 0],
+    "19": [1, 0, 0, 0, 0, 0], "12": [1, 0, 0, 0, 0, 0], "25": [1, 0, 0, 0, 0, 0],
+    "1": [2, "1.43", ".939", 1, 0, 0, 0], "31": [11, "1.98", ".937", 6, 4, 1, 2]
+  };
+  Object.keys(CUR).forEach(function (n) { if (PL[K] && PL[K][n]) PL[K][n].st = CUR[n]; });
+  var DOB = { "2": "2004-02-18", "23": "2006-10-11", "14": "2006-07-17", "28": "2006-02-03" };
+  Object.keys(DOB).forEach(function (n) { if (PL[K] && PL[K][n] && !PL[K][n].dob) PL[K][n].dob = DOB[n]; });
+  NCAA_HIST[K] = {
+    "26": [["2025-26", MS, 35, 3, 8, 11, 6, 41]],
+    "15": [["2025-26", MS, 37, 14, 14, 28, 5, 12]],
+    "18": [["2025-26", MS, 35, 15, 15, 30, 5, 26]],
+    "28": [["2025-26", MS, 31, 3, 7, 10, 1, 94]],
+    "3": [["2025-26", MS, 37, 0, 4, 4, 8, 14]],
+    "6": [["2025-26", MS, 8, 0, 0, 0, 0, 19]],
+    "14": [["2025-26", MS, 19, 0, 5, 5, 6, 4]],
+    "25": [["2025-26", MS, 2, 1, 0, 1, 1, 0]],
+    "11": [["2024-25", MS, 34, 0, 3, 3, 9, 20], ["2025-26", MS, 33, 4, 9, 13, 10, 10]],
+    "29": [["2023-24", MS, 38, 15, 11, 26, 8, 12], ["2024-25", MS, 28, 6, 7, 13, 5, 10], ["2025-26", MS, 37, 6, 10, 16, 1, 16]],
+    "2": [["2023-24", MS, 32, 5, 8, 13, 1, 30], ["2024-25", MS, 37, 1, 6, 7, 4, 43], ["2025-26", MS, 35, 2, 9, 11, 15, 70]],
+    "10": [["2023-24", MS, 32, 1, 9, 10, 5, 39], ["2024-25", MS, 37, 3, 8, 11, 13, 6], ["2025-26", MS, 37, 12, 9, 21, 14, 6]],
+    "23": [["2024-25", MS, 37, 6, 10, 16, 10, 30], ["2025-26", MS, 35, 4, 7, 11, 3, 28]],
+    "7": [["2023-24", "Minnesota", 39, 5, 6, 11, 5, 4], ["2024-25", "Minnesota", 39, 5, 17, 22, 15, 0], ["2025-26", "Minnesota", 36, 4, 12, 16, -7, 2]],
+    "21": [["2024-25", "Arizona State", 35, 13, 9, 22, -1, 6], ["2025-26", "Arizona State", 24, 12, 14, 26, "-", 16]],
+    "1": [["2025-26", "Northeastern", 5, "2.66", ".922", 2, 2, 0, "-"]]
+  };
 })();
 var sel = document.getElementById("team"), lsel = document.getElementById("league");
 function leagueOf(k) { return k.indexOf("whl_") === 0 ? "WHL" : (k.indexOf("qmjhl_") === 0 ? "QMJHL" : (k.indexOf("ncaa_") === 0 ? "NCAA" : "OHL")); }
