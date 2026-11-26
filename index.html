@@ -1357,7 +1357,7 @@ function closeHist() { if (histBox) { histBox.remove(); histBox = null; } docume
 function histKey(e) { if (e.key === "Escape") closeHist(); }
 function ncaaLogoImg(s) {
   var h = histLogo(String(s || "").split(" \u00b7 ")[0]);
-  return h ? h.replace('class="tl"', 'class="tl" style="width:18px;height:18px;vertical-align:middle;margin-left:' + (/^(Penn State|Wisconsin|Notre Dame|Ohio State|Minnesota|Michigan)$/.test(String(s || '').split(' \u00b7 ')[0]) ? '0' : '6') + 'px' + (/^(Penn State|Wisconsin|Notre Dame|Ohio State|Minnesota|Michigan)$/.test(String(s || '').split(' \u00b7 ')[0]) ? ';display:block;margin-top:3px' : '') + (String(s || '').split(' \u00b7 ')[0] === 'Michigan' ? ';margin-bottom:-4px' : '') + '"') : "";
+  return h ? h.replace('class="tl"', 'class="tl" style="width:18px;height:18px;vertical-align:middle;margin-left:' + (/^(Penn State|Wisconsin|Notre Dame|Ohio State|Minnesota)$/.test(String(s || '').split(' \u00b7 ')[0]) ? '0' : '6') + 'px' + (/^(Penn State|Wisconsin|Notre Dame|Ohio State|Minnesota)$/.test(String(s || '').split(' \u00b7 ')[0]) ? ';display:block;margin-top:3px' : '') + (String(s || '').split(' \u00b7 ')[0] === 'Michigan' ? ';position:relative;top:-2px' : '') + '"') : "";
 }
 function histEdge(im) {
   try {
@@ -1571,7 +1571,7 @@ function ncPaint(k, g, opp, seo) {
   if (pre) {
     var tz = NCTZ[me.home ? seo : ot.seo] || "America/Toronto", tm = "";
     try { tm = new Date(g.start * 1000).toLocaleTimeString("en-US", { timeZone: tz, hour: "numeric", minute: "2-digit" }); } catch (e) {}
-    el.innerHTML = esc2(mn) + " vs " + esc2(opp) + '<span class="st">Puck drop ' + esc2(tm) + (tz === "America/Chicago" ? " CT" : " ET") + "</span>";
+    el.innerHTML = esc2(mn) + (me.home ? " vs " : " at ") + esc2(opp) + '<span class="st">Puck drop ' + esc2(tm) + (tz === "America/Chicago" ? " CT" : " ET") + "</span>";
     return (g.start * 1000 - Date.now() < 3.6e6) ? 60000 : 300000;
   }
   var html = nameHtml(mn, mg, og) + " – " + nameHtml(opp, og, mg);
@@ -1616,7 +1616,7 @@ var nameHtml = function (n, a, b) { return (fin && a > b ? '<span class="w">' + 
 var scoreHtml = nameHtml(mn, mg, og) + " – " + nameHtml(on, og, mg);
 var pill, clock = "";
 if (fin) { var ps = g.PeriodNameShort; pill = '<span class="st">Final' + (ps === "OT" || ps === "SO" ? "/" + ps : "") + "</span>"; }
-else if (g.GameStatus === "1") { pill = '<span class="st">Puck drop ' + esc2(g.ScheduledFormattedTime || "") + esc2(({ "America/Toronto": " ET", "America/New_York": " ET", "America/Winnipeg": " CT", "America/Regina": " CT", "America/Edmonton": " MT", "America/Vancouver": " PT", "America/Los_Angeles": " PT", "America/Halifax": " AT", "America/St_Johns": " NT" })[g.Timezone] || "") + "</span>"; scoreHtml = esc2(mn) + " vs " + esc2(on); }
+else if (g.GameStatus === "1") { pill = '<span class="st">Puck drop ' + esc2(g.ScheduledFormattedTime || "") + esc2(({ "America/Toronto": " ET", "America/New_York": " ET", "America/Winnipeg": " CT", "America/Regina": " CT", "America/Edmonton": " MT", "America/Vancouver": " PT", "America/Los_Angeles": " PT", "America/Halifax": " AT", "America/St_Johns": " NT" })[g.Timezone] || "") + "</span>"; scoreHtml = esc2(mn) + (home ? " vs " : " at ") + esc2(on); }
 else {
 var p = { 1: "1st", 2: "2nd", 3: "3rd", 4: "OT", 5: "SO" }[g.Period] || (g.PeriodNameShort || ""), c = String(g.GameClock || "").replace(/^0/, "");
 pill = '<span class="st live">Live</span>';
