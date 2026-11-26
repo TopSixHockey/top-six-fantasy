@@ -1531,11 +1531,58 @@ if (!SCLG[leagueOf(k)]) {   // NCAA: static final score from the lineup data
     var nm = function (n, x, y) { n = String(n).replace(/,/g, ""); return x > y ? '<span class="w">' + esc2(n) + " " + x + "</span>" : esc2(n) + " " + x; };
     el0.innerHTML = nm(C[k][0], sc[0], sc[1]) + " – " + nm(m[1], sc[1], sc[0]) + '<span class="st">Final' + (sc[2] ? "/" + sc[2] : "") + "</span>";
   }
+  ncLive(k, d, m);
   return;
 }
 var iso = m[4] + "-" + (SCMON[m[2]] < 10 ? "0" : "") + SCMON[m[2]] + "-" + (+m[3] < 10 ? "0" : "") + (+m[3]);
 SC.key = k; SC.info = { me: C[k][0], opp: m[1], iso: iso, code: SCLG[leagueOf(k)] };
 scPoll(k);
+}
+/* NCAA live score: lineups/ncaa_live.json is refreshed by a GitHub job (lineups/ncaa_live.py) while games are on */
+var NCSEO = { ncaa_michigan: "michigan", ncaa_michiganstate: "michigan-st", ncaa_minnesota: "minnesota", ncaa_notredame: "notre-dame", ncaa_ohiostate: "ohio-st", ncaa_pennstate: "penn-st", ncaa_wisconsin: "wisconsin" },
+  NCTZ = { minnesota: "America/Chicago", wisconsin: "America/Chicago" };
+function ncLive(k, d, m) {
+  var seo = NCSEO[k]; if (!seo) return;
+  SC.key = k;
+  var iso = m[4] + "-" + (SCMON[m[2]] < 10 ? "0" : "") + SCMON[m[2]] + "-" + (+m[3] < 10 ? "0" : "") + (+m[3]);
+  var go = async function () {
+    if (SC.key !== k) return;
+    var next = 300000;
+    try {
+      var j = await (await fetch("lineups/ncaa_live.json?t=" + Date.now(), { cache: "no-store" })).json(), g = null;
+      (j.games || []).forEach(function (x) {
+        if (x.date === iso && (x.teams || []).some(function (t) { return t.seo === seo; })) g = x;
+      });
+      if (g && SC.key === k) next = ncPaint(k, g, m[1], seo);
+    } catch (e) { next = 120000; }
+    if (next && SC.key === k) SC.timer = setTimeout(go, next);
+  };
+  go();
+}
+function ncPaint(k, g, opp, seo) {
+  var el = document.getElementById("score"); if (!el) return 0;
+  var me = null, ot = null;
+  g.teams.forEach(function (t) { if (t.seo === seo) me = t; else ot = t; });
+  if (!me || !ot) return 0;
+  var st = g.state, fin = st === "F", pre = st === "P";
+  var mg = +me.score || 0, og = +ot.score || 0, per = String(g.period || "");
+  var nameHtml = function (n, a, b) { return (fin && a > b ? '<span class="w">' + esc2(n) + " " + a + "</span>" : esc2(n) + " " + a); };
+  var mn = C[k][0];
+  if (pre) {
+    var tz = NCTZ[me.home ? seo : ot.seo] || "America/Toronto", tm = "";
+    try { tm = new Date(g.start * 1000).toLocaleTimeString("en-US", { timeZone: tz, hour: "numeric", minute: "2-digit" }); } catch (e) {}
+    el.innerHTML = esc2(mn) + " vs " + esc2(opp) + '<span class="st">Puck drop ' + esc2(tm) + (tz === "America/Chicago" ? " CT" : " ET") + "</span>";
+    return (g.start * 1000 - Date.now() < 3.6e6) ? 60000 : 300000;
+  }
+  var html = nameHtml(mn, mg, og) + " – " + nameHtml(opp, og, mg);
+  if (fin) {
+    var ot2 = /(\d?OT|SO)/i.exec(per);
+    el.innerHTML = html + '<span class="st">Final' + (ot2 ? "/" + ot2[1].toUpperCase() : "") + "</span>";
+    return 0;
+  }
+  per = per.replace(/^(\d)(ST|ND|RD|TH)\b/i, function (_, n, x) { return n + x.toLowerCase(); });
+  el.innerHTML = html + '<span class="clk">' + esc2(per) + '</span><span class="st live">Live</span>';
+  return 60000;
 }
 function scLater(k, ms) { if (SC.key !== k) return; if (SC.timer) clearTimeout(SC.timer); SC.timer = setTimeout(function () { if (document.hidden) { scLater(k, 15000); } else { scPoll(k); } }, ms); }
 async function scPoll(k) {
