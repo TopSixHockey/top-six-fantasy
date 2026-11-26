@@ -1,6 +1,6 @@
 {
- "inj:ohl": 1795667859.001776,
- "inj:whl": 1795667859.001776,
+ "inj:ohl": 1795681732.038485,
+ "inj:whl": 1795681732.038485,
  "ncaa_fetched": "2026-11-25T20:39:12.756750+00:00",
  "ohl:29211:away": {
   "done": true,
@@ -202,7 +202,7 @@
   "done": true,
   "flipped": true
  },
- "players_full": "2026-11-25T22:03:49.560115-05:00",
+ "players_full": "2026-11-26T03:28:54.216820-05:00",
  "qmjhl:32662:away": {
   "done": true,
   "flipped": true
@@ -605,11 +605,11 @@
  },
  "whl:1023342:away": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "whl:1023342:home": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "whl:1023343:away": {
   "done": true,
