@@ -258,7 +258,7 @@ var Q = {
 for (var qk in Q) C[qk] = Q[qk];
 var N = {
  ncaa_michigan:["Michigan Wolverines","#00274c","#00274c","#ffcb05","#ffcb05","#ffcb05","#00274c"],
- ncaa_michiganstate:["Michigan State Spartans","#1c4a39","#1c4a39","#ffffff","#ffffff","#ffffff","#1c4a39"],
+ ncaa_michiganstate:["Michigan State Spartans","#143528","#143528","#ffffff","#ffffff","#ffffff","#000000"],
  ncaa_minnesota:["Minnesota Golden Gophers","#7a0019","#7a0019","#ffcc33","#ffcc33","#ffcc33","#ffffff"],
  ncaa_notredame:["Notre Dame Fighting Irish","#0c2340","#0c2340","#c99700","#c99700","#c99700","#f4efe0"],
  ncaa_ohiostate:["Ohio State Buckeyes","#bb0000","#bb0000","#ffffff","#ffffff","#ffffff","#2a2a2a"],
@@ -1114,7 +1114,8 @@ var SPEC = {
   SPEC["Michigan State Spartans"] = d([], [[101, 11, "#ffffff"]], "body");   // no sleeve band, body-colour collar
   SPEC["Michigan State Spartans"].svg += '<rect x="20" y="42" width="4.5" height="50" fill="#ffffff"/><rect x="95.5" y="42" width="4.5" height="50" fill="#ffffff"/>';   // thin side-of-body strips
   // small slits in each body number (one per digit; no 7/8 reference yet)
-  SPEC["Michigan State Spartans"].svg += '<g class="slitmsu"></g>';
+  SPEC["Michigan State Spartans"].sw = 2.2;
+  SPEC["Michigan State Spartans"].svg += '<g class="slitmsu" data-c="#143528"></g>';
   (function () {
     var SL = { 0: [0.6, 0.62, 0.8, 0.62, 0.7, 0.2], 1: [-0.05, 0.16, -0.05, 0.34, 0.45, 0.25], 2: [1.05, 0.3, 1.05, 0.48, 0.6, 0.39], 3: [-0.05, 0.42, -0.05, 0.6, 0.42, 0.51], 4: [1.05, 0.28, 1.05, 0.44, 0.68, 0.36], 5: [-0.05, 0.3, -0.05, 0.48, 0.38, 0.39], 6: [1.05, 0.5, 1.05, 0.68, 0.58, 0.59], 9: [-0.05, 0.3, -0.05, 0.48, 0.38, 0.39] };
     var NS = "http://www.w3.org/2000/svg", tm = 0;
@@ -1137,7 +1138,7 @@ var SPEC = {
             var top = base - fs * 0.7, h = fs * 0.7, pl = document.createElementNS(NS, "polygon"), pts = [];
             for (var q = 0; q < 6; q += 2) pts.push((e.x + e.width * sg[q]).toFixed(2) + "," + (top + h * sg[q + 1]).toFixed(2));
             pl.setAttribute("points", pts.join(" "));
-            pl.setAttribute("fill", t.getAttribute("stroke") || "#1c4a39");
+            pl.setAttribute("fill", s.querySelector(".slitmsu").getAttribute("data-c") || "#143528");
             g.appendChild(pl);
           }
           if (!ok) continue;
