@@ -148,6 +148,7 @@ def render_card(item, colors, caps=None, path=None):
     muted = (160, 175, 195)
     caps = caps or {}
     ent = item["entry"]
+    item = dict(item, team=item["team"].replace("\u0153", "oe").replace("\u0152", "Oe"), opp=item["opp"].replace("\u0153", "oe").replace("\u0152", "Oe"))   # no French ligature on the card
 
     img = Image.new("RGB", (W, H), bg)
     d = ImageDraw.Draw(img)
@@ -260,7 +261,8 @@ def caption(item):
     else:
         when, ab = local_when(item)
         when_line = "%s %s · %s %d" % (when.strftime("%I:%M %p").lstrip("0"), ab, when.strftime("%b"), when.day)
-    return "\U0001F3D2 %s lines %s %s\n%s\n\n%s" % (item["team"], item["vsat"], item["opp"], when_line, tags)
+    text = "\U0001F3D2 %s lines %s %s\n%s\n\n%s" % (item["team"], item["vsat"], item["opp"], when_line, tags)
+    return text.replace("\u0153", "oe").replace("\u0152", "Oe")   # X posts: no French ligature (matches the site)
 
 
 # ----------------------------------------------------------------------------- X API (OAuth 1.0a)
