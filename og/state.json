@@ -1,8 +1,8 @@
 {
- "barrie": "3834d5bae5",
+ "barrie": "c5507a11c0",
  "brampton": "7005e7008b",
  "erie": "457119cf85",
- "flint": "51cd6ae834",
+ "flint": "30a7383d30",
  "guelph": "a486bbc395",
  "hamilton": "d318d73b63",
  "kingston": "e9af363c9d",
@@ -33,9 +33,9 @@
  "qmjhl_valdor": "29158e4892",
  "qmjhl_victoriaville": "6763281d95",
  "saginaw": "71df2e9f40",
- "sarnia": "baee9d4c84",
+ "sarnia": "568070a1b7",
  "soo": "e711d1e775",
- "sudbury": "7de090d1d8",
+ "sudbury": "cd4fc2f1ef",
  "whl_brandon": "73c88575a7",
  "whl_calgary": "48dba8b7ea",
  "whl_edmonton": "90b34a2920",
@@ -59,5 +59,5 @@
  "whl_vancouver": "f10ee61fce",
  "whl_victoria": "37694c0438",
  "whl_wenatchee": "44bd24c5a0",
- "windsor": "8b294346ef"
+ "windsor": "8e2073e848"
 }
