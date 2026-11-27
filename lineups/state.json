@@ -218,7 +218,27 @@
   "done": true,
   "flipped": true
  },
- "players_full": "2026-11-27T03:27:23.135123-05:00",
+ "ohl:29241:away": {
+  "done": true,
+  "flipped": false
+ },
+ "ohl:29242:away": {
+  "done": true,
+  "flipped": false
+ },
+ "ohl:29242:home": {
+  "done": true,
+  "flipped": false
+ },
+ "ohl:29246:away": {
+  "done": true,
+  "flipped": false
+ },
+ "ohl:29246:home": {
+  "done": true,
+  "flipped": false
+ },
+ "players_full": "2026-11-27T17:01:00.275176-05:00",
  "qmjhl:32662:away": {
   "done": true,
   "flipped": true
@@ -319,6 +339,14 @@
   "done": true,
   "flipped": true
  },
+ "qmjhl:32856:away": {
+  "done": true,
+  "flipped": false
+ },
+ "qmjhl:32856:home": {
+  "done": true,
+  "flipped": false
+ },
  "qmjhl:32886:away": {
   "done": true,
   "flipped": false
@@ -371,6 +399,14 @@
   "done": true,
   "flipped": true
  },
+ "qmjhl:32984:away": {
+  "done": true,
+  "flipped": false
+ },
+ "qmjhl:32984:home": {
+  "done": true,
+  "flipped": false
+ },
  "qmjhl:33014:away": {
   "done": true,
   "flipped": true
@@ -386,6 +422,22 @@
  "qmjhl:33015:home": {
   "done": true,
   "flipped": true
+ },
+ "qmjhl:33016:away": {
+  "done": true,
+  "flipped": false
+ },
+ "qmjhl:33016:home": {
+  "done": true,
+  "flipped": false
+ },
+ "qmjhl:33048:away": {
+  "done": true,
+  "flipped": false
+ },
+ "qmjhl:33048:home": {
+  "done": true,
+  "flipped": false
  },
  "qmjhl:33081:away": {
   "done": true,
@@ -410,6 +462,10 @@
  "qmjhl:33109:home": {
   "done": true,
   "flipped": true
+ },
+ "qmjhl:33110:away": {
+  "done": true,
+  "flipped": false
  },
  "qmjhl:33144:away": {
   "done": true,
