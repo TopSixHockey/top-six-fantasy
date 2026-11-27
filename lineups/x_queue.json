@@ -1,1 +1,136 @@
-[]
+[
+ {
+  "id": "ohl:29241:home",
+  "lg": "ohl",
+  "key": "brampton",
+  "team": "Brampton Steelheads",
+  "opp": "North Bay Battalion",
+  "vsat": "vs",
+  "start": "2026-11-27T19:00:00-05:00",
+  "local": "2026-11-27T19:00:00",
+  "zone": "America/Toronto",
+  "entry": {
+   "F": [
+    [
+     [
+      29,
+      "Nathan",
+      "Amidovski"
+     ],
+     [
+      97,
+      "Matej",
+      "Stankoven"
+     ],
+     [
+      18,
+      "Stepan",
+      "Kuryachenkov"
+     ]
+    ],
+    [
+     [
+      13,
+      "Kieran",
+      "Witkowski"
+     ],
+     [
+      71,
+      "Weston",
+      "Cameron"
+     ],
+     [
+      10,
+      "Keaton",
+      "Ardagh"
+     ]
+    ],
+    [
+     [
+      9,
+      "Geno",
+      "Carcone"
+     ],
+     [
+      11,
+      "Arjun",
+      "Nanubhai"
+     ],
+     [
+      16,
+      "Tyler",
+      "Cooper"
+     ]
+    ],
+    [
+     [
+      42,
+      "Manuel",
+      "Amado"
+     ],
+     [
+      17,
+      "Lucas",
+      "DeMiglio"
+     ],
+     [
+      73,
+      "MacGregor",
+      "Richmond"
+     ]
+    ]
+   ],
+   "D": [
+    [
+     [
+      64,
+      "Mason",
+      "Roy"
+     ],
+     [
+      4,
+      "Peter",
+      "Green"
+     ]
+    ],
+    [
+     [
+      24,
+      "Jared",
+      "Harding"
+     ],
+     [
+      58,
+      "Carter",
+      "Hicks"
+     ]
+    ],
+    [
+     [
+      8,
+      "Reed",
+      "Gee"
+     ],
+     [
+      28,
+      "Sean Matthew",
+      "Goyette"
+     ]
+    ]
+   ],
+   "G": [
+    [
+     32,
+     "Oskari",
+     "Ahmajarvi"
+    ],
+    [
+     33,
+     "Neilan",
+     "Johnson"
+    ]
+   ]
+  },
+  "queued": "2026-11-27T17:15:29.261611-05:00"
+ }
+]
