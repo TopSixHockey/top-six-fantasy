@@ -1,1 +1,405 @@
-[]
+[
+ {
+  "id": "ohl:29244:away",
+  "lg": "ohl",
+  "key": "peterborough",
+  "team": "Peterborough Petes",
+  "opp": "Kingston Frontenacs",
+  "vsat": "at",
+  "start": "2026-11-27T19:05:00-05:00",
+  "local": "2026-11-27T19:05:00",
+  "zone": "America/Toronto",
+  "entry": {
+   "F": [
+    [
+     [
+      16,
+      "Adam",
+      "Novotný"
+     ],
+     [
+      10,
+      "Adam",
+      "Levac"
+     ],
+     [
+      27,
+      "Mason",
+      "Minsky"
+     ]
+    ],
+    [
+     [
+      21,
+      "James",
+      "McMurray"
+     ],
+     [
+      26,
+      "Aiden",
+      "Young"
+     ],
+     [
+      12,
+      "Leon",
+      "Kolarik"
+     ]
+    ],
+    [
+     [
+      11,
+      "Pacey",
+      "Adduono"
+     ],
+     [
+      17,
+      "Lucas",
+      "Karmiris"
+     ],
+     [
+      24,
+      "Cooper",
+      "Dennis"
+     ]
+    ],
+    [
+     "h",
+     [
+      20,
+      "Jonny",
+      "Brooks"
+     ],
+     [
+      14,
+      "Mason",
+      "Quinn"
+     ],
+     "h"
+    ]
+   ],
+   "D": [
+    [
+     [
+      4,
+      "Calum",
+      "Hartnell"
+     ],
+     [
+      72,
+      "Matthew",
+      "Perreault"
+     ]
+    ],
+    [
+     [
+      76,
+      "Camron",
+      "Hankai"
+     ],
+     [
+      7,
+      "Holden",
+      "Carter"
+     ]
+    ],
+    [
+     [
+      9,
+      "Jacob",
+      "Xu"
+     ]
+    ]
+   ],
+   "G": [
+    [
+     31,
+     "Matthew",
+     "Koprowski"
+    ],
+    [
+     78,
+     "Aleksei",
+     "Medvedev"
+    ]
+   ]
+  },
+  "queued": "2026-11-27T17:10:54.695927-05:00"
+ },
+ {
+  "id": "ohl:29243:away",
+  "lg": "ohl",
+  "key": "erie",
+  "team": "Erie Otters",
+  "opp": "Guelph Storm",
+  "vsat": "at",
+  "start": "2026-11-27T19:07:00-05:00",
+  "local": "2026-11-27T19:07:00",
+  "zone": "America/Toronto",
+  "entry": {
+   "F": [
+    [
+     [
+      34,
+      "Kase",
+      "Kamzik"
+     ],
+     [
+      81,
+      "Evan",
+      "Headrick"
+     ],
+     [
+      92,
+      "Mclean",
+      "Agrette"
+     ]
+    ],
+    [
+     [
+      21,
+      "Luka",
+      "Arkko"
+     ],
+     [
+      91,
+      "Liam",
+      "Beamish"
+     ],
+     [
+      25,
+      "Michael",
+      "Dec"
+     ]
+    ],
+    [
+     [
+      27,
+      "Colin",
+      "Kennedy"
+     ],
+     [
+      80,
+      "Jake",
+      "Murray"
+     ],
+     [
+      11,
+      "Jack",
+      "Torr"
+     ]
+    ],
+    [
+     [
+      96,
+      "Paul",
+      "Schuster"
+     ],
+     [
+      89,
+      "Ulysses",
+      "Lombardi"
+     ],
+     [
+      15,
+      "Anton",
+      "Gesink"
+     ]
+    ]
+   ],
+   "D": [
+    [
+     [
+      73,
+      "Lucas",
+      "Ambrosio"
+     ],
+     [
+      4,
+      "Broden",
+      "McArthur"
+     ]
+    ],
+    [
+     [
+      2,
+      "Ty",
+      "Henry"
+     ],
+     [
+      10,
+      "Tristen",
+      "Trevino"
+     ]
+    ],
+    [
+     [
+      6,
+      "Julius",
+      "Saari"
+     ],
+     [
+      22,
+      "A.J.",
+      "Gladman"
+     ]
+    ],
+    [
+     [
+      29,
+      "Gairin",
+      "Michalski"
+     ]
+    ]
+   ],
+   "G": [
+    [
+     30,
+     "Liam",
+     "Karbowski"
+    ],
+    [
+     88,
+     "David",
+     "Egorov"
+    ]
+   ]
+  },
+  "queued": "2026-11-27T17:10:54.695927-05:00"
+ },
+ {
+  "id": "ohl:29248:away",
+  "lg": "ohl",
+  "key": "oshawa",
+  "team": "Oshawa Generals",
+  "opp": "Soo Greyhounds",
+  "vsat": "at",
+  "start": "2026-11-27T19:07:00-05:00",
+  "local": "2026-11-27T19:07:00",
+  "zone": "America/Toronto",
+  "entry": {
+   "F": [
+    [
+     [
+      37,
+      "Ryan",
+      "Hedley"
+     ],
+     [
+      21,
+      "Tyler",
+      "Hinde"
+     ],
+     [
+      10,
+      "Brooks",
+      "Rogowski"
+     ]
+    ],
+    [
+     [
+      89,
+      "Cole",
+      "Mazzoni"
+     ],
+     [
+      12,
+      "Harrison",
+      "Franssen"
+     ],
+     [
+      78,
+      "Onni",
+      "Kalto"
+     ]
+    ],
+    [
+     [
+      23,
+      "Mark",
+      "Pape"
+     ],
+     [
+      98,
+      "Kane",
+      "Cloutier"
+     ],
+     [
+      79,
+      "Aiden",
+      "O'Donnell"
+     ]
+    ],
+    [
+     [
+      96,
+      "Caden",
+      "Taylor"
+     ],
+     [
+      28,
+      "Brennan",
+      "Huyck"
+     ],
+     [
+      13,
+      "Grant",
+      "Yingst"
+     ]
+    ]
+   ],
+   "D": [
+    [
+     [
+      7,
+      "Linus",
+      "Funck"
+     ]
+    ],
+    [
+     [
+      11,
+      "Anthony",
+      "Timmerman"
+     ],
+     [
+      43,
+      "Cody",
+      "Costello"
+     ]
+    ],
+    [
+     [
+      18,
+      "Jackson",
+      "Marthaler"
+     ],
+     [
+      5,
+      "Luca",
+      "Diplacido"
+     ]
+    ],
+    [
+     [
+      86,
+      "Leo",
+      "Laschon"
+     ]
+    ]
+   ],
+   "G": [
+    [
+     30,
+     "Jaden",
+     "Cholette"
+    ],
+    [
+     32,
+     "Matthew",
+     "Humphries"
+    ]
+   ]
+  },
+  "queued": "2026-11-27T17:10:54.695927-05:00"
+ }
+]
