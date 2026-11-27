@@ -273,7 +273,7 @@ def update_cap(src, key, caps):
 
 # ------------------------------------------------------------ injury reports
 INJ_URL = {"ohl": "https://chl.ca/ohl/ohl-weekly-report/", "whl": "https://chl.ca/whl/whl-weekly-report/"}
-INJ_EVERY_H = 3     # re-read the weekly reports at most every 3 hours
+INJ_EVERY_H = 23    # re-read the weekly reports once a day (23h so the time of day does not drift later)
 
 def parse_injuries_html(html, lg="ohl"):
     """OHL weekly-report page -> (as-of text, {team key: [[first,last,pos,injury,status],..]}).
