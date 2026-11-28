@@ -11,6 +11,16 @@ on:
       teams:
         description: "Team keys, comma separated (blank = all 17), e.g. ncaa_michigan,ncaa_denver"
         default: ""
+      explore:
+        description: "Only list each team's recent media posts (no lineup reading)"
+        type: boolean
+        default: false
+      extra:
+        description: "Extra X search words, e.g. (lines OR lineup)"
+        default: ""
+      limit:
+        description: "Most posts to fetch per team"
+        default: "20"
 
 permissions:
   contents: read
@@ -30,7 +40,13 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           HOURS: ${{ inputs.hours }}
           TEAMS: ${{ inputs.teams }}
-        run: python lineups/ncaa_lines_watch.py --hours "$HOURS" --teams "$TEAMS"
+          EXPLORE: ${{ inputs.explore }}
+          EXTRA: ${{ inputs.extra }}
+          LIMIT: ${{ inputs.limit }}
+        run: |
+          ARGS=""
+          if [ "$EXPLORE" = "true" ]; then ARGS="--explore"; fi
+          python lineups/ncaa_lines_watch.py --hours "$HOURS" --teams "$TEAMS" --limit "$LIMIT" --extra "$EXTRA" $ARGS
       - uses: actions/upload-artifact@v4
         if: always()
         with:
