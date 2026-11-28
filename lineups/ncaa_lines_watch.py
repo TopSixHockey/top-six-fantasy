@@ -179,11 +179,10 @@ def build_lines(lu, cur):
     F, D = [[pl(q) for q in g] for g in lu["F"]], [[pl(q) for q in g] for g in lu["D"]]
     G = [pl(q) for q in lu["G"]]
     dressed = {q[0] for g in F + D for q in g} | {q[0] for q in G}
-    if lu.get("S"):
-        S = [pl(q) for q in lu["S"]]
-    else:
-        old = [q for g in cur["F"] + cur["D"] for q in g] + cur["G"] + cur["S"]
-        S = [[q[0], q[1], q[2]] for q in old if q[0] not in dressed]
+    S = [pl(q) for q in lu.get("S") or []]
+    seen = {q[0] for q in S} | dressed
+    old = [q for g in cur["F"] + cur["D"] for q in g] + cur["G"] + cur["S"]
+    S += [[q[0], q[1], q[2]] for q in old if q[0] not in seen]  # keep players the site already lists as scratches (or dressed last time)
     return F, D, G, sorted(S, key=lambda q: q[0]), flagged
 
 
