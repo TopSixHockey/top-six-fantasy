@@ -1,1 +1,549 @@
-[]
+[
+ {
+  "id": "whl:1023350:home",
+  "lg": "whl",
+  "key": "whl_pg",
+  "team": "Prince George Cougars",
+  "opp": "Kamloops Blazers",
+  "vsat": "vs",
+  "start": "2026-11-27T21:00:00-05:00",
+  "local": "2026-11-27T19:00:00",
+  "zone": "America/Vancouver",
+  "entry": {
+   "F": [
+    [
+     [
+      37,
+      "Jett",
+      "Lajoie"
+     ],
+     [
+      16,
+      "Kash",
+      "Andresen"
+     ],
+     [
+      28,
+      "Kayden",
+      "Lemire"
+     ]
+    ],
+    [
+     [
+      17,
+      "Tre",
+      "Peck"
+     ],
+     [
+      23,
+      "Lee",
+      "Shurgot"
+     ],
+     [
+      29,
+      "Ryder",
+      "Riedel"
+     ]
+    ],
+    [
+     [
+      9,
+      "Cole",
+      "Hajt"
+     ],
+     [
+      14,
+      "Townes",
+      "Kozicky"
+     ],
+     [
+      19,
+      "Riley",
+      "Ashe"
+     ]
+    ],
+    [
+     [
+      20,
+      "Ollie",
+      "Reid"
+     ],
+     [
+      39,
+      "Dade",
+      "Wotherspoon"
+     ],
+     [
+      11,
+      "Jonathan",
+      "Bitonti"
+     ]
+    ]
+   ],
+   "D": [
+    [
+     [
+      15,
+      "Corbin",
+      "Vaughan"
+     ],
+     [
+      4,
+      "Ethan",
+      "Popowich"
+     ]
+    ],
+    [
+     [
+      5,
+      "Jace",
+      "McFaul"
+     ],
+     [
+      25,
+      "Kolten",
+      "Bridgeman"
+     ]
+    ],
+    [
+     [
+      6,
+      "Dermot",
+      "Johnston"
+     ],
+     [
+      21,
+      "Cooper",
+      "Bratton"
+     ]
+    ]
+   ],
+   "G": [
+    [
+     1,
+     "Kason",
+     "Kobelka"
+    ],
+    [
+     35,
+     "Peyton",
+     "Shore"
+    ]
+   ]
+  },
+  "queued": "2026-11-27T19:02:24.472394-05:00"
+ },
+ {
+  "id": "whl:1023350:away",
+  "lg": "whl",
+  "key": "whl_kamloops",
+  "team": "Kamloops Blazers",
+  "opp": "Prince George Cougars",
+  "vsat": "at",
+  "start": "2026-11-27T21:00:00-05:00",
+  "local": "2026-11-27T19:00:00",
+  "zone": "America/Vancouver",
+  "entry": {
+   "F": [
+    [
+     [
+      16,
+      "Vit",
+      "Zahejsky"
+     ],
+     [
+      18,
+      "Gavin",
+      "Nemis"
+     ],
+     [
+      14,
+      "Cooper",
+      "Moore"
+     ]
+    ],
+    [
+     [
+      13,
+      "Jacob",
+      "Dumansky"
+     ],
+     [
+      24,
+      "Ty",
+      "Bonkowski"
+     ],
+     [
+      27,
+      "River",
+      "Arnason"
+     ]
+    ],
+    [
+     [
+      34,
+      "Brady",
+      "Ondrus"
+     ],
+     [
+      10,
+      "Teagen",
+      "Bouchard"
+     ],
+     [
+      23,
+      "Eli",
+      "Tverdovsky"
+     ]
+    ],
+    [
+     [
+      15,
+      "Owen",
+      "Cooper"
+     ],
+     [
+      19,
+      "Andrew",
+      "Thomson"
+     ],
+     [
+      7,
+      "Logan",
+      "Lanti"
+     ]
+    ]
+   ],
+   "D": [
+    [
+     [
+      5,
+      "Isa",
+      "Guram"
+     ],
+     [
+      2,
+      "Mateo",
+      "Ferreira"
+     ]
+    ],
+    [
+     [
+      22,
+      "Mikhail",
+      "Cherepanov"
+     ],
+     [
+      21,
+      "Carson",
+      "Olsen"
+     ]
+    ],
+    [
+     [
+      25,
+      "Madden",
+      "Tymchak"
+     ],
+     [
+      9,
+      "Joaquin",
+      "Geras"
+     ]
+    ],
+    [
+     [
+      3,
+      "Dryden",
+      "Deobald"
+     ]
+    ]
+   ],
+   "G": [
+    [
+     31,
+     "Logan",
+     "Edmonstone"
+    ],
+    [
+     1,
+     "Kaeden",
+     "Tate"
+    ]
+   ]
+  },
+  "queued": "2026-11-27T19:02:24.472394-05:00"
+ },
+ {
+  "id": "whl:1023352:home",
+  "lg": "whl",
+  "key": "whl_vancouver",
+  "team": "Vancouver Giants",
+  "opp": "Regina Pats",
+  "vsat": "vs",
+  "start": "2026-11-27T21:00:00-05:00",
+  "local": "2026-11-27T19:00:00",
+  "zone": "America/Vancouver",
+  "entry": {
+   "F": [
+    [
+     [
+      17,
+      "Cam",
+      "Parr"
+     ],
+     [
+      20,
+      "Jakob",
+      "Oreskovic"
+     ],
+     [
+      27,
+      "Mathis",
+      "Preston"
+     ]
+    ],
+    [
+     [
+      13,
+      "Tobias",
+      "Tomik"
+     ],
+     [
+      16,
+      "Blake",
+      "Chorney"
+     ],
+     [
+      43,
+      "Brogan",
+      "McNeil"
+     ]
+    ],
+    [
+     [
+      29,
+      "Sam",
+      "Charko"
+     ],
+     [
+      12,
+      "Brett",
+      "Olson"
+     ],
+     [
+      34,
+      "Dennis",
+      "Emesibe"
+     ]
+    ],
+    [
+     "h",
+     [
+      18,
+      "Colton",
+      "Gerrior"
+     ],
+     [
+      26,
+      "Brayden",
+      "Jugnauth"
+     ],
+     "h"
+    ]
+   ],
+   "D": [
+    [
+     [
+      8,
+      "Derek",
+      "Thurston"
+     ],
+     [
+      6,
+      "Lance",
+      "McCloskey"
+     ]
+    ],
+    [
+     [
+      7,
+      "Kaleb",
+      "Hartmann"
+     ],
+     [
+      2,
+      "Sullivan",
+      "Humeniuk"
+     ]
+    ],
+    [
+     [
+      23,
+      "Crosby",
+      "Mateychuk"
+     ],
+     [
+      24,
+      "Ethan",
+      "Armstrong"
+     ]
+    ],
+    [
+     [
+      14,
+      "Nolen",
+      "Miller"
+     ]
+    ]
+   ],
+   "G": [
+    [
+     35,
+     "Burke",
+     "Hood"
+    ],
+    [
+     31,
+     "Oliver",
+     "Bryks"
+    ]
+   ]
+  },
+  "queued": "2026-11-27T19:02:24.472394-05:00"
+ },
+ {
+  "id": "whl:1023352:away",
+  "lg": "whl",
+  "key": "whl_regina",
+  "team": "Regina Pats",
+  "opp": "Vancouver Giants",
+  "vsat": "at",
+  "start": "2026-11-27T21:00:00-05:00",
+  "local": "2026-11-27T19:00:00",
+  "zone": "America/Vancouver",
+  "entry": {
+   "F": [
+    [
+     [
+      43,
+      "Parker",
+      "Trottier"
+     ],
+     [
+      19,
+      "Maddox",
+      "Schultz"
+     ],
+     [
+      57,
+      "Zachary",
+      "Lansard"
+     ]
+    ],
+    [
+     [
+      32,
+      "Mathis",
+      "Paull"
+     ],
+     [
+      29,
+      "Samuel",
+      "Karsay"
+     ],
+     [
+      13,
+      "Liam",
+      "Pue"
+     ]
+    ],
+    [
+     [
+      20,
+      "Connor",
+      "Bear"
+     ],
+     [
+      37,
+      "Cohen",
+      "Klassen"
+     ],
+     [
+      24,
+      "Jace",
+      "Egland"
+     ]
+    ],
+    [
+     [
+      52,
+      "Owen",
+      "Sejna"
+     ],
+     [
+      11,
+      "Dayce",
+      "Derkatch"
+     ],
+     [
+      18,
+      "Zach",
+      "Moore"
+     ]
+    ]
+   ],
+   "D": [
+    [
+     [
+      38,
+      "Dayton",
+      "Deschamps"
+     ],
+     [
+      6,
+      "Reese",
+      "Hamilton"
+     ]
+    ],
+    [
+     [
+      55,
+      "Tomas",
+      "Cermak"
+     ],
+     [
+      44,
+      "Matt",
+      "Paranych"
+     ]
+    ],
+    [
+     [
+      26,
+      "Ossi",
+      "Tukio"
+     ],
+     [
+      23,
+      "Aiden",
+      "Wagner"
+     ]
+    ]
+   ],
+   "G": [
+    [
+     30,
+     "Taylor",
+     "Tabashniuk"
+    ],
+    [
+     33,
+     "Drake",
+     "Mooney"
+    ]
+   ]
+  },
+  "queued": "2026-11-27T19:02:24.472394-05:00"
+ }
+]
