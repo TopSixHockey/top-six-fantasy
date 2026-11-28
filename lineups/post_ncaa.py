@@ -19,7 +19,10 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import post_to_x as X
 
 STATE = os.path.join(X.ROOT, "lineups", "ncaa_x_posted.json")
-# Team hashtags for the posts (after #NCAAHockey #BigTen). Edit here to change them.
+# NCHC teams (their posts get #NCHC instead of #BigTen).
+NCHC_KEYS = {"ncaa_minnesotaduluth", "ncaa_miamioh", "ncaa_denver", "ncaa_northdakota", "ncaa_westernmichigan",
+             "ncaa_coloradocollege", "ncaa_omaha", "ncaa_arizonastate", "ncaa_stthomas", "ncaa_stcloudstate"}
+# Team hashtags for the posts (after #NCAAHockey and #BigTen or #NCHC). Edit here to change them.
 TAGS = {
     "ncaa_michigan": "GoBlue",
     "ncaa_michiganstate": "GoGreen",
@@ -37,7 +40,7 @@ READ = """() => Object.keys(L).filter(k => k.indexOf('ncaa_') === 0).map(k => ({
 
 def caption(item):
     d = datetime.date.fromisoformat(item["date_only"])
-    tags = ["#NCAAHockey", "#BigTen"] + (["#" + TAGS[item["key"]]] if TAGS.get(item["key"]) else [])
+    tags = ["#NCAAHockey", "#NCHC" if item["key"] in NCHC_KEYS else "#BigTen"] + (["#" + TAGS[item["key"]]] if TAGS.get(item["key"]) else [])
     return "\U0001F3D2 %s lines %s %s\n%s %d\n\n%s" % (item["team"], item["vsat"], item["opp"], d.strftime("%b"), d.day, " ".join(tags))
 
 
