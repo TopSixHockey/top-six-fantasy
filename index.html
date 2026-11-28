@@ -1334,7 +1334,7 @@ function popHtml(k, n, nm) {
     "#hist .tmw{display:flex;align-items:center}" +
     "#hist .tmw .tl{flex:none}" +
     "#hist .hm .fl{margin-left:6px}" +
-    "#hist .tlw{filter:drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff) drop-shadow(0 1px 0 #fff) drop-shadow(0 -1px 0 #fff)}" +
+    "#pop .tlw,#hist .tlw{filter:drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff) drop-shadow(0 1px 0 #fff) drop-shadow(0 -1px 0 #fff)}" +
     "#hist .tw td:first-child{white-space:nowrap}";
   document.head.appendChild(st);
 })();
@@ -1403,7 +1403,7 @@ function ncaaLogoImg(s) {
 }
 function histEdge(im) {
   try {
-    var hb = im.closest(".hb"), m = hb && /(\d+)\D+(\d+)\D+(\d+)/.exec(getComputedStyle(hb).backgroundColor);
+    var hb = im.closest(".hb, #pop"), m = hb && /(\d+)\D+(\d+)\D+(\d+)/.exec(getComputedStyle(hb).backgroundColor);
     if (!m || !im.naturalWidth) return;
     var br = +m[1], bg = +m[2], bb = +m[3], S = 48, cv = document.createElement("canvas"); cv.width = cv.height = S;
     var cx = cv.getContext("2d"), sc = Math.min(S / im.naturalWidth, S / im.naturalHeight), dw = im.naturalWidth * sc, dh = im.naturalHeight * sc;
