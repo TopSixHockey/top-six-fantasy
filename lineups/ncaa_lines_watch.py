@@ -411,6 +411,10 @@ def main():
         if done:
             open(os.path.join(ROOT, "index.html"), "w", encoding="utf-8").write(new_html)
             open(os.path.join(HERE, "_pr_body.md"), "w", encoding="utf-8").write(text)
+        smp = os.environ.get("GITHUB_STEP_SUMMARY")
+        if smp:
+            with open(smp, "a") as f:
+                f.write("### Pull request text\n\n" + text + "\n\n")
     json.dump({"generated": datetime.datetime.utcnow().isoformat() + "Z", "model": MODEL, "photos_read": nimg, "tokens_in": tin, "tokens_out": tout, "teams": rep},
               open(os.path.join(HERE, "_watch_report.json"), "w"), indent=1)
     sm = os.environ.get("GITHUB_STEP_SUMMARY")
