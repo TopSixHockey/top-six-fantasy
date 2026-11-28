@@ -18,6 +18,8 @@ ROOT = os.path.dirname(HERE)
 MODEL = os.environ.get("LINES_MODEL", "claude-sonnet-5-5")
 ET = ZoneInfo("America/New_York")
 UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+# Words that teams use in their lineup posts. Only matching posts are fetched, so X bills only for those.
+DEFAULT_EXTRA = '(lines OR lineup OR lineups OR "hit the ice" OR crew)'
 
 PROMPT = """You are reading a college hockey team's game-day lineup graphic posted on X by @@HANDLE@@ (post text: "@@TEXT@@").
 Decide whether the image is a lineup (forward lines, defence pairs, goalies) for an upcoming or current game. Season previews, final scores, stat graphics, schedules, promos and ordinary photos are NOT lineups.
@@ -55,7 +57,7 @@ def xget(path, params):
 
 def recent_photo_posts(handle, since, extra="", limit=20):
     """Posts by the account that have an attachment, newest first. Uses recent search, so X bills only for the posts returned."""
-    q = ("from:%s has:media -is:retweet -is:reply %s" % (handle, extra)).strip()
+    q = ("from:%s has:images -is:retweet -is:reply %s" % (handle, extra)).strip()
     d = xget("/tweets/search/recent", {"query": q, "max_results": max(10, min(limit, 100)), "start_time": since.strftime("%Y-%m-%dT%H:%M:%SZ"),
                                        "tweet.fields": "created_at", "expansions": "attachments.media_keys", "media.fields": "type,url"})
     media = {m["media_key"]: m for m in d.get("includes", {}).get("media", [])}
@@ -174,7 +176,8 @@ def main():
     since = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=a.hours)
     print("Looking back %g hours from %s UTC; model %s\n" % (a.hours, since.strftime("%Y-%m-%d %H:%M"), MODEL))
     rep, tin, tout, nimg = [], 0, 0, 0
-    for key, handle in acc.items():
+    for key, cfg in acc.items():
+        handle, tx = (cfg, None) if isinstance(cfg, str) else (cfg["handle"], cfg.get("extra"))
         row = {"team": key, "handle": handle, "status": "", "detail": ""}
         rep.append(row)
         try:
@@ -182,7 +185,7 @@ def main():
             if not cur:
                 row["status"], row["detail"] = "ERROR", "team not found in index.html"
                 continue
-            posts, stats = recent_photo_posts(handle, since, a.extra, a.limit)
+            posts, stats = recent_photo_posts(handle, since, a.extra or tx or DEFAULT_EXTRA, a.limit)
             row["fetched"] = stats
             if a.explore:
                 row["status"] = "explore"
