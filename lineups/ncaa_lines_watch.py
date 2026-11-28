@@ -17,11 +17,13 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 MODEL = os.environ.get("LINES_MODEL", "claude-sonnet-5-5")
 ET = ZoneInfo("America/New_York")
+UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
 
 PROMPT = """You are reading a college hockey team's game-day lineup graphic posted on X by @@HANDLE@@ (post text: "@@TEXT@@").
 Decide whether the image is a lineup (forward lines, defence pairs, goalies) for an upcoming or current game. Season previews, final scores, stat graphics, schedules, promos and ordinary photos are NOT lineups.
 Return ONLY a JSON object, with no other text, in this shape:
 {"is_lineup": true or false,
+ "what": "a few words saying what the image is, e.g. lineup, final score graphic, promo, photo",
  "opponent": "school name as shown, or null",
  "home_away": "vs" or "at" or null,
  "game_date": "YYYY-MM-DD" or null,
@@ -63,21 +65,23 @@ def resolve_ids(handles):
 
 
 def recent_photo_posts(uid, since):
-    d = xget("/users/%s/tweets" % uid, {"max_results": 5, "exclude": "retweets,replies", "start_time": since.strftime("%Y-%m-%dT%H:%M:%SZ"),
+    d = xget("/users/%s/tweets" % uid, {"max_results": 10, "exclude": "retweets,replies", "start_time": since.strftime("%Y-%m-%dT%H:%M:%SZ"),
                                         "tweet.fields": "created_at", "expansions": "attachments.media_keys", "media.fields": "type,url"})
     media = {m["media_key"]: m for m in d.get("includes", {}).get("media", [])}
-    out = []
+    out, withmedia = [], 0
     for t in d.get("data", []):
-        imgs = [media[k]["url"] for k in t.get("attachments", {}).get("media_keys", []) if k in media and media[k].get("type") == "photo" and media[k].get("url")]
+        keys = t.get("attachments", {}).get("media_keys", [])
+        withmedia += 1 if keys else 0
+        imgs = [media[k]["url"] for k in keys if k in media and media[k].get("type") == "photo" and media[k].get("url")]
         if imgs:
             out.append({"id": t["id"], "created": t["created_at"], "text": t.get("text", ""), "images": imgs})
-    return out  # newest first
+    return out, {"posts": len(d.get("data", [])), "with_media": withmedia, "types": sorted({str(m.get("type")) for m in media.values()})}  # newest first
 
 
 # ---------- Claude ----------
 def fetch_image(url):
     for size in ("large", "medium"):
-        body, hdr = http(url + ("&" if "?" in url else "?") + "name=" + size)
+        body, hdr = http(url + ("&" if "?" in url else "?") + "name=" + size, {"User-Agent": UA})
         if len(body) < 4900000:
             break
     ct = (hdr.get("Content-Type") or "image/jpeg").split(";")[0].strip()
@@ -114,6 +118,10 @@ def load_current(html, key):
         for t in json.loads(line).values():
             if t.get("k") == key:
                 return {"F": t["F"], "D": t["D"], "G": t["G"], "S": t["S"], "game": t.get("game", ""), "roster": {int(r[0]) for r in t["p"]}}
+    mj = re.search(r'var K = "' + key + r'";\s*\n\s*L\[K\] = (\{.*\});\n[^\n]*\n([^\n]*)\n', html)
+    if mj:
+        o = json.loads(mj.group(1))
+        return {"F": o["F"], "D": o["D"], "G": o["G"], "S": o.get("S") or [], "game": o.get("game", ""), "roster": {int(x) for x in re.findall(r'\[(\d+),"[FDG]"', mj.group(2))}}
     m = re.search(r"\n  L\." + key + r" = \{(.*?)\n  \};", html, re.S)
     if not m:
         return None
@@ -162,7 +170,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--hours", type=float, default=48)
     ap.add_argument("--teams", default="")
-    ap.add_argument("--max-images", type=int, default=2, help="most photos to read per team")
+    ap.add_argument("--max-images", type=int, default=5, help="most photos to read per team")
     a = ap.parse_args()
     acc = {k: v for k, v in json.load(open(os.path.join(HERE, "ncaa_x_accounts.json"))).items() if not k.startswith("_")}
     want = {x.strip() for x in a.teams.split(",") if x.strip()}
@@ -186,9 +194,11 @@ def main():
                 row["status"], row["detail"] = "ERROR", "X account @%s not found" % handle
                 continue
             row["x_id"] = uid
-            posts = recent_photo_posts(uid, since)
+            posts, stats = recent_photo_posts(uid, since)
+            row["fetched"] = stats
             if not posts:
                 row["status"] = "no photo posts"
+                row["detail"] = "%d posts, %d with media (media types: %s)" % (stats["posts"], stats["with_media"], ", ".join(stats["types"]) or "none")
                 continue
             seen = 0
             for p in posts:
@@ -199,6 +209,7 @@ def main():
                     img, mt = fetch_image(url)
                     lu, use = read_lineup(img, mt, "@" + handle, p["text"])
                     nimg += 1
+                    row.setdefault("saw", []).append((lu or {}).get("what"))
                     tin += use.get("input_tokens", 0)
                     tout += use.get("output_tokens", 0)
                     if lu and lu.get("is_lineup"):
@@ -209,6 +220,7 @@ def main():
                         bad = check(lu)
                         if bad:
                             row["status"], row["detail"] = "NEEDS REVIEW", "; ".join(bad)
+                            row["raw"] = lu
                         else:
                             diffs = []
                             if nums(lu["F"]) != nums(cur["F"]):
@@ -232,7 +244,7 @@ def main():
                     break
             if not row["status"]:
                 row["status"] = "no lineup found"
-                row["detail"] = "read %d photo(s), none was a lineup" % seen
+                row["detail"] = "read %d photo(s), none was a lineup (saw: %s)" % (seen, "; ".join(str(x) for x in row.get("saw", [])))
         except Exception as e:
             row["status"], row["detail"] = "ERROR", str(e)[:300]
         print("%-24s %-14s %s" % (key, row["status"], row["detail"]))
@@ -245,6 +257,9 @@ def main():
             f.write("### NCAA lines watcher (dry run)\n\nPhotos read: %d, tokens %d in / %d out\n\n| Team | Status | Detail | Post |\n|---|---|---|---|\n" % (nimg, tin, tout))
             for r in rep:
                 f.write("| %s | %s | %s | %s |\n" % (r["team"], r["status"], r["detail"].replace("|", "/"), r.get("post", "")))
+            for r in rep:
+                if r.get("raw") is not None:
+                    f.write("\n<b>%s - what Claude returned</b>\n<pre>%s</pre>\n" % (r["team"], json.dumps(r["raw"])[:2500].replace("&", "&amp;").replace("<", "&lt;")))
 
 
 if __name__ == "__main__":
