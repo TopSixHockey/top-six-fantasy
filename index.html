@@ -1580,8 +1580,8 @@ SC.key = k; SC.info = { me: C[k][0], opp: m[1], iso: iso, code: SCLG[leagueOf(k)
 scPoll(k);
 }
 /* NCAA live score: ncaa_live.json on the "live" branch is refreshed by a GitHub job (lineups/ncaa_live.py) while games are on */
-var NCSEO = { ncaa_michigan: "michigan", ncaa_michiganstate: "michigan-st", ncaa_minnesota: "minnesota", ncaa_notredame: "notre-dame", ncaa_ohiostate: "ohio-st", ncaa_pennstate: "penn-st", ncaa_wisconsin: "wisconsin" },
-  NCTZ = { minnesota: "America/Chicago", wisconsin: "America/Chicago" };
+var NCSEO = { ncaa_michigan: "michigan", ncaa_michiganstate: "michigan-st", ncaa_minnesota: "minnesota", ncaa_notredame: "notre-dame", ncaa_ohiostate: "ohio-st", ncaa_pennstate: "penn-st", ncaa_wisconsin: "wisconsin", ncaa_minnesotaduluth: "minnesota-duluth", ncaa_miamioh: "miami-oh", ncaa_denver: "denver", ncaa_northdakota: "north-dakota", ncaa_westernmichigan: "western-michigan", ncaa_coloradocollege: "colorado-college", ncaa_omaha: "omaha", ncaa_arizonastate: "arizona-state", ncaa_stthomas: "st-thomas", ncaa_stcloudstate: "st-cloud-state" },
+  NCTZ = { minnesota: "America/Chicago", wisconsin: "America/Chicago", "minnesota-duluth": "America/Chicago", "north-dakota": "America/Chicago", omaha: "America/Chicago", "st-cloud-state": "America/Chicago", "st-thomas": "America/Chicago", denver: "America/Denver", "colorado-college": "America/Denver", "arizona-state": "America/Phoenix" };
 function ncLive(k, d, m) {
   var seo = NCSEO[k]; if (!seo) return;
   SC.key = k;
@@ -1612,7 +1612,7 @@ function ncPaint(k, g, opp, seo) {
   if (pre) {
     var tz = NCTZ[me.home ? seo : ot.seo] || "America/Toronto", tm = "";
     try { tm = new Date(g.start * 1000).toLocaleTimeString("en-US", { timeZone: tz, hour: "numeric", minute: "2-digit" }); } catch (e) {}
-    el.innerHTML = esc2(mn) + (me.home ? " vs " : " at ") + esc2(opp) + '<span class="st">Puck drop ' + esc2(tm) + (tz === "America/Chicago" ? " CT" : " ET") + "</span>";
+    el.innerHTML = esc2(mn) + (me.home ? " vs " : " at ") + esc2(opp) + '<span class="st">Puck drop ' + esc2(tm) + (tz === "America/Chicago" ? " CT" : tz === "America/Denver" ? " MT" : tz === "America/Phoenix" ? " MST" : " ET") + "</span>";
     return (g.start * 1000 - Date.now() < 3.6e6) ? 60000 : 300000;
   }
   var html = nameHtml(mn, mg, og) + " – " + nameHtml(opp, og, mg);
