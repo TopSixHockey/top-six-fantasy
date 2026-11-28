@@ -53,20 +53,11 @@ def xget(path, params):
     return json.loads(body)
 
 
-def resolve_ids(handles):
-    out = {}
-    for i in range(0, len(handles), 100):
-        d = xget("/users/by", {"usernames": ",".join(handles[i:i + 100])})
-        for u in d.get("data", []):
-            out[u["username"].lower()] = u["id"]
-        for e in d.get("errors", []):
-            print("  X lookup problem:", e.get("detail"))
-    return out
-
-
-def recent_photo_posts(uid, since):
-    d = xget("/users/%s/tweets" % uid, {"max_results": 10, "exclude": "retweets,replies", "start_time": since.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                                        "tweet.fields": "created_at", "expansions": "attachments.media_keys", "media.fields": "type,url"})
+def recent_photo_posts(handle, since, extra="", limit=20):
+    """Posts by the account that have an attachment, newest first. Uses recent search, so X bills only for the posts returned."""
+    q = ("from:%s has:media -is:retweet -is:reply %s" % (handle, extra)).strip()
+    d = xget("/tweets/search/recent", {"query": q, "max_results": max(10, min(limit, 100)), "start_time": since.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                                       "tweet.fields": "created_at", "expansions": "attachments.media_keys", "media.fields": "type,url"})
     media = {m["media_key"]: m for m in d.get("includes", {}).get("media", [])}
     out, withmedia = [], 0
     for t in d.get("data", []):
@@ -171,6 +162,9 @@ def main():
     ap.add_argument("--hours", type=float, default=48)
     ap.add_argument("--teams", default="")
     ap.add_argument("--max-images", type=int, default=5, help="most photos to read per team")
+    ap.add_argument("--extra", default="", help="extra X search terms, e.g. (lines OR lineup)")
+    ap.add_argument("--limit", type=int, default=20, help="most posts to fetch per team")
+    ap.add_argument("--explore", action="store_true", help="only list each team's recent media posts (no Claude)")
     a = ap.parse_args()
     acc = {k: v for k, v in json.load(open(os.path.join(HERE, "ncaa_x_accounts.json"))).items() if not k.startswith("_")}
     want = {x.strip() for x in a.teams.split(",") if x.strip()}
@@ -178,7 +172,6 @@ def main():
         acc = {k: v for k, v in acc.items() if k in want}
     html = open(os.path.join(ROOT, "index.html"), encoding="utf-8").read()
     since = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=a.hours)
-    ids = resolve_ids([h.lower() for h in acc.values()])
     print("Looking back %g hours from %s UTC; model %s\n" % (a.hours, since.strftime("%Y-%m-%d %H:%M"), MODEL))
     rep, tin, tout, nimg = [], 0, 0, 0
     for key, handle in acc.items():
@@ -189,13 +182,13 @@ def main():
             if not cur:
                 row["status"], row["detail"] = "ERROR", "team not found in index.html"
                 continue
-            uid = ids.get(handle.lower())
-            if not uid:
-                row["status"], row["detail"] = "ERROR", "X account @%s not found" % handle
-                continue
-            row["x_id"] = uid
-            posts, stats = recent_photo_posts(uid, since)
+            posts, stats = recent_photo_posts(handle, since, a.extra, a.limit)
             row["fetched"] = stats
+            if a.explore:
+                row["status"] = "explore"
+                row["detail"] = "%d media posts" % stats["posts"]
+                row["posts"] = ["%s | %d photo(s) | %s" % (pdate(x["created"]), len(x["images"]), re.sub(r"\s+", " ", x["text"])[:120]) for x in posts]
+                continue
             if not posts:
                 row["status"] = "no photo posts"
                 row["detail"] = "%d posts, %d with media (media types: %s)" % (stats["posts"], stats["with_media"], ", ".join(stats["types"]) or "none")
@@ -214,6 +207,7 @@ def main():
                     tout += use.get("output_tokens", 0)
                     if lu and lu.get("is_lineup"):
                         row["post"] = "https://x.com/%s/status/%s" % (handle, p["id"])
+                        row["image"] = url
                         row["posted"] = str(pdate(p["created"]))
                         row["opponent"], row["home_away"], row["game_date"] = lu.get("opponent"), lu.get("home_away"), lu.get("game_date")
                         row["uncertain"] = lu.get("uncertain") or []
@@ -258,6 +252,10 @@ def main():
             for r in rep:
                 f.write("| %s | %s | %s | %s |\n" % (r["team"], r["status"], r["detail"].replace("|", "/"), r.get("post", "")))
             for r in rep:
+                if r.get("posts"):
+                    f.write("\n<b>%s - media posts</b>\n<pre>%s</pre>\n" % (r["team"], "\n".join(r["posts"]).replace("&", "&amp;").replace("<", "&lt;")))
+                if r.get("lineup") and r["status"] == "CHANGED":
+                    f.write("\n<b>%s - read from %s</b>\n<pre>%s</pre>\n" % (r["team"], r.get("image", ""), json.dumps(r["lineup"])[:2500].replace("&", "&amp;").replace("<", "&lt;")))
                 if r.get("raw") is not None:
                     f.write("\n<b>%s - what Claude returned</b>\n<pre>%s</pre>\n" % (r["team"], json.dumps(r["raw"])[:2500].replace("&", "&amp;").replace("<", "&lt;")))
 
