@@ -1419,7 +1419,7 @@ function histEdge(im) {
   } catch (e) {}
 }
 var TLK = null, TLA = { "hamilton bulldogs": "hamilton", "soo greyhounds": "soo", "mississauga steelheads": "brampton", "sherbrooke phoenix": "qmjhl_sherbrooke", "newfoundland growlers": "qmjhl_newfoundland", "michigan state": "ncaa_michiganstate", "michigan": "ncaa_michigan", "minnesota": "ncaa_minnesota", "wisconsin": "ncaa_wisconsin", "notre dame": "ncaa_notredame", "ohio state": "ncaa_ohiostate", "penn state": "ncaa_pennstate" };
-if (NCHC_ON) { [["Minnesota-Duluth", "ncaa_minnesotaduluth"], ["Miami", "ncaa_miamioh"], ["Denver", "ncaa_denver"], ["North Dakota", "ncaa_northdakota"], ["Western Michigan", "ncaa_westernmichigan"], ["Colorado College", "ncaa_coloradocollege"], ["Nebraska-Omaha", "ncaa_omaha"], ["Arizona State", "ncaa_arizonastate"], ["St. Thomas", "ncaa_stthomas"], ["St. Cloud State", "ncaa_stcloudstate"]].forEach(function (a) { TLA[injNrm(a[0])] = a[1]; }); }
+if (NCHC_ON) { [["Minnesota-Duluth", "ncaa_minnesotaduluth"], ["Miami", "ncaa_miamioh"], ["Miami (OH)", "ncaa_miamioh"], ["Miami (Ohio)", "ncaa_miamioh"], ["Denver", "ncaa_denver"], ["North Dakota", "ncaa_northdakota"], ["Western Michigan", "ncaa_westernmichigan"], ["Colorado College", "ncaa_coloradocollege"], ["Nebraska-Omaha", "ncaa_omaha"], ["Arizona State", "ncaa_arizonastate"], ["St. Thomas", "ncaa_stthomas"], ["St. Cloud State", "ncaa_stcloudstate"]].forEach(function (a) { TLA[injNrm(a[0])] = a[1]; }); }
 function histLogo(name) {
   if (!TLK) { TLK = {}; for (var k in C) TLK[injNrm(C[k][0])] = k; for (var a in TLA) TLK[a] = TLA[a]; }
   var k2 = TLK[injNrm(name)]; if (!k2 || !window.tsLogoSrc) return "";
