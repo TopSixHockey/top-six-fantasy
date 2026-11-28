@@ -809,11 +809,11 @@
  },
  "whl:1023345:away": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "whl:1023345:home": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "whl:1023346:away": {
   "done": true,
@@ -825,27 +825,27 @@
  },
  "whl:1023347:away": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "whl:1023347:home": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "whl:1023348:away": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "whl:1023348:home": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "whl:1023349:away": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "whl:1023349:home": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "whl:1023350:away": {
   "done": true,
