@@ -1397,7 +1397,7 @@ function histTable(rows, g, po) {
 var histBox = null;
 function closeHist() { if (histBox) { histBox.remove(); histBox = null; } document.removeEventListener("keydown", histKey); }
 function histKey(e) { if (e.key === "Escape") closeHist(); }
-function ncaaLogoImg(s) { var nm = String(s || "").split(" " + String.fromCharCode(183) + " ")[0], h = histLogo(nm); return h ? h.replace('class="tl"', 'class="tl" style="width:18px;height:18px;vertical-align:middle;margin-left:6px' + (nm === "Michigan" ? ";position:relative;top:-2px" : "") + '"').replace('onload="histEdge(this)"', 'onload="histEdge(this);ncaaWrapFix(this)"') : ""; }
+function ncaaLogoImg(s) { var nm = String(s || "").split(" " + String.fromCharCode(183) + " ")[0], h = histLogo(nm); return h ? h.replace('class="tl"', 'class="tl" style="width:18px;height:18px;vertical-align:middle;margin-left:6px' + (nm === "Michigan" ? ";position:relative;top:-2px" : nm === "Western Michigan" ? ";position:relative;top:4px" : "") + '"').replace('onload="histEdge(this)"', 'onload="histEdge(this);ncaaWrapFix(this)"') : ""; }
 function ncaaWrapFix(im, n) { try { var sp = im.parentElement, rs = sp && sp.getBoundingClientRect(); if (!rs || !rs.width) { if ((n || 0) < 20) setTimeout(function () { ncaaWrapFix(im, (n || 0) + 1); }, 100); return; } im.style.marginLeft = "6px"; im.style.marginTop = "0"; im.style.display = ""; if (im.getBoundingClientRect().left - rs.left < 10) { im.style.marginLeft = "0"; im.style.marginTop = "3px"; im.style.display = "block"; } if (!im.__wf) { im.__wf = 1; setTimeout(function () { ncaaWrapFix(im, 99); }, 400); } } catch (e) {} }
 function histEdge(im) {
   try {
