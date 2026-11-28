@@ -280,11 +280,11 @@
  },
  "ohl:29249:away": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "ohl:29249:home": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "players_full": "2026-11-27T22:01:18.433124-05:00",
  "qmjhl:32662:away": {
