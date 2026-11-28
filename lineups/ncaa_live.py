@@ -10,14 +10,26 @@ The file is written to live/ncaa_live.json (not part of the main branch): the wo
 so frequent updates (with the game clock) never rebuild the site. Only written when something changed.
 Exit codes: 0 = games are on or about to start (keep polling), 10 = nothing is happening (stop for now), 1 = feed error.
 """
-import datetime, json, os, sys, urllib.parse, urllib.request
+import datetime, json, os, re, sys, urllib.parse, urllib.request
 from zoneinfo import ZoneInfo
 
 ET = ZoneInfo("America/Toronto")
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "live", "ncaa_live.json")
 HASH = "4bcb5e6432fa9da365c0c19af01b1f9015cc7eb5c21e7af2dba308784a166df7"   # the scoreboard page's GetContests_web query
-OURS = {"michigan", "michigan-st", "minnesota", "notre-dame", "ohio-st", "penn-st", "wisconsin"}
+OURS = {"michigan", "michigan-st", "minnesota", "notre-dame", "ohio-st", "penn-st", "wisconsin"}   # NCAA's own team slugs (Big Ten)
+# NCHC teams: our own slug -> a piece of the school name (letters only) to look for in NCAA's slug, short name or full name,
+# so a different spelling on NCAA.com does not matter. The page uses the same slugs (NCSEO in index.html).
+NCHC = {"minnesota-duluth": "duluth", "miami-oh": "miami", "denver": "denver", "north-dakota": "northdakota", "western-michigan": "westernmich",
+        "colorado-college": "coloradoc", "omaha": "omaha", "arizona-state": "arizona", "st-thomas": "thomas", "st-cloud-state": "cloud"}
+OURS |= set(NCHC)
+
+
+def canon(t):
+    names = [re.sub("[^a-z]", "", str(t.get(k) or "").lower()) for k in ("seoname", "nameShort", "nameFull", "name6Char")]
+    for slug, bit in NCHC.items():
+        if any(bit in n for n in names): return slug
+    return t.get("seoname")
 
 
 def fetch_day(day, season):
@@ -43,7 +55,7 @@ def main():
         except Exception as e:
             print("feed error for", day, "-", e); bad += 1; continue
         for c in contests:
-            teams = [{"seo": t.get("seoname"), "name": t.get("nameShort"), "score": t.get("score"), "home": bool(t.get("isHome"))}
+            teams = [{"seo": canon(t), "name": t.get("nameShort"), "score": t.get("score"), "home": bool(t.get("isHome"))}
                      for t in c.get("teams") or []]
             if not any(t["seo"] in OURS for t in teams): continue
             sd = (c.get("startDate") or "").split("/")
