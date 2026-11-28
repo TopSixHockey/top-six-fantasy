@@ -21,9 +21,14 @@ on:
       limit:
         description: "Most posts to fetch per team"
         default: "20"
+      apply:
+        description: "Put the new lines into a copy of index.html and open a pull request to approve (nothing goes live until you merge it)"
+        type: boolean
+        default: false
 
 permissions:
-  contents: read
+  contents: write
+  pull-requests: write
 
 jobs:
   watch:
@@ -43,10 +48,26 @@ jobs:
           EXPLORE: ${{ inputs.explore }}
           EXTRA: ${{ inputs.extra }}
           LIMIT: ${{ inputs.limit }}
+          APPLY: ${{ inputs.apply }}
         run: |
           ARGS=""
           if [ "$EXPLORE" = "true" ]; then ARGS="--explore"; fi
+          if [ "$APPLY" = "true" ]; then ARGS="$ARGS --apply"; fi
           python lineups/ncaa_lines_watch.py --hours "$HOURS" --teams "$TEAMS" --limit "$LIMIT" --extra "$EXTRA" $ARGS
+      - name: Open a pull request with the new lines
+        if: ${{ inputs.apply }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet -- index.html; then echo "No line changes to propose."; exit 0; fi
+          BR="lines/update-$(date -u +%Y%m%d-%H%M)"
+          git config user.name "Top Six Hockey bot"
+          git config user.email "actions@users.noreply.github.com"
+          git checkout -b "$BR"
+          git add index.html
+          git commit -m "Update NCAA lines from team X posts"
+          git push origin "$BR"
+          gh pr create --base main --head "$BR" --title "NCAA lines update $(date -u +%Y-%m-%d)" --body-file lineups/_pr_body.md || echo "Branch $BR is pushed. Open a pull request here: https://github.com/${{ github.repository }}/compare/main...$BR"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
