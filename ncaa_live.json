@@ -1,0 +1,599 @@
+{
+ "updated": "2026-11-28T07:56:54-05:00",
+ "games": [
+  {
+   "id": 6643030,
+   "date": "2026-11-27",
+   "start": 1795788000,
+   "state": "F",
+   "period": "FINAL",
+   "clock": "",
+   "teams": [
+    {
+     "seo": "providence",
+     "name": "Providence",
+     "score": 4,
+     "home": true
+    },
+    {
+     "seo": "minnesota-duluth",
+     "name": "Minn. Duluth",
+     "score": 1,
+     "home": false
+    }
+   ]
+  },
+  {
+   "id": 6643369,
+   "date": "2026-11-27",
+   "start": 1795809600,
+   "state": "F",
+   "period": "FINAL",
+   "clock": "",
+   "teams": [
+    {
+     "seo": "notre-dame",
+     "name": "Notre Dame",
+     "score": 4,
+     "home": true
+    },
+    {
+     "seo": "boston-college",
+     "name": "Boston College",
+     "score": 9,
+     "home": false
+    }
+   ]
+  },
+  {
+   "id": 6642681,
+   "date": "2026-11-27",
+   "start": 1795816800,
+   "state": "F",
+   "period": "FINAL",
+   "clock": "",
+   "teams": [
+    {
+     "seo": "minnesota",
+     "name": "Minnesota",
+     "score": 3,
+     "home": true
+    },
+    {
+     "seo": "minn-st-mankato",
+     "name": "Minnesota St.",
+     "score": 0,
+     "home": false
+    }
+   ]
+  },
+  {
+   "id": 6642979,
+   "date": "2026-11-27",
+   "start": 1795816800,
+   "state": "F",
+   "period": "FINAL/SO",
+   "clock": "",
+   "teams": [
+    {
+     "seo": "penn-st",
+     "name": "Penn St.",
+     "score": 1,
+     "home": true
+    },
+    {
+     "seo": "princeton",
+     "name": "Princeton",
+     "score": 1,
+     "home": false
+    }
+   ]
+  },
+  {
+   "id": 6643333,
+   "date": "2026-11-27",
+   "start": 1795820400,
+   "state": "F",
+   "period": "FINAL",
+   "clock": "",
+   "teams": [
+    {
+     "seo": "boston-u",
+     "name": "Boston U.",
+     "score": 3,
+     "home": true
+    },
+    {
+     "seo": "denver",
+     "name": "Denver",
+     "score": 5,
+     "home": false
+    }
+   ]
+  },
+  {
+   "id": 6642721,
+   "date": "2026-11-27",
+   "start": 1795824000,
+   "state": "F",
+   "period": "FINAL",
+   "clock": "",
+   "teams": [
+    {
+     "seo": "omaha",
+     "name": "Omaha",
+     "score": 4,
+     "home": true
+    },
+    {
+     "seo": "yale",
+     "name": "Yale",
+     "score": 1,
+     "home": false
+    }
+   ]
+  },
+  {
+   "id": 6643159,
+   "date": "2026-11-27",
+   "start": 1795824000,
+   "state": "F",
+   "period": "FINAL",
+   "clock": "",
+   "teams": [
+    {
+     "seo": "union-ny",
+     "name": "Union (NY)",
+     "score": 0,
+     "home": true
+    },
+    {
+     "seo": "ohio-st",
+     "name": "Ohio St.",
+     "score": 4,
+     "home": false
+    }
+   ]
+  },
+  {
+   "id": 6643232,
+   "date": "2026-11-27",
+   "start": 1795824000,
+   "state": "F",
+   "period": "FINAL",
+   "clock": "",
+   "teams": [
+    {
+     "seo": "stonehill",
+     "name": "Stonehill",
+     "score": 1,
+     "home": true
+    },
+    {
+     "seo": "miami-oh",
+     "name": "Miami (OH)",
+     "score": 3,
+     "home": false
+    }
+   ]
+  },
+  {
+   "id": 6643449,
+   "date": "2026-11-27",
+   "start": 1795824000,
+   "state": "F",
+   "period": "FINAL (OT)",
+   "clock": "",
+   "teams": [
+    {
+     "seo": "vermont",
+     "name": "Vermont",
+     "score": 3,
+     "home": true
+    },
+    {
+     "seo": "st-cloud-state",
+     "name": "St. Cloud St.",
+     "score": 2,
+     "home": false
+    }
+   ]
+  },
+  {
+   "id": 6643614,
+   "date": "2026-11-27",
+   "start": 1795824000,
+   "state": "F",
+   "period": "FINAL",
+   "clock": "",
+   "teams": [
+    {
+     "seo": "michigan",
+     "name": "Michigan",
+     "score": 3,
+     "home": true
+    },
+    {
+     "seo": "ferris-st",
+     "name": "Ferris St.",
+     "score": 1,
+     "home": false
+    }
+   ]
+  },
+  {
+   "id": 6642794,
+   "date": "2026-11-27",
+   "start": 1795828020,
+   "state": "F",
+   "period": "FINAL",
+   "clock": "",
+   "teams": [
+    {
+     "seo": "north-dakota",
+     "name": "North Dakota",
+     "score": 2,
+     "home": true
+    },
+    {
+     "seo": "lindenwood-mo",
+     "name": "Lindenwood",
+     "score": 3,
+     "home": false
+    }
+   ]
+  },
+  {
+   "id": 6642934,
+   "date": "2026-11-27",
+   "start": 1795831200,
+   "state": "F",
+   "period": "FINAL (OT)",
+   "clock": "",
+   "teams": [
+    {
+     "seo": "arizona-state",
+     "name": "Arizona St.",
+     "score": 8,
+     "home": true
+    },
+    {
+     "seo": "alas-anchorage",
+     "name": "Alas. Anchorage",
+     "score": 7,
+     "home": false
+    }
+   ]
+  },
+  {
+   "id": 6643510,
+   "date": "2026-11-27",
+   "start": 1795831200,
+   "state": "F",
+   "period": "FINAL",
+   "clock": "",
+   "teams": [
+    {
+     "seo": "colorado-college",
+     "name": "Colorado Col.",
+     "score": 1,
+     "home": true
+    },
+    {
+     "seo": "alas-fairbanks",
+     "name": "Alas. Fairbanks",
+     "score": 2,
+     "home": false
+    }
+   ]
+  },
+  {
+   "id": 6643032,
+   "date": "2026-11-28",
+   "start": 1795878000,
+   "state": "P",
+   "period": "",
+   "clock": "",
+   "teams": [
+    {
+     "seo": "minnesota-duluth",
+     "name": "Minn. Duluth",
+     "score": null,
+     "home": true
+    },
+    {
+     "seo": "colgate",
+     "name": "Colgate",
+     "score": null,
+     "home": false
+    }
+   ]
+  },
+  {
+   "id": 6643160,
+   "date": "2026-11-28",
+   "start": 1795903200,
+   "state": "P",
+   "period": "",
+   "clock": "",
+   "teams": [
+    {
+     "seo": "union-ny",
+     "name": "Union (NY)",
+     "score": null,
+     "home": true
+    },
+    {
+     "seo": "ohio-st",
+     "name": "Ohio St.",
+     "score": null,
+     "home": false
+    }
+   ]
+  },
+  {
+   "id": 6643334,
+   "date": "2026-11-28",
+   "start": 1795906800,
+   "state": "P",
+   "period": "",
+   "clock": "",
+   "teams": [
+    {
+     "seo": "boston-u",
+     "name": "Boston U.",
+     "score": null,
+     "home": true
+    },
+    {
+     "seo": "denver",
+     "name": "Denver",
+     "score": null,
+     "home": false
+    }
+   ]
+  },
+  {
+   "id": 6642682,
+   "date": "2026-11-28",
+   "start": 1795910400,
+   "state": "P",
+   "period": "",
+   "clock": "",
+   "teams": [
+    {
+     "seo": "minn-st-mankato",
+     "name": "Minnesota St.",
+     "score": null,
+     "home": true
+    },
+    {
+     "seo": "minnesota",
+     "name": "Minnesota",
+     "score": null,
+     "home": false
+    }
+   ]
+  },
+  {
+   "id": 6642722,
+   "date": "2026-11-28",
+   "start": 1795910400,
+   "state": "P",
+   "period": "",
+   "clock": "",
+   "teams": [
+    {
+     "seo": "omaha",
+     "name": "Omaha",
+     "score": null,
+     "home": true
+    },
+    {
+     "seo": "yale",
+     "name": "Yale",
+     "score": null,
+     "home": false
+    }
+   ]
+  },
+  {
+   "id": 6642935,
+   "date": "2026-11-28",
+   "start": 1795910400,
+   "state": "P",
+   "period": "",
+   "clock": "",
+   "teams": [
+    {
+     "seo": "arizona-state",
+     "name": "Arizona St.",
+     "score": null,
+     "home": true
+    },
+    {
+     "seo": "alas-anchorage",
+     "name": "Alas. Anchorage",
+     "score": null,
+     "home": false
+    }
+   ]
+  },
+  {
+   "id": 6643071,
+   "date": "2026-11-28",
+   "start": 1795910400,
+   "state": "P",
+   "period": "",
+   "clock": "",
+   "teams": [
+    {
+     "seo": "wisconsin",
+     "name": "Wisconsin",
+     "score": null,
+     "home": true
+    },
+    {
+     "seo": "canisius",
+     "name": "Canisius",
+     "score": null,
+     "home": false
+    }
+   ]
+  },
+  {
+   "id": 6643233,
+   "date": "2026-11-28",
+   "start": 1795910400,
+   "state": "P",
+   "period": "",
+   "clock": "",
+   "teams": [
+    {
+     "seo": "stonehill",
+     "name": "Stonehill",
+     "score": null,
+     "home": true
+    },
+    {
+     "seo": "miami-oh",
+     "name": "Miami (OH)",
+     "score": null,
+     "home": false
+    }
+   ]
+  },
+  {
+   "id": 6643450,
+   "date": "2026-11-28",
+   "start": 1795910400,
+   "state": "P",
+   "period": "",
+   "clock": "",
+   "teams": [
+    {
+     "seo": "vermont",
+     "name": "Vermont",
+     "score": null,
+     "home": true
+    },
+    {
+     "seo": "st-cloud-state",
+     "name": "St. Cloud St.",
+     "score": null,
+     "home": false
+    }
+   ]
+  },
+  {
+   "id": 6643615,
+   "date": "2026-11-28",
+   "start": 1795910400,
+   "state": "P",
+   "period": "",
+   "clock": "",
+   "teams": [
+    {
+     "seo": "michigan",
+     "name": "Michigan",
+     "score": null,
+     "home": true
+    },
+    {
+     "seo": "ferris-st",
+     "name": "Ferris St.",
+     "score": null,
+     "home": false
+    }
+   ]
+  },
+  {
+   "id": 6642795,
+   "date": "2026-11-28",
+   "start": 1795910820,
+   "state": "P",
+   "period": "",
+   "clock": "",
+   "teams": [
+    {
+     "seo": "north-dakota",
+     "name": "North Dakota",
+     "score": null,
+     "home": true
+    },
+    {
+     "seo": "lindenwood-mo",
+     "name": "Lindenwood",
+     "score": null,
+     "home": false
+    }
+   ]
+  },
+  {
+   "id": 6643424,
+   "date": "2026-11-28",
+   "start": 1795910820,
+   "state": "P",
+   "period": "",
+   "clock": "",
+   "teams": [
+    {
+     "seo": "st-thomas",
+     "name": "St. Thomas (MN)",
+     "score": null,
+     "home": true
+    },
+    {
+     "seo": "bemidji-st",
+     "name": "Bemidji St.",
+     "score": null,
+     "home": false
+    }
+   ]
+  },
+  {
+   "id": 6643511,
+   "date": "2026-11-28",
+   "start": 1795914000,
+   "state": "P",
+   "period": "",
+   "clock": "",
+   "teams": [
+    {
+     "seo": "colorado-college",
+     "name": "Colorado Col.",
+     "score": null,
+     "home": true
+    },
+    {
+     "seo": "alas-fairbanks",
+     "name": "Alas. Fairbanks",
+     "score": null,
+     "home": false
+    }
+   ]
+  },
+  {
+   "id": 6643072,
+   "date": "2026-11-29",
+   "start": 1795993200,
+   "state": "P",
+   "period": "",
+   "clock": "",
+   "teams": [
+    {
+     "seo": "wisconsin",
+     "name": "Wisconsin",
+     "score": null,
+     "home": true
+    },
+    {
+     "seo": "canisius",
+     "name": "Canisius",
+     "score": null,
+     "home": false
+    }
+   ]
+  }
+ ]
+}
