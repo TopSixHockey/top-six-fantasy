@@ -1,141 +1,99 @@
 {
  "ohl": [
   {
-   "away": "Brantford Bulldogs",
-   "et": "16:00",
-   "home": "Niagara IceDogs",
-   "id": "29254",
-   "time": "16:00"
+   "away": "Brampton Steelheads",
+   "et": "14:00",
+   "home": "North Bay Battalion",
+   "id": "29259",
+   "time": "14:00"
   },
   {
-   "away": "Kitchener Rangers",
-   "et": "16:00",
-   "home": "London Knights",
-   "id": "29253",
-   "time": "16:00"
-  },
-  {
-   "away": "Windsor Spitfires",
-   "et": "18:00",
-   "home": "Erie Otters",
-   "id": "29251",
-   "time": "18:00"
+   "away": "Saginaw Spirit",
+   "et": "14:05",
+   "home": "Sarnia Sting",
+   "id": "29261",
+   "time": "14:05"
   },
   {
    "away": "Ottawa 67's",
-   "et": "19:00",
-   "home": "Owen Sound Attack",
-   "id": "29255",
-   "time": "19:00"
-  },
-  {
-   "away": "Sarnia Sting",
-   "et": "19:00",
-   "home": "Flint Firebirds",
-   "id": "29252",
-   "time": "19:00"
-  },
-  {
-   "away": "Oshawa Generals",
-   "et": "19:05",
-   "home": "Sudbury Wolves",
-   "id": "29257",
-   "time": "19:05"
-  },
-  {
-   "away": "Soo Greyhounds",
-   "et": "19:05",
-   "home": "Saginaw Spirit",
-   "id": "29256",
-   "time": "19:05"
+   "et": "14:07",
+   "home": "Guelph Storm",
+   "id": "29258",
+   "time": "14:07"
   },
   {
    "away": "Kingston Frontenacs",
-   "et": "19:30",
-   "home": "Barrie Colts",
-   "id": "29250",
-   "time": "19:30"
+   "et": "15:00",
+   "home": "Owen Sound Attack",
+   "id": "29260",
+   "time": "15:00"
   }
  ],
  "qmjhl": [
   {
-   "away": "Sherbrooke, Ph\u0153nix",
-   "et": "16:00",
-   "home": "Rimouski, Oc\u00e9anic",
-   "id": "33017",
-   "time": "16:00"
+   "away": "Blainville-Boisbriand, Armada",
+   "et": "13:00",
+   "home": "Halifax, Mooseheads",
+   "id": "32887",
+   "time": "14:00"
   },
   {
-   "away": "Baie-Comeau, Drakkar",
-   "et": "16:00",
-   "home": "Shawinigan, Cataractes",
-   "id": "33111",
-   "time": "16:00"
+   "away": "Moncton, Wildcats",
+   "et": "14:00",
+   "home": "Cape Breton, Eagles",
+   "id": "32725",
+   "time": "15:00"
+  },
+  {
+   "away": "Chicoutimi, Saguen\u00e9ens",
+   "et": "15:00",
+   "home": "Qu\u00e9bec, Remparts",
+   "id": "32985",
+   "time": "15:00"
+  },
+  {
+   "away": "Drummondville, Voltigeurs",
+   "et": "15:00",
+   "home": "Gatineau, Olympiques",
+   "id": "32857",
+   "time": "15:00"
   },
   {
    "away": "Charlottetown, Islanders",
    "et": "16:00",
-   "home": "Val-d'Or, Foreurs",
-   "id": "33179",
+   "home": "Rouyn-Noranda, Huskies",
+   "id": "33049",
+   "time": "16:00"
+  },
+  {
+   "away": "Saint John, Sea Dogs",
+   "et": "16:00",
+   "home": "Victoriaville, Tigres",
+   "id": "33212",
    "time": "16:00"
   }
  ],
  "whl": [
   {
-   "away": "Prince Albert Raiders",
-   "et": "19:00",
-   "home": "Moose Jaw Warriors",
-   "id": "1023357",
-   "time": "18:00"
-  },
-  {
-   "away": "Calgary Hitmen",
-   "et": "19:00",
-   "home": "Swift Current Broncos",
-   "id": "1023361",
-   "time": "18:00"
-  },
-  {
-   "away": "Brandon Wheat Kings",
-   "et": "19:00",
+   "away": "Lethbridge Hurricanes",
+   "et": "17:00",
    "home": "Edmonton Oil Kings",
-   "id": "1023359",
-   "time": "18:00"
+   "id": "1023363",
+   "time": "16:00"
   },
   {
-   "away": "Regina Pats",
-   "et": "20:00",
-   "home": "Kamloops Blazers",
-   "id": "1023355",
-   "time": "18:00"
+   "away": "Seattle Thunderbirds",
+   "et": "18:05",
+   "home": "Victoria Royals",
+   "id": "1023365",
+   "time": "16:05"
   },
   {
-   "away": "Everett Silvertips",
-   "et": "21:00",
-   "home": "Portland Winterhawks",
-   "id": "1023358",
-   "time": "18:00"
-  },
-  {
-   "away": "Penticton Vees",
-   "et": "21:00",
-   "home": "Wenatchee Wild",
-   "id": "1023362",
-   "time": "18:00"
-  },
-  {
-   "away": "Kelowna Rockets",
-   "et": "21:05",
-   "home": "Spokane Chiefs",
-   "id": "1023360",
-   "time": "18:05"
-  },
-  {
-   "away": "Saskatoon Blades",
-   "et": "20:00",
-   "home": "Medicine Hat Tigers",
-   "id": "1023356",
-   "time": "19:00"
+   "away": "Portland Winterhawks",
+   "et": "19:05",
+   "home": "Tri-City Americans",
+   "id": "1023364",
+   "time": "16:05"
   }
  ]
 }
