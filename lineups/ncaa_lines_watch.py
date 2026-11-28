@@ -36,6 +36,7 @@ Return ONLY a JSON object, with no other text, in this shape:
  "C": captain's jersey number or null,
  "A": list of assistant captain jersey numbers,
  "uncertain": ["short note for anything hard to read"]}
+A graphic that shows only the starting six (3 forwards, 2 defence, 1 goalie) is NOT a lineup: set is_lineup to false.
 Rules: copy jersey numbers and name spellings exactly as shown. Never guess: if a number or name is unreadable use null for it and say so in "uncertain". Do not invent players. If the graphic shows a 13th forward, put him in "S". Use null for home_away when unclear ("vs" means home, "at" means away). If is_lineup is false, the other fields may be null."""
 
 
@@ -114,7 +115,7 @@ def load_current(html, key):
     mj = re.search(r'var K = "' + key + r'";\s*\n\s*L\[K\] = (\{.*\});\n[^\n]*\n([^\n]*)\n', html)
     if mj:
         o = json.loads(mj.group(1))
-        return {"F": o["F"], "D": o["D"], "G": o["G"], "S": o.get("S") or [], "game": o.get("game", ""), "roster": {int(x) for x in re.findall(r'\[(\d+),"[FDG]"', mj.group(2))}}
+        return {"F": o["F"], "D": o["D"], "G": o["G"], "S": o.get("S") or [], "game": o.get("game", ""), "roster": {int(x) for x in re.findall(r'\[(\d+),"[A-Z]{1,2}"', mj.group(2))}}
     m = re.search(r"\n  L\." + key + r" = \{(.*?)\n  \};", html, re.S)
     if not m:
         return None
@@ -122,7 +123,7 @@ def load_current(html, key):
     g = re.search(r'game: "(.*?)", updated', b)
     roster = set()
     for pm in re.finditer(r'put\("' + key + r'", \[(.*?)\n  \]\);', html, re.S):
-        roster |= {int(x) for x in re.findall(r'\[(\d+),"[FDG]"', pm.group(1))}
+        roster |= {int(x) for x in re.findall(r'\[(\d+),"[A-Z]{1,2}"', pm.group(1))}
     return {"F": field(b, "F"), "D": field(b, "D"), "G": field(b, "G"), "S": field(b, "S") or [], "game": g.group(1) if g else "", "roster": roster}
 
 
@@ -133,6 +134,15 @@ def nums(groups):
 def flat(lu):
     """every player [number, name] in a lineup (F and D are lists of groups; G and S are flat lists)"""
     return [p for grp in (lu.get("F") or []) + (lu.get("D") or []) for p in grp] + list(lu.get("G") or []) + list(lu.get("S") or [])
+
+
+def normalize(lu):
+    """Site convention: two goalies in G; any extra goalie is listed with the scratches, which are sorted by number."""
+    G = list(lu.get("G") or [])
+    if len(G) > 2:
+        lu["S"] = sorted(list(lu.get("S") or []) + G[2:], key=lambda q: q[0] if isinstance(q[0], int) else 999)
+        lu["G"] = G[:2]
+    return lu
 
 
 def check(lu):
@@ -209,6 +219,10 @@ def main():
                     tin += use.get("input_tokens", 0)
                     tout += use.get("output_tokens", 0)
                     if lu and lu.get("is_lineup"):
+                        try:
+                            normalize(lu)
+                        except Exception:
+                            pass
                         row["post"] = "https://x.com/%s/status/%s" % (handle, p["id"])
                         row["image"] = url
                         row["posted"] = str(pdate(p["created"]))
@@ -230,14 +244,15 @@ def main():
                                 diffs.append("scratches")
                             new = sorted({p2[0] for p2 in flat(lu)} - cur["roster"]) if cur["roster"] else []
                             row["new_numbers"] = new
+                            row.pop("raw", None)
                             row["status"] = "CHANGED" if diffs else "unchanged"
                             row["detail"] = ("differs in: " + ", ".join(diffs)) if diffs else "matches the site"
                             if new:
                                 row["detail"] += "; numbers not on the site roster: %s" % new
                             row["lineup"] = {k: lu.get(k) for k in ("F", "D", "G", "S", "C", "A")}
                             row["current_game"] = cur["game"]
-                        break
-                if row["status"]:
+                            break
+                if row["status"] in ("CHANGED", "unchanged"):
                     break
             if not row["status"]:
                 row["status"] = "no lineup found"
