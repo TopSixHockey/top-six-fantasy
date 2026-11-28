@@ -1,0 +1,20 @@
+{
+ "_note": "X handles of the team accounts that post lineup graphics. Keys are the site team keys.",
+ "ncaa_michigan": "umichhockey",
+ "ncaa_wisconsin": "BadgerMHockey",
+ "ncaa_michiganstate": "MSU_Hockey",
+ "ncaa_notredame": "NDHockey",
+ "ncaa_minnesota": "GopherHockey",
+ "ncaa_ohiostate": "OhioStateMHKY",
+ "ncaa_pennstate": "PennStateMHKY",
+ "ncaa_minnesotaduluth": "UMDMensHockey",
+ "ncaa_miamioh": "MiamiOH_Hockey",
+ "ncaa_denver": "DU_Hockey",
+ "ncaa_northdakota": "UNDmhockey",
+ "ncaa_westernmichigan": "WMUHockey",
+ "ncaa_coloradocollege": "CCTigerHKY",
+ "ncaa_omaha": "OmahaHKY",
+ "ncaa_arizonastate": "SunDevilHockey",
+ "ncaa_stthomas": "TommieMHockey",
+ "ncaa_stcloudstate": "SCSUHuskies_MH"
+}
