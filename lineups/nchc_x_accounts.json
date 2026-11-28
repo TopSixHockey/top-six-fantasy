@@ -1,0 +1,13 @@
+{
+  "_note": "X accounts that post each NCHC team's lineups (for the lines watcher). Keys are the team keys used in index.html.",
+  "ncaa_minnesotaduluth": "UMDMensHockey",
+  "ncaa_miamioh": "MiamiOH_Hockey",
+  "ncaa_denver": "DU_Hockey",
+  "ncaa_northdakota": "UNDmhockey",
+  "ncaa_westernmichigan": "WMUHockey",
+  "ncaa_coloradocollege": "CCTigerHKY",
+  "ncaa_omaha": "OmahaHKY",
+  "ncaa_arizonastate": "SunDevilHockey",
+  "ncaa_stthomas": "TommieMHockey",
+  "ncaa_stcloudstate": "SCSUHuskies_MH"
+}
