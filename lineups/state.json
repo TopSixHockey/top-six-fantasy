@@ -481,11 +481,11 @@
  },
  "qmjhl:33048:away": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "qmjhl:33048:home": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "qmjhl:33081:away": {
   "done": true,
