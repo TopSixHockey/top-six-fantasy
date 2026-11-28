@@ -220,11 +220,11 @@
  },
  "ohl:29241:away": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "ohl:29241:home": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "ohl:29242:away": {
   "done": true,
@@ -397,11 +397,11 @@
  },
  "qmjhl:32886:away": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "qmjhl:32886:home": {
   "done": true,
-  "flipped": false
+  "flipped": true
  },
  "qmjhl:32919:away": {
   "done": true,
